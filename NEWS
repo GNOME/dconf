@@ -1,3 +1,9 @@
+Changes in dconf 0.12.1
+=======================
+
+ * dconf CLI: call setlocale() on startup (for proper handling of values
+   containing non-ascii characters)
+
 Changes in dconf 0.12.0
 =======================
 
