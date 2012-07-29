@@ -22,7 +22,7 @@
 #ifndef __dconf_engine_h__
 #define __dconf_engine_h__
 
-#include "dconf-changeset-list.h"
+#include "../common/dconf-changeset.h"
 
 #include <gio/gio.h>
 
@@ -109,6 +109,8 @@ DConfEngine *           dconf_engine_new                                (gpointe
                                                                          GDestroyNotify           free_func);
 
 G_GNUC_INTERNAL
+DConfEngine *           dconf_engine_ref                                (DConfEngine             *engine);
+G_GNUC_INTERNAL
 void                    dconf_engine_unref                              (DConfEngine             *engine);
 
 /* Read API: always handled immediately */
@@ -116,12 +118,15 @@ G_GNUC_INTERNAL
 guint64                 dconf_engine_get_state                          (DConfEngine             *engine);
 
 G_GNUC_INTERNAL
+gboolean                dconf_engine_is_set                             (DConfEngine             *engine,
+                                                                         const gchar             *key);
+G_GNUC_INTERNAL
 gboolean                dconf_engine_is_writable                        (DConfEngine             *engine,
                                                                          const gchar             *key);
 
 G_GNUC_INTERNAL
 GVariant *              dconf_engine_read                               (DConfEngine             *engine,
-                                                                         DConfChangesetList      *read_through,
+                                                                         GQueue                  *read_through,
                                                                          const gchar             *key);
 
 G_GNUC_INTERNAL

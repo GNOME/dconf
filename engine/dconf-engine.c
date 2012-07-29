@@ -295,7 +295,7 @@ dconf_engine_unref (DConfEngine *engine)
     goto again;
 }
 
-static DConfEngine *
+DConfEngine *
 dconf_engine_ref (DConfEngine *engine)
 {
   g_atomic_int_inc (&engine->ref_count);
@@ -360,6 +360,24 @@ dconf_engine_is_writable (DConfEngine *engine,
   return writable;
 }
 
+gboolean
+dconf_engine_is_set (DConfEngine *engine,
+                     const gchar *key)
+{
+  gboolean set;
+
+  dconf_engine_acquire_sources (engine);
+
+  set = engine->n_sources > 0 &&
+        engine->sources[0]->writable &&
+        engine->sources[0]->values &&
+        gvdb_table_has_value (engine->sources[0]->values, key);
+
+  dconf_engine_release_sources (engine);
+
+  return set;
+}
+
 static gboolean
 dconf_engine_find_key_in_queue (GQueue       *queue,
                                 const gchar  *key,
@@ -377,7 +395,7 @@ dconf_engine_find_key_in_queue (GQueue       *queue,
 
 GVariant *
 dconf_engine_read (DConfEngine        *engine,
-                   DConfChangesetList *read_through,
+                   GQueue             *read_through,
                    const gchar        *key)
 {
   GVariant *value = NULL;
@@ -500,7 +518,7 @@ dconf_engine_read (DConfEngine        *engine,
 
       /* Step 2.  Check read_through. */
       if (read_through)
-        found_key = dconf_engine_find_key_in_queue (&read_through->queue, key, &value);
+        found_key = dconf_engine_find_key_in_queue (read_through, key, &value);
 
       /* Step 3.  Check queued changes if we didn't find it in read_through.
        *
