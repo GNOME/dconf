@@ -440,6 +440,15 @@ dconf_dbus_client_scan_outstanding (DConfDBusClient  *dcdbc,
  *
  * We just initially set it to 2, since these are the only two users.
  * That way we can skip having the ref() function.
+ *
+ * We also track the number of outstanding messages that we are waiting
+ * to see before assuming that the watch has been established.  This is
+ * set to the number of messages sent and decremented for each incoming
+ * reply.  When it hits zero, we do one single unref.
+ *
+ * We need to keep this number separate from the refcount due to the
+ * fact that we need to do some additional checking when the last reply
+ * arrives (see code below).
  */
 typedef struct
 {
@@ -449,6 +458,7 @@ typedef struct
   gpointer         user_data;
   guint64          initial_state;
   gint             ref_count;
+  gint             n_messages;
 } Watch;
 
 
@@ -555,6 +565,12 @@ add_match_done (DBusPendingCall *pending,
   else
     g_variant_unref (reply); /* it is just an empty tuple */
 
+  /* There may be multiple messages to receive replies for.  Make sure
+   * we have them all before proceeding.
+   */
+  if (--watch->n_messages != 0)
+    return;
+
   /* In the normal case we're done.
    *
    * There is a fleeting chance, however, that the database has changed
@@ -576,9 +592,10 @@ dconf_dbus_client_subscribe (DConfDBusClient *dcdbc,
 {
   DConfEngineMessage dcem;
   Watch *watch;
- 
+
   watch = watch_new (dcdbc, name, notify, user_data);
   dconf_engine_watch (dcdbc->engine, name, &dcem);
+  watch->n_messages = dcem.n_messages;
   dconf_dbus_client_send (dcdbc, &dcem, add_match_done, watch);
   dconf_engine_message_destroy (&dcem);
 }
