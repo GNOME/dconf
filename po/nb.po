@@ -5,10 +5,10 @@
 # Torstein Adolf Winterseth <kvikende@fsfe.org>, 2010.
 msgid ""
 msgstr ""
-"Project-Id-Version: dconf 3.5.x\n"
+"Project-Id-Version: dconf 0.14.x\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-08-28 07:20+0200\n"
-"PO-Revision-Date: 2012-08-28 07:21+0200\n"
+"POT-Creation-Date: 2012-10-12 00:21+0200\n"
+"PO-Revision-Date: 2012-10-12 00:23+0200\n"
 "Last-Translator: Kjartan Maraas <kmaraas@gnome.org>\n"
 "Language-Team: Norwegian bokmål <i18n-nb@lister.ping.uio.no>\n"
 "Language: no\n"
@@ -41,7 +41,7 @@ msgstr "Streng"
 
 #: ../editor/dconf-editor.vala:171
 msgid "Enumeration"
-msgstr ""
+msgstr "Nummerert liste"
 
 #: ../editor/dconf-editor.vala:214
 msgid "No schema"
@@ -67,6 +67,11 @@ msgid ""
 "this program; if not, write to the Free Software Foundation, Inc., 51 "
 "Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA"
 msgstr ""
+"Dette programmet er fri programvare. Du kan redistribuere og/eller endre programmet under betingelsene gitt i GNU General Public License som utgitt av Free Software Foundation; enten versjon 2 av lisensen, eller (hvis du ønsker det) enhver senere versjon.\n"
+"\n"
+"Programmet distribueres i håp om at programmet er nyttig, men uten NOEN GARANTI, ikke engang implisitt garanti om at det er SALGBART eller PASSER ET BESTEMT FORMÅL. Se GNU General Public License for detaljer.\n"
+"\n"
+"Du skal ha mottatt en kopi av GNU General Public License sammen med dette programmet. Hvis dette ikke er tilfelle, kan du skrive til Free Software Foundation, Inc. 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA"
 
 #: ../editor/dconf-editor.vala:342
 msgid "Copyright © Canonical Ltd"
