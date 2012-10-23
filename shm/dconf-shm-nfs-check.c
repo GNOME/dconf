@@ -1,5 +1,5 @@
 /*
- * Copyright © 2010 Codethink Limited
+ * Copyright © 2012 Canonical Limited
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,28 +19,45 @@
  * Author: Ryan Lortie <desrt@desrt.ca>
  */
 
-#ifndef __dconf_shm_h__
-#define __dconf_shm_h__
+#include "dconf-shm.h"
 
 #include <glib.h>
 
-G_GNUC_INTERNAL
-const gchar *           dconf_shm_get_shmdir                            (void);
+#include <sys/statfs.h>
 
-G_GNUC_INTERNAL
-guint8 *                dconf_shm_open                                  (const gchar *name);
-G_GNUC_INTERNAL
-void                    dconf_shm_close                                 (guint8      *shm);
-G_GNUC_INTERNAL
-void                    dconf_shm_flag                                  (const gchar *name);
+#ifndef ECRYPTFS_SUPER_MAGIC
+#define ECRYPTFS_SUPER_MAGIC 0xf15f
+#endif
 
-static inline gboolean
-dconf_shm_is_flagged (const guint8 *shm)
+#ifndef NFS_SUPER_MAGIC
+#define NFS_SUPER_MAGIC 0x6969
+#endif
+
+/* returns TRUE if the filesystem is capable */
+static gboolean
+dconf_shm_check (const gchar *filename)
 {
-  return shm == NULL || *shm != 0;
+  struct statfs buf;
+
+  if (statfs (filename, &buf) != 0)
+    return FALSE;
+
+  return buf.f_type != NFS_SUPER_MAGIC && buf.f_type != ECRYPTFS_SUPER_MAGIC;
 }
 
-G_GNUC_INTERNAL
-gboolean                dconf_shm_homedir_is_native                     (void);
+gboolean
+dconf_shm_homedir_is_native (void)
+{
+  static gsize homedir_is_native;
 
-#endif /* __dconf_shm_h__ */
+  if (g_once_init_enter (&homedir_is_native))
+    {
+      gboolean is_native;
+
+      is_native = dconf_shm_check (g_get_home_dir ());
+
+      g_once_init_leave (&homedir_is_native, is_native + 1);
+    }
+
+  return homedir_is_native - 1;
+}

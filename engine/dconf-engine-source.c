@@ -71,6 +71,15 @@ dconf_engine_source_refresh (DConfEngineSource *source)
   return FALSE;
 }
 
+static const DConfEngineSourceVTable *
+dconf_engine_source_get_user_vtable (void)
+{
+  if (dconf_shm_homedir_is_native ())
+    return &dconf_engine_source_user_vtable;
+  else
+    return &dconf_engine_source_user_nfs_vtable;
+}
+
 DConfEngineSource *
 dconf_engine_source_new (const gchar *description)
 {
@@ -94,7 +103,7 @@ dconf_engine_source_new (const gchar *description)
 
   /* Check if the part before the colon is "user-db"... */
   if ((colon == description + 7) && memcmp (description, "user-db", 7) == 0)
-    vtable = &dconf_engine_source_user_vtable;
+    vtable = dconf_engine_source_get_user_vtable ();
 
   /* ...or "system-db" */
   else if ((colon == description + 9) && memcmp (description, "system-db", 9) == 0)
@@ -122,10 +131,12 @@ dconf_engine_source_new (const gchar *description)
 DConfEngineSource *
 dconf_engine_source_new_default (void)
 {
+  const DConfEngineSourceVTable *vtable;
   DConfEngineSource *source;
 
-  source = g_malloc0 (dconf_engine_source_user_vtable.instance_size);
-  source->vtable = &dconf_engine_source_user_vtable;
+  vtable = dconf_engine_source_get_user_vtable ();
+  source = g_malloc0 (vtable->instance_size);
+  source->vtable = vtable;
   source->name = g_strdup ("user");
   source->vtable->init (source);
 

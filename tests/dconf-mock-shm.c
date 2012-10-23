@@ -122,3 +122,15 @@ dconf_mock_shm_assert_log (const gchar *expected_log)
   g_string_truncate (dconf_mock_shm_log, 0);
   g_mutex_unlock (&dconf_mock_shm_lock);
 }
+
+const gchar *
+dconf_shm_get_shmdir (void)
+{
+  g_assert_not_reached ();
+}
+
+gboolean
+dconf_shm_homedir_is_native (void)
+{
+  return TRUE;
+}

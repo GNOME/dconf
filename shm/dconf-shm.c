@@ -27,7 +27,7 @@
 #include <fcntl.h>
 #include <errno.h>
 
-static gchar *
+const gchar *
 dconf_shm_get_shmdir (void)
 {
   static gchar *shmdir;
