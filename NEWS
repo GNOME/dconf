@@ -1,3 +1,15 @@
+Changes in dconf 0.14.1
+========================
+
+ - fix a rather substantial memory leak in dconf-service
+
+ - fix xinclude issues in docs for srcdir != builddir
+
+ - using the g_settings_delay()/g_settings_reset()/g_settings_get()
+   trick to read default values is working again
+
+ - Updated translations: Arabic, Bulgarian, Norwegian bokmål, Slovak.
+
 Changes in dconf 0.14.0
 ========================
 
