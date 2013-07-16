@@ -1,3 +1,11 @@
+Changes in dconf 0.16.1
+========================
+
+Fix a crash when using DConfChangeset in two threads (as can happen
+during normal writes to dconf).
+
+Updated Indonesian translation
+
 Changes in dconf 0.16.0
 ========================
 
