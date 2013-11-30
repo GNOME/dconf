@@ -38,6 +38,8 @@ dconf_is_path
 dconf_is_rel_path
 dconf_is_rel_dir
 dconf_is_rel_key
+<SUBSECTION>
+dconf_match
 </SECTION>
 
 <SECTION>

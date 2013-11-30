@@ -38,5 +38,7 @@ gboolean                dconf_is_rel_key                                (const g
                                                                          GError             **error);
 gboolean                dconf_is_rel_dir                                (const gchar         *string,
                                                                          GError             **error);
+gboolean                dconf_match                                     (const gchar         *path_a,
+                                                                         const gchar         *path_b);
 
 #endif /* __dconf_paths_h__ */

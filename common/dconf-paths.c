@@ -26,6 +26,8 @@
 
 #include "dconf-error.h"
 
+#include <string.h>
+
 /**
  * SECTION:paths
  * @title: dconf Paths
@@ -252,4 +254,37 @@ dconf_is_rel_dir (const gchar  *string,
 #define type "relative dir"
   vars; nonnull; relative; no_double_slash; dir;
 #undef type
+}
+
+/**
+ * dconf_match:
+ * @path_a: a dconf path
+ * @path_b: a dconf path
+ *
+ * Compare two paths using the (symmetric) dconf "match" operation.
+ *
+ * Two paths match if either they are exactly equal or if one of them
+ * (ending with '/') is a prefix of the other.
+ *
+ * The result if this function is undefined if either of the two
+ * arguments are not dconf paths.
+ *
+ * Returns: %TRUE if the paths match
+ **/
+gboolean
+dconf_match (const gchar *path_a,
+             const gchar *path_b)
+{
+  int len_a, len_b;
+
+  len_a = strlen (path_a);
+  len_b = strlen (path_b);
+
+  if (len_a < len_b && path_a[len_a - 1] != '/')
+    return FALSE;
+
+  if (len_b < len_a && path_b[len_b -1] != '/')
+    return FALSE;
+
+  return memcmp (path_a, path_b, MIN (len_a, len_b)) == 0;
 }

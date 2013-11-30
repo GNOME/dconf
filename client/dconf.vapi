@@ -59,4 +59,6 @@ namespace DConf {
 	public static bool verify_rel_key (string str) throws GLib.Error;
 	[CCode (cheader_filename = "dconf.h", cname = "dconf_is_rel_path")]
 	public static bool verify_rel_path (string str) throws GLib.Error;
+	[CCode (cheader_filename = "dconf.h")]
+	public static bool match (string path_a, string path_b);
 }
