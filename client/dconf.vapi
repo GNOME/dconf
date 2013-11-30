@@ -20,15 +20,17 @@ namespace DConf {
 	}
 
 	[Compact]
-	[CCode (ref_function = "dconf_changeset_ref", unref_function = "dconf_changeset_unref")]
+	[CCode (cheader_filename = "dconf.h", ref_function = "dconf_changeset_ref", unref_function = "dconf_changeset_unref")]
 	public class Changeset {
 		public delegate bool Predicate (string path, GLib.Variant? value);
 		public Changeset ();
 		public Changeset.write (string path, GLib.Variant? value);
+		public Changeset.database (Changeset? copy_of = null);
 		public void set (string path, GLib.Variant? value);
 		public bool get (string path, out GLib.Variant? value);
 		public bool is_similar_to (Changeset other);
 		public bool all (Predicate predicate);
+		[CCode (returns_floating_reference = true)]
 		public GLib.Variant serialise ();
 		public static Changeset deserialise (GLib.Variant serialised);
 	}
