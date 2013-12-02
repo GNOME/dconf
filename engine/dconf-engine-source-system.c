@@ -49,8 +49,34 @@ dconf_engine_source_system_reopen (DConfEngineSource *source)
   GvdbTable *table;
   gchar *filename;
 
-  filename = g_build_filename ("/etc/dconf/db", source->name, NULL);
+  filename = g_build_filename ("/var/lib/dconf/db", source->name, NULL);
   table = gvdb_table_new (filename, FALSE, &error);
+
+  if (table == NULL)
+    {
+      gchar *etc_filename;
+
+      /* This is just a fallback, so we want to keep the original error
+       * message in case of failure, as not to confuse anyone...
+       */
+      etc_filename = g_build_filename ("/etc/dconf/db", source->name, NULL);
+      table = gvdb_table_new (etc_filename, FALSE, NULL);
+
+      if (table != NULL)
+        {
+          if (!source->did_warn)
+            {
+              /* It wasn't in /var/lib, but opening the file in /etc worked... */
+              g_warning ("binary dconf database files in /etc/dconf/db are deprecated; please run dconf-update");
+              source->did_warn = TRUE;
+            }
+
+          /* It worked, so clear the error. */
+          g_clear_error (&error);
+        }
+
+      g_free (etc_filename);
+    }
 
   if (table == NULL)
     {

@@ -504,7 +504,7 @@ test_system_source (void)
 
   /* Create the file after the fact and make sure it opens properly */
   first_table = dconf_mock_gvdb_table_new ();
-  dconf_mock_gvdb_install ("/etc/dconf/db/site", first_table);
+  dconf_mock_gvdb_install ("/var/lib/dconf/db/site", first_table);
 
   reopened = dconf_engine_source_refresh (source);
   g_assert (reopened);
@@ -517,7 +517,7 @@ test_system_source (void)
   g_assert (source != NULL);
 
   first_table = dconf_mock_gvdb_table_new ();
-  dconf_mock_gvdb_install ("/etc/dconf/db/site", first_table);
+  dconf_mock_gvdb_install ("/var/lib/dconf/db/site", first_table);
   /* Hang on to a copy for ourselves for below... */
   dconf_mock_gvdb_table_ref (first_table);
 
@@ -533,7 +533,7 @@ test_system_source (void)
 
   /* Replace the table on "disk" but don't invalidate the old one */
   next_table = dconf_mock_gvdb_table_new ();
-  dconf_mock_gvdb_install ("/etc/dconf/db/site", next_table);
+  dconf_mock_gvdb_install ("/var/lib/dconf/db/site", next_table);
 
   /* Make sure the old table remains open (ie: no IO performed) */
   reopened = dconf_engine_source_refresh (source);
@@ -548,7 +548,7 @@ test_system_source (void)
   g_assert (source->values == next_table);
 
   /* Remove the file entirely and do the same thing */
-  dconf_mock_gvdb_install ("/etc/dconf/db/site", NULL);
+  dconf_mock_gvdb_install ("/var/lib/dconf/db/site", NULL);
   reopened = dconf_engine_source_refresh (source);
   g_assert (!reopened);
 
@@ -625,7 +625,7 @@ setup_state (guint     n_sources,
                 state[i] = NULL;
             }
 
-          filename = g_strdup_printf ("/etc/dconf/db/db%d", i);
+          filename = g_strdup_printf ("/var/lib/dconf/db/db%d", i);
         }
       else
         {
@@ -870,7 +870,7 @@ is_expected (const gchar    *log_domain,
 {
   return g_str_equal (log_domain, "dconf") &&
          log_level == (G_LOG_LEVEL_WARNING | G_LOG_FLAG_FATAL) &&
-         strstr (message, "unable to open file '/etc/dconf/db");
+         strstr (message, "unable to open file '/var/lib/dconf/db");
 }
 
 static gboolean
@@ -1097,7 +1097,7 @@ test_watch_fast (void)
   table = dconf_mock_gvdb_table_new ();
   dconf_mock_gvdb_install ("/HOME/.config/dconf/user", table);
   table = dconf_mock_gvdb_table_new ();
-  dconf_mock_gvdb_install ("/etc/dconf/db/site", table);
+  dconf_mock_gvdb_install ("/var/lib/dconf/db/site", table);
 
   triv = g_variant_ref_sink (g_variant_new ("()"));
 
@@ -1146,7 +1146,7 @@ test_watch_fast (void)
   dconf_mock_dbus_assert_no_async ();
 
   dconf_mock_gvdb_install ("/HOME/.config/dconf/user", NULL);
-  dconf_mock_gvdb_install ("/etc/dconf/db/site", NULL);
+  dconf_mock_gvdb_install ("/var/lib/dconf/db/site", NULL);
   dconf_engine_unref (engine);
   g_string_free (change_log, TRUE);
   change_log = NULL;
@@ -1226,7 +1226,7 @@ test_change_fast (void)
   locks = dconf_mock_gvdb_table_new ();
   dconf_mock_gvdb_table_insert (locks, "/locked", g_variant_new_boolean (TRUE), NULL);
   dconf_mock_gvdb_table_insert (table, ".locks", NULL, locks);
-  dconf_mock_gvdb_install ("/etc/dconf/db/site", table);
+  dconf_mock_gvdb_install ("/var/lib/dconf/db/site", table);
 
   empty = dconf_changeset_new ();
   good_write = dconf_changeset_new_write ("/value", g_variant_new_string ("value"));
@@ -1404,7 +1404,7 @@ test_change_sync (void)
   locks = dconf_mock_gvdb_table_new ();
   dconf_mock_gvdb_table_insert (locks, "/locked", g_variant_new_boolean (TRUE), NULL);
   dconf_mock_gvdb_table_insert (table, ".locks", NULL, locks);
-  dconf_mock_gvdb_install ("/etc/dconf/db/site", table);
+  dconf_mock_gvdb_install ("/var/lib/dconf/db/site", table);
 
   empty = dconf_changeset_new ();
   good_write = dconf_changeset_new_write ("/value", g_variant_new_string ("value"));
