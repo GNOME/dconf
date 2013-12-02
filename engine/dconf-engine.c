@@ -818,10 +818,11 @@ dconf_engine_watch_fast (DConfEngine *engine,
   ow->pending = engine->n_sources;
 
   for (i = 0; i < engine->n_sources; i++)
-    dconf_engine_dbus_call_async_func (engine->sources[i]->bus_type, "org.freedesktop.DBus",
-                                       "/org/freedesktop/DBus", "org.freedesktop.DBus", "AddMatch",
-                                       dconf_engine_make_match_rule (engine->sources[i], path),
-                                       &ow->handle, NULL);
+    if (engine->sources[i]->bus_type)
+      dconf_engine_dbus_call_async_func (engine->sources[i]->bus_type, "org.freedesktop.DBus",
+                                         "/org/freedesktop/DBus", "org.freedesktop.DBus", "AddMatch",
+                                         dconf_engine_make_match_rule (engine->sources[i], path),
+                                         &ow->handle, NULL);
 }
 
 void
@@ -831,9 +832,10 @@ dconf_engine_unwatch_fast (DConfEngine *engine,
   gint i;
 
   for (i = 0; i < engine->n_sources; i++)
-    dconf_engine_dbus_call_async_func (engine->sources[i]->bus_type, "org.freedesktop.DBus",
-                                       "/org/freedesktop/DBus", "org.freedesktop.DBus", "RemoveMatch",
-                                       dconf_engine_make_match_rule (engine->sources[i], path), NULL, NULL);
+    if (engine->sources[i]->bus_type)
+      dconf_engine_dbus_call_async_func (engine->sources[i]->bus_type, "org.freedesktop.DBus",
+                                         "/org/freedesktop/DBus", "org.freedesktop.DBus", "RemoveMatch",
+                                         dconf_engine_make_match_rule (engine->sources[i], path), NULL, NULL);
 }
 
 static void
@@ -851,17 +853,18 @@ dconf_engine_handle_match_rule_sync (DConfEngine *engine,
    */
 
   for (i = 0; i < engine->n_sources; i++)
-    {
-      GVariant *result;
+    if (engine->sources[i]->bus_type)
+      {
+        GVariant *result;
 
-      result = dconf_engine_dbus_call_sync_func (engine->sources[i]->bus_type, "org.freedesktop.DBus",
-                                                 "/org/freedesktop/DBus", "org.freedesktop.DBus", method_name,
-                                                 dconf_engine_make_match_rule (engine->sources[i], path),
-                                                 G_VARIANT_TYPE_UNIT, NULL);
+        result = dconf_engine_dbus_call_sync_func (engine->sources[i]->bus_type, "org.freedesktop.DBus",
+                                                   "/org/freedesktop/DBus", "org.freedesktop.DBus", method_name,
+                                                   dconf_engine_make_match_rule (engine->sources[i], path),
+                                                   G_VARIANT_TYPE_UNIT, NULL);
 
-      if (result)
-        g_variant_unref (result);
-    }
+        if (result)
+          g_variant_unref (result);
+      }
 }
 
 void
