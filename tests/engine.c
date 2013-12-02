@@ -489,39 +489,33 @@ test_system_source (void)
   g_assert (source != NULL);
 
   /* Check to see that we get the warning about the missing file. */
-  if (g_test_trap_fork (0, G_TEST_TRAP_SILENCE_STDERR))
-    {
-      g_log_set_always_fatal (G_LOG_LEVEL_ERROR);
+  g_test_expect_message ("dconf", G_LOG_LEVEL_WARNING, "*gvdb does not exist; expect degraded performance*");
 
-      /* Failing to open should return FALSE from refresh */
-      reopened = dconf_engine_source_refresh (source);
-      g_assert (!reopened);
-      g_assert (source->values == NULL);
+  /* Failing to open should return FALSE from refresh */
+  reopened = dconf_engine_source_refresh (source);
+  g_assert (!reopened);
+  g_assert (source->values == NULL);
 
-      /* Attempt the reopen to make sure we don't get two warnings.
-       * We should see FALSE again since we go from NULL to NULL.
-       */
-      reopened = dconf_engine_source_refresh (source);
-      g_assert (!reopened);
+  /* Attempt the reopen to make sure we don't get two warnings.
+   * We should see FALSE again since we go from NULL to NULL.
+   */
+  reopened = dconf_engine_source_refresh (source);
+  g_assert (!reopened);
 
-      /* Create the file after the fact and make sure it opens properly */
-      first_table = dconf_mock_gvdb_table_new ();
-      dconf_mock_gvdb_install ("/etc/dconf/db/site", first_table);
+  /* Create the file after the fact and make sure it opens properly */
+  first_table = dconf_mock_gvdb_table_new ();
+  dconf_mock_gvdb_install ("/etc/dconf/db/site", first_table);
 
-      reopened = dconf_engine_source_refresh (source);
-      g_assert (reopened);
-      g_assert (source->values != NULL);
+  reopened = dconf_engine_source_refresh (source);
+  g_assert (reopened);
+  g_assert (source->values != NULL);
 
-      dconf_engine_source_free (source);
-
-      exit (0);
-    }
-  g_test_trap_assert_passed ();
-  /* Check that we only saw the warning, but only one time. */
-  g_test_trap_assert_stderr ("*this gvdb does not exist; expect degraded performance*");
-  g_test_trap_assert_stderr_unmatched ("*degraded*degraded*");
+  dconf_engine_source_free (source);
 
   /* Create the file before the first refresh attempt */
+  source = dconf_engine_source_new ("system-db:site");
+  g_assert (source != NULL);
+
   first_table = dconf_mock_gvdb_table_new ();
   dconf_mock_gvdb_install ("/etc/dconf/db/site", first_table);
   /* Hang on to a copy for ourselves for below... */
