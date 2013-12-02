@@ -556,6 +556,61 @@ test_system_source (void)
 }
 
 static void
+test_system_source_compat (void)
+{
+  /* Test the ability to find old system-db files in /etc.
+   *
+   * We may drop this some day...
+   */
+  DConfEngineSource *source;
+  GvdbTable *first_table;
+  GvdbTable *next_table;
+  gboolean reopened;
+
+  source = dconf_engine_source_new ("system-db:site");
+  g_assert (source != NULL);
+
+  first_table = dconf_mock_gvdb_table_new ();
+  dconf_mock_gvdb_install ("/etc/dconf/db/site", first_table);
+  /* Hang on to a copy for ourselves for below... */
+  dconf_mock_gvdb_table_ref (first_table);
+
+  /* This should give us a warning... */
+  g_test_expect_message ("dconf", G_LOG_LEVEL_WARNING, "*database files in /etc/dconf/db are deprecated*");
+  reopened = dconf_engine_source_refresh (source);
+  g_assert (reopened);
+  g_assert (source->values == first_table);
+
+  /* Do a refresh, make sure there is no change. */
+  reopened = dconf_engine_source_refresh (source);
+  g_assert (!reopened);
+  g_assert (source->values == first_table);
+
+  /* Replace the table on "disk" but don't invalidate the old one */
+  next_table = dconf_mock_gvdb_table_new ();
+  dconf_mock_gvdb_install ("/etc/dconf/db/site", next_table);
+
+  /* Make sure the old table remains open (ie: no IO performed) */
+  reopened = dconf_engine_source_refresh (source);
+  g_assert (!reopened);
+  g_assert (source->values == first_table);
+
+  /* Now mark the first table invalid and reopen */
+  dconf_mock_gvdb_table_invalidate (first_table);
+  gvdb_table_free (first_table);
+  reopened = dconf_engine_source_refresh (source);
+  g_assert (reopened);
+  g_assert (source->values == next_table);
+
+  /* Remove the file entirely and do the same thing */
+  dconf_mock_gvdb_install ("/etc/dconf/db/site", NULL);
+  reopened = dconf_engine_source_refresh (source);
+  g_assert (!reopened);
+
+  dconf_engine_source_free (source);
+}
+
+static void
 invalidate_state (guint     n_sources,
                   guint     source_types,
                   gpointer *state)
@@ -1690,6 +1745,7 @@ main (int argc, char **argv)
   g_test_add_func ("/engine/signal-threadsafety", test_signal_threadsafety);
   g_test_add_func ("/engine/sources/user", test_user_source);
   g_test_add_func ("/engine/sources/system", test_system_source);
+  g_test_add_func ("/engine/sources/system/compat", test_system_source_compat);
   g_test_add_func ("/engine/sources/service", test_service_source);
   g_test_add_func ("/engine/read", test_read);
   g_test_add_func ("/engine/watch/fast", test_watch_fast);
