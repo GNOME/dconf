@@ -66,7 +66,7 @@ AC_ARG_ENABLE(gcov,
               AC_HELP_STRING([--enable-gcov],
                              [enable generation of code coverage information]))
 
-if test "x$enable_gcov" == "xyes"; then
+if test "x$enable_gcov" = "xyes"; then
   CFLAGS="$CFLAGS -O0 -fprofile-arcs -ftest-coverage"
   LDFLAGS="$LDFLAGS -lgcov"
 fi
