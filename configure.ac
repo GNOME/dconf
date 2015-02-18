@@ -49,17 +49,6 @@ PKG_CHECK_MODULES(glib, glib-2.0 >= 2.39.1)
 PKG_CHECK_MODULES(gio, gio-unix-2.0)
 PKG_CHECK_MODULES(dbus, dbus-1)
 
-AC_ARG_ENABLE(editor,
-              AC_HELP_STRING([--disable-editor],
-                             [Disable the dconf editor]))
-AM_CONDITIONAL(ENABLE_EDITOR, test "x$enable_editor" != "xno")
-
-if test "x$enable_editor" != "xno"; then
-  PKG_CHECK_MODULES(gtk, gtk+-3.0 >= 3.4)
-  PKG_CHECK_MODULES(gmodule, gmodule-2.0)
-  PKG_CHECK_MODULES(libxml, libxml-2.0)
-fi
-
 AC_ARG_WITH(gio_modules_dir, [  --with-gio-modules-dir=PATH choose directory for the GIO module, [default=LIBDIR/gio/modules]], giomodulesdir="$withval", giomodulesdir=${libdir}/gio/modules)
 AC_SUBST(giomodulesdir)
 
@@ -87,9 +76,6 @@ GETTEXT_PACKAGE=dconf
 AC_SUBST(GETTEXT_PACKAGE)
 AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, ["$GETTEXT_PACKAGE"], [Define the gettext package to be used])
 
-AM_GLIB_GNU_GETTEXT
-IT_PROG_INTLTOOL([0.50.0])
-
 AC_CONFIG_FILES([
   common/Makefile
   shm/Makefile
@@ -103,11 +89,8 @@ AC_CONFIG_FILES([
   service/Makefile
   dbus-1/Makefile
   bin/Makefile
-  editor/Makefile
-  editor/ca.desrt.dconf-editor.desktop.in
   tests/Makefile
   docs/Makefile
-  po/Makefile.in
   Makefile
 ])
 AC_OUTPUT

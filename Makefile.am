@@ -2,11 +2,7 @@ include Makefile.gtester
 
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = shm gvdb common engine service gdbus gsettings dbus-1 client bin docs tests po
-
-if ENABLE_EDITOR
-SUBDIRS += editor
-endif
+SUBDIRS = shm gvdb common engine service gdbus gsettings dbus-1 client bin docs tests
 
 DISTCHECK_CONFIGURE_FLAGS = --enable-gtk-doc
 EXTRA_DIST = trim-lcov.py m4

@@ -1,8 +1,0 @@
-editor/ca.desrt.dconf-editor.desktop.in.in
-[type: gettext/gsettings]editor/ca.desrt.dconf-editor.gschema.xml
-[type: gettext/glade]editor/dconf-editor-menu.ui
-[type: gettext/glade]editor/dconf-editor.ui
-editor/dconf-editor.vala
-editor/dconf-model.vala
-editor/dconf-schema.vala
-editor/dconf-view.vala
