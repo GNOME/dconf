@@ -64,17 +64,17 @@ void show_help (bool requested, string? command) {
 
 		case "watch":
 			description = "Watch a path for key changes";
-			synopsis = "PATH";
+			synopsis = " PATH ";
 			break;
 
 		case "dump":
 			description = "Dump an entire subpath to stdout";
-			synopsis = "DIR";
+			synopsis = " DIR ";
 			break;
 
 		case "load":
 			description = "Populate a subpath from stdin";
-			synopsis = "DIR";
+			synopsis = " DIR ";
 			break;
 
 		default:
