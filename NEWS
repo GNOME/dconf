@@ -1,3 +1,10 @@
+Changes in dconf 0.23.1
+========================
+
+ - dconf-editor is now in a separate package
+
+ - portability improvements
+
 Changes in dconf 0.22.0
 ========================
 
