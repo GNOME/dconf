@@ -18,7 +18,6 @@ GTKDOC_LIBS = $(gio_LIBS) -L../client -ldconf -Wl,-rpath=../client
 content_files = \
 	dconf-overview.xml		\
 	dconf-service.xml		\
-	dconf-editor.xml		\
 	dconf-tool.xml
 
 XSLTPROC_MAN_FLAGS = \
@@ -43,11 +42,10 @@ man_MANS =
 if ENABLE_MAN
 man_MANS += \
         dconf-service.1 \
-	dconf-editor.1 \
 	dconf.1 \
 	dconf.7
 endif
 
-EXTRA_DIST += dconf-service.xml dconf-editor.xml dconf-tool.xml dconf-overview.xml
+EXTRA_DIST += dconf-service.xml dconf-tool.xml dconf-overview.xml
 
 DISTCLEANFILES = $(man_MANS)
