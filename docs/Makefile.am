@@ -41,7 +41,7 @@ man_MANS =
 
 if ENABLE_MAN
 man_MANS += \
-        dconf-service.1 \
+	dconf-service.1 \
 	dconf.1 \
 	dconf.7
 endif
