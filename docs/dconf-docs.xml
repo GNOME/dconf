@@ -28,7 +28,6 @@
   <chapter id='programs'>
     <title>Programs</title>
     <xi:include href='dconf-service.xml'/>
-    <xi:include href='dconf-editor.xml'/>
     <xi:include href='dconf-tool.xml'/>
   </chapter>
 
