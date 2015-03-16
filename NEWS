@@ -1,3 +1,10 @@
+Changes in dconf 0.23.2
+========================
+
+ - remove dconf-editor manpage (accidentally missed during the split)
+
+ - fix whitespace issues in 'dconf --help'
+
 Changes in dconf 0.23.1
 ========================
 
