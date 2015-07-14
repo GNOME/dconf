@@ -1,0 +1,10 @@
+dconf brings an optional pam module that creates a dconf.profile symlink in
+XDG_RUNTIME_DIR pointing to a specific dconf profile for that user. This
+module is affected by changes in XDG_DATA_DIRS which holds the paths where
+the profile files are checked from.
+
+System integrators should make sure that this module should be loaded after
+XDG_RUNTIME_DIR is created and XDG_DATA_DIRS is set. On most modern Linux
+systems this means loading after pam_systemd and pam_env have been loaded.
+Some systems might not use systemd and XDG_RUNTIME_DIR might be set and
+created by some other module.

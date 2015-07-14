@@ -62,6 +62,25 @@ AC_SUBST(dconfincludedir, ${includedir}/dconf)
 
 AC_PATH_PROG(gio_QUERYMODULES, gio-querymodules, no)
 
+dnl PAM support
+AC_ARG_ENABLE(pam,
+              AC_HELP_STRING([--disable-pam],
+                             [Build dconf PAM helper]))
+if test "$enable_pam" != "no"; then
+  AC_CHECK_HEADERS(security/pam_modules.h pam/pam_modules.h, [have_pam=yes; break], have_pam=no)
+  if test "$have_pam" = "no"; then
+    AC_MSG_ERROR(The PAM headers are missing)
+  fi
+fi
+
+AC_ARG_WITH([pam-dir],
+            [AC_HELP_STRING([--with-pam-dir=DIR],
+                             [directory to install pam modules in])],
+             [], [with_pam_dir='${libdir}/security'])
+PAM_DEST_DIR="$with_pam_dir"
+AC_SUBST(PAM_DEST_DIR)
+
+dnl gcov support
 AC_ARG_ENABLE(gcov,
               AC_HELP_STRING([--enable-gcov],
                              [enable generation of code coverage information]))
@@ -89,6 +108,7 @@ AC_CONFIG_FILES([
   service/Makefile
   dbus-1/Makefile
   bin/Makefile
+  pam/Makefile
   tests/Makefile
   docs/Makefile
   Makefile
