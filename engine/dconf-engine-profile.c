@@ -224,6 +224,21 @@ dconf_engine_open_profile_file (const gchar *profile)
   return fp;
 }
 
+static FILE *
+dconf_engine_get_runtime_profile (void) {
+  gchar *filename;
+  FILE  *fp;
+
+  filename = g_build_filename (g_get_user_runtime_dir (), "dconf.profile", NULL);
+  fp = fopen (filename, "r");
+
+  if (fp == NULL)
+    g_debug ("Unable to open %s: %s", filename, g_strerror (errno));
+
+  g_free (filename);
+  return fp;
+}
+
 DConfEngineSource **
 dconf_engine_profile_open (const gchar *profile,
                            gint        *n_sources)
@@ -236,7 +251,10 @@ dconf_engine_profile_open (const gchar *profile,
 
   if (profile == NULL)
     {
-      file = dconf_engine_open_profile_file ("user");
+      file = dconf_engine_get_runtime_profile ();
+
+      if (file == NULL)
+        file = dconf_engine_open_profile_file ("user");
 
       /* Only in the case that no profile was specified do we use this
        * fallback.
