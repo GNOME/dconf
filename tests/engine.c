@@ -505,6 +505,7 @@ test_service_source (void)
    */
   dconf_engine_source_free (source);
   source = dconf_engine_source_new ("service-db:shm/nil");
+  g_assert (source != NULL);
   reopened = dconf_engine_source_refresh (source);
   g_assert (reopened);
 
