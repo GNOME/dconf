@@ -102,3 +102,17 @@ client_LDADD = \
 	libdconf-mock.a				\
 	$(gio_LIBS)
 client_SOURCES = client.c
+
+PAM_TEST_USERNAME = pamdconftest
+TEST_PROGS += pam
+pam_CFLAGS = $(glib_CFLAGS) $(gio_CFLAGS) -DSRCDIR=\"$(abs_srcdir)\" -DUSERNAME=\"$(PAM_TEST_USERNAME)\"
+pam_SOURCES = \
+	pam.c \
+	pam-mock.c \
+	pam-mock.h
+pam_LDADD = \
+	../pam/pam_dconf.a \
+	$(glib_LIBS) \
+	$(gio_LIBS)
+EXTRA_DIST += \
+	      pamprofile/dconf/profile/$(PAM_TEST_USERNAME).profile
