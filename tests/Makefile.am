@@ -91,7 +91,8 @@ EXTRA_DIST += \
 	profile/many-sources			\
 	profile/no-newline-longline		\
 	profile/test-profile			\
-	profile/will-never-exist
+	profile/will-never-exist		\
+	profile/dconf.profile
 
 TEST_PROGS += client
 client_CFLAGS = $(gio_CFLAGS) -DSRCDIR=\"$(abs_srcdir)\"

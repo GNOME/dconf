@@ -1737,6 +1737,37 @@ test_sync (void)
   dconf_mock_shm_reset ();
 }
 
+void
+test_runtime_dir_profile (void)
+{
+  DConfEngineSource **sources;
+  gint                n_sources;
+
+  /* Check behaviour in the abscence of $DCONF_PROFILE */
+
+  const gchar *expected_names_a[5] = {"user", "one", "two", "three", "four"};
+  const gchar *expected_names_b[2] = {"user", "site"};
+
+  g_unsetenv ("DCONF_PROFILE");
+
+  filename_to_replace = "/RUNTIME/dconf.profile";
+  filename_to_replace_it_with = SRCDIR "/profile/dconf.profile";
+
+  sources = dconf_engine_profile_open (NULL, &n_sources);
+  verify_and_free (sources, n_sources, expected_names_a, 5);
+
+  /* Check behaviour in the presence of $DCONF_PROFILE */
+
+  g_setenv ("DCONF_PROFILE", SRCDIR "/profile/dos" , TRUE);
+
+  sources = dconf_engine_profile_open (NULL, &n_sources);
+  verify_and_free (sources, n_sources, expected_names_b, 2);
+
+  g_unsetenv ("DCONF_PROFILE");
+
+  filename_to_replace = NULL;
+  filename_to_replace_it_with = NULL;
+}
 
 int
 main (int argc, char **argv)
@@ -1762,6 +1793,7 @@ main (int argc, char **argv)
   g_test_add_func ("/engine/change/sync", test_change_sync);
   g_test_add_func ("/engine/signals", test_signals);
   g_test_add_func ("/engine/sync", test_sync);
+  g_test_add_func ("/engine/runtime-dir-profile", test_runtime_dir_profile);
 
   return g_test_run ();
 }
