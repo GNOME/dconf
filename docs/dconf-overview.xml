@@ -78,14 +78,6 @@
     </para>
 
     <para>
-      On startup, dconf consults the <envar>DCONF_PROFILE</envar> environment variable. If set, dconf will attempt to open
-      the named profile, aborting if that fails. If the environment variable is not set, it will attempt to open the profile
-      named "user" and if that fails, it will fall back to an internal hard-wired configuration. dconf stores its profiles
-      in text files. <envar>DCONF_PROFILE</envar> can specify a relative path to a file in <filename>/etc/dconf/profile/</filename>,
-      or an absolute path (such as in a user's home directory). The profile name can only use alphanumeric characters or '_'.
-    </para>
-
-    <para>
       A profile file might look like the following:
       <screen>
 user-db:user
@@ -103,12 +95,12 @@ system-db:site
     <para>
       A "user-db" line specifies a user database. These databases are found in <filename><envar>$XDG_CONFIG_HOME</envar>/dconf/</filename>.
       The name of the file to open in that directory is exactly as it is written in the profile. This file is expected to be in the binary
-      dconf database format. Note that <envar>XDG_CONFIG_HOME</envar> cannot be set/modified per terminal or session, because then the writer
+      dconf database format. Note that <envar>$XDG_CONFIG_HOME</envar> cannot be set/modified per terminal or session, because then the writer
       and reader would be working on different DBs (the writer is started by DBus and cannot see that variable).
     </para>
 
     <para>
-      A "service-db" line instructs dconf to place the binary database file for the user database in <envar>XDG_RUNTIME_DIR</envar>.
+      A "service-db" line instructs dconf to place the binary database file for the user database in <envar>$XDG_RUNTIME_DIR</envar>.
       Since this location is not persistent, the rest of the line instructs dconf how to store the database persistently. A typical
       line is <literal>service-db:keyfile/user</literal>, which tells dconf to synchronize the binary database with a plain text
       keyfile in <filename><envar>$XDG_CONFIG_HOME</envar>/dconf/user.txt</filename>. The synchronization is bi-directional.
@@ -121,12 +113,59 @@ system-db:site
     </para>
 
     <para>
-      If the <envar>DCONF_PROFILE</envar> environment variable is unset and the "user" profile can not be opened, then the effect is as if
-      the profile was specified by this file:
-      <screen>
-user-db:user
-      </screen>
-      That is, the user's personal database is consulted and there are no system settings.
+      On startup, dconf consults checks for profiles in the following order:
+    </para>
+
+    <orderedlist numeration="lowerroman">
+      <listitem>
+        <para>
+          <envar>$DCONF_PROFILE</envar> environment variable. If set, dconf will attempt to open the named profile.
+          <envar>$DCONF_PROFILE</envar> can specify a relative path to a file in <filename>/etc/dconf/profile/</filename>,
+          or an absolute path (such as in a user's home directory). The profile name can only use alphanumeric characters or '_'.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          If <envar>$DCONF_PROFILE</envar> is not set, dconf will attempt to open the profile named <filename>dconf.profile</filename>
+          located in <envar>$XDG_RUNTIME_DIR</envar>, this location is reserverd for an optional dconf pam module that looks
+          for profiles specific to this user, please refer to the <link linkend="pammodule">PAM Module section</link> for further info on its behaviour.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          A profile located in <filename>dconf/profile/user</filename> under <filename>/etc</filename> or any of
+          the directories listed in <envar>$XDG_DATA_DIRS</envar>. Note that dconf defaults to
+          <filename>/usr/local/share/:/usr/share/</filename> if not set <envar>$XDG_DATA_DIRS</envar> is not set
+          and that it will honour the order in which directories are listed within the environment variable value.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          If dconf cannot find a profile through any of the locations described above then the effect is as if the profile was specified by this file:
+          <screen>
+    user-db:user
+          </screen>
+          That is, the user's personal database is consulted and there are no system settings.
+        </para>
+      </listitem>
+    </orderedlist>
+  </refsect1>
+
+  <refsect1 id="pammodule">
+    <title>PAM Module</title>
+
+    <para>
+      To allow sysadmins to be able to specify a profile specific to each user we have created a PAM module
+      looks for a profile located in <filename>dconf/profile/<envar>$USERNAME</envar>.profile</filename> within
+      <filename>/etc</filename> or any of the directories listed in <envar>$XDG_DATA_DIRS</envar> and then it
+      creates a symbolic link located in <filename><envar>$XDG_RUNTIME_DIR</envar>/dconf.profile</filename>.
+    </para>
+    <para>
+      System administrators and integrators should note that the <filename>pam_dconf.so</filename> module should
+      be loaded after <filename>pam_systemd.so</filename> and <filename>pam_env.so</filename> modules. Those
+      systems not using systemd should also make sure that whatever module that handles
+      <envar>$XDG_RUNTIME_DIR</envar> or <envar>$XDG_DATA_DIRS</envar> should be loaded before
+      <filename>pam_dconf.so</filename>.
     </para>
   </refsect1>
 
