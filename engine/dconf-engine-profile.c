@@ -28,6 +28,9 @@
 
 #include "dconf-engine-source.h"
 
+#define MANDATORY_DIR           "/run/dconf/user/" /* + getuid () */
+#define RUNTIME_PROFILE         /* XDG_RUNTIME_DIR + */ "/dconf/profile"
+
 /* This comment attempts to document the exact semantics of
  * profile-loading.
  *
@@ -224,30 +227,92 @@ dconf_engine_open_profile_file (const gchar *profile)
   return fp;
 }
 
+static FILE *
+dconf_engine_open_mandatory_profile (void)
+{
+  gchar path[20 + sizeof MANDATORY_DIR];
+  gint mdlen = strlen (MANDATORY_DIR);
+
+  memcpy (path, MANDATORY_DIR, mdlen);
+  snprintf (path + mdlen, 20, "%u", (guint) getuid ());
+
+  return fopen (path, "r");
+}
+
+static FILE *
+dconf_engine_open_runtime_profile (void)
+{
+  const gchar *runtime_dir;
+  gchar *path;
+  gint rdlen;
+
+  runtime_dir = g_get_user_runtime_dir ();
+  rdlen = strlen (runtime_dir);
+
+  path = g_alloca (rdlen + sizeof RUNTIME_PROFILE);
+  memcpy (path, runtime_dir, rdlen);
+  memcpy (path + rdlen, RUNTIME_PROFILE, sizeof RUNTIME_PROFILE);
+
+  return fopen (path, "r");
+}
+
 DConfEngineSource **
 dconf_engine_profile_open (const gchar *profile,
                            gint        *n_sources)
 {
   DConfEngineSource **sources;
-  FILE *file;
+  FILE *file = NULL;
 
+  /* We must consider a few different possibilities for the dconf
+   * profile file.  We proceed until we have either
+   *
+   *   a) a profile name; or
+   *
+   *   b) a profile file is open
+   *
+   * If we get a profile name, even if the file is missing, we will use
+   * that name rather than falling back to another possibility.  In this
+   * case, we will issue a warning.
+   *
+   * Therefore, at each step, we ensure that there is no profile name or
+   * file yet open before checking the next possibility.
+   *
+   * Note that @profile is an argument to this function, so we will end
+   * up trying none of the five possibilities if that is given.
+   */
+
+  /* 1. Mandatory profile */
   if (profile == NULL)
+    file = dconf_engine_open_mandatory_profile ();
+
+  /* 2. Environment variable */
+  if (profile == NULL && file == NULL)
     profile = g_getenv ("DCONF_PROFILE");
 
-  if (profile == NULL)
-    {
-      file = dconf_engine_open_profile_file ("user");
+  /* 3. Runtime profile */
+  if (profile == NULL && file == NULL)
+    file = dconf_engine_open_runtime_profile ();
 
-      /* Only in the case that no profile was specified do we use this
-       * fallback.
-       */
-      if (file == NULL)
-        return dconf_engine_default_profile (n_sources);
+  /* 4. User profile */
+  if (profile == NULL && file == NULL)
+    file = dconf_engine_open_profile_file ("user");
+
+  /* 5. Default profile */
+  if (profile == NULL && file == NULL)
+    return dconf_engine_default_profile (n_sources);
+
+  /* At this point either we have a profile name or file open, but never
+   * both.  If it's a profile name, we try to open it.
+   */
+  if (profile != NULL)
+    {
+      g_assert (file == NULL);
+
+      if (profile[0] != '/')
+        file = dconf_engine_open_profile_file (profile);
+      else
+        file = fopen (profile, "r");
     }
-  else if (profile[0] != '/')
-    file = dconf_engine_open_profile_file (profile);
-  else
-    file = fopen (profile, "r");
 
   if (file != NULL)
     {
