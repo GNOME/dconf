@@ -23,6 +23,7 @@
 #include "dconf-client.h"
 
 #include "../engine/dconf-engine.h"
+#include "../common/dconf-paths.h"
 #include <glib-object.h>
 
 /**
