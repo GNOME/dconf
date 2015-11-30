@@ -46,6 +46,10 @@ gchar **                dconf_client_list                               (DConfCl
                                                                          const gchar          *dir,
                                                                          gint                 *length);
 
+gchar **                dconf_client_list_locks                         (DConfClient          *client,
+                                                                         const gchar          *path,
+                                                                         gint                 *length);
+
 gboolean                dconf_client_is_writable                        (DConfClient          *client,
                                                                          const gchar          *key);
 

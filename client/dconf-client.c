@@ -324,6 +324,32 @@ dconf_client_list (DConfClient *client,
 }
 
 /**
+ * dconf_client_list_locks:
+ * @client: a #DConfClient
+ * @dir: the dir to limit results to
+ * @length: the length of the returned list.
+ *
+ * Lists all locks under @dir in effect for @client.
+ *
+ * If no locks are in effect, an empty list is returned.  If no keys are
+ * writable at all then a list containing @dir is returned.
+ *
+ * The returned list will be %NULL-terminated.
+ *
+ * Returns: an array of strings, never %NULL.
+ */
+gchar **
+dconf_client_list_locks (DConfClient *client,
+                         const gchar *path,
+                         gint        *length)
+{
+  g_return_val_if_fail (DCONF_IS_CLIENT (client), NULL);
+  g_return_val_if_fail (dconf_is_path (path, NULL), NULL);
+
+  return dconf_engine_list_locks (client->engine, path, length);
+}
+
+/**
  * dconf_client_is_writable:
  * @client: a #DConfClient
  * @key: the key to check for writability

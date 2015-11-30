@@ -168,6 +168,16 @@ gvdb_table_list (GvdbTable   *table,
   return g_strdupv ((gchar **) result);
 }
 
+gchar **
+gvdb_table_get_names (GvdbTable *table,
+                      gint      *length)
+{
+  if (length)
+    *length = 0;
+
+  return g_new0 (gchar *, 0 + 1);
+}
+
 GvdbTable *
 gvdb_table_new (const gchar  *filename,
                 gboolean      trusted,

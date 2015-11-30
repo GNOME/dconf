@@ -8,6 +8,7 @@ namespace DConf {
 		public Client ();
 		public GLib.Variant? read (string key);
 		public string[] list (string dir);
+		public string[] list_locks (string dir);
 		public bool is_writable (string key);
 		public void write_fast (string path, GLib.Variant? value) throws GLib.Error;
 		public void write_sync (string path, GLib.Variant? value, out string tag = null, GLib.Cancellable? cancellable = null) throws GLib.Error;

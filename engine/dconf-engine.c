@@ -363,6 +363,71 @@ dconf_engine_is_writable (DConfEngine *engine,
   return writable;
 }
 
+gchar **
+dconf_engine_list_locks (DConfEngine *engine,
+                         const gchar *path,
+                         gint        *length)
+{
+  gchar **strv;
+
+  if (dconf_is_dir (path, NULL))
+    {
+      GHashTable *set;
+
+      set = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+
+      dconf_engine_acquire_sources (engine);
+
+      if (engine->n_sources > 0 && engine->sources[0]->writable)
+        {
+          gint i, j;
+
+          for (i = 1; i < engine->n_sources; i++)
+            {
+              if (engine->sources[i]->locks)
+                {
+                  strv = gvdb_table_get_names (engine->sources[i]->locks, NULL);
+
+                  for (j = 0; strv[j]; j++)
+                    {
+                      /* It is not currently possible to lock dirs, so we
+                       * don't (yet) have to check the other direction.
+                       */
+                      if (g_str_has_prefix (strv[j], path))
+                        g_hash_table_add (set, strv[j]);
+                      else
+                        g_free (strv[j]);
+                    }
+
+                  g_free (strv);
+                }
+            }
+        }
+      else
+        g_hash_table_add (set, g_strdup (path));
+
+      dconf_engine_release_sources (engine);
+
+      strv = (gchar **) g_hash_table_get_keys_as_array (set, (guint *) length);
+      g_hash_table_steal_all (set);
+      g_hash_table_unref (set);
+    }
+  else
+    {
+      if (dconf_engine_is_writable (engine, path))
+        {
+          strv = g_new0 (gchar *, 0 + 1);
+        }
+      else
+        {
+          strv = g_new0 (gchar *, 1 + 1);
+          strv[0] = g_strdup (path);
+        }
+    }
+
+  return strv;
+}
+
 static gboolean
 dconf_engine_find_key_in_queue (GQueue       *queue,
                                 const gchar  *key,
