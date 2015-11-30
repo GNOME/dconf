@@ -54,6 +54,7 @@
 struct _DConfChangeset
 {
   GHashTable *table;
+  GHashTable *dir_resets;
   guint is_database : 1;
   guint is_sealed : 1;
   gint ref_count;
@@ -157,6 +158,9 @@ dconf_changeset_unref (DConfChangeset *changeset)
 
       g_hash_table_unref (changeset->table);
 
+      if (changeset->dir_resets)
+        g_hash_table_unref (changeset->dir_resets);
+
       g_slice_free (DConfChangeset, changeset);
     }
 }
@@ -175,6 +179,21 @@ dconf_changeset_ref (DConfChangeset *changeset)
   g_atomic_int_inc (&changeset->ref_count);
 
   return changeset;
+}
+
+void
+dconf_changeset_record_dir_reset (DConfChangeset *changeset,
+                                  const gchar    *dir)
+{
+  g_return_if_fail (dconf_is_dir (dir, NULL));
+  g_return_if_fail (!changeset->is_database);
+  g_return_if_fail (!changeset->is_sealed);
+
+  if (!changeset->dir_resets)
+    changeset->dir_resets = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+
+  g_hash_table_insert (changeset->table, g_strdup (dir), NULL);
+  g_hash_table_add (changeset->dir_resets, g_strdup (dir));
 }
 
 /**
@@ -217,7 +236,7 @@ dconf_changeset_set (DConfChangeset *changeset,
 
       /* If this is a non-database then record the reset itself. */
       if (!changeset->is_database)
-        g_hash_table_insert (changeset->table, g_strdup (path), NULL);
+        dconf_changeset_record_dir_reset (changeset, path);
     }
 
   /* ...or a value reset */
@@ -263,7 +282,26 @@ dconf_changeset_get (DConfChangeset  *changeset,
   gpointer tmp;
 
   if (!g_hash_table_lookup_extended (changeset->table, key, NULL, &tmp))
-    return FALSE;
+    {
+      /* Did not find an exact match, so check for dir resets */
+      if (changeset->dir_resets)
+        {
+          GHashTableIter iter;
+          gpointer dir;
+
+          g_hash_table_iter_init (&iter, changeset->dir_resets);
+          while (g_hash_table_iter_next (&iter, &dir, NULL))
+            if (g_str_has_prefix (key, dir))
+              {
+                if (value)
+                  *value = NULL;
+
+                return TRUE;
+              }
+        }
+
+      return FALSE;
+    }
 
   if (value)
     *value = tmp ? g_variant_ref (tmp) : NULL;
@@ -624,16 +662,11 @@ dconf_changeset_deserialise (GVariant *serialised)
        *
        * If we get an invalid case, just fall through and ignore it.
        */
-      if (value == NULL)
-        {
-          if (dconf_is_path (key, NULL))
-            g_hash_table_insert (changeset->table, g_strdup (key), NULL);
-        }
-      else
-        {
-          if (dconf_is_key (key, NULL))
-            g_hash_table_insert (changeset->table, g_strdup (key), g_variant_ref (value));
-        }
+      if (dconf_is_key (key, NULL))
+        g_hash_table_insert (changeset->table, g_strdup (key), value ? g_variant_ref (value) : NULL);
+
+      else if (dconf_is_dir (key, NULL) && value == NULL)
+        dconf_changeset_record_dir_reset (changeset, key);
     }
 
   return changeset;

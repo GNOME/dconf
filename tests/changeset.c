@@ -281,37 +281,58 @@ static void
 test_reset (void)
 {
   DConfChangeset *changeset;
+  GVariant *value;
 
   changeset = dconf_changeset_new ();
   g_assert (!dconf_changeset_get (changeset, "/value/a", NULL));
+  g_assert (!dconf_changeset_get (changeset, "/value/a", &value));
+  /* value was not set */
 
   /* set a value */
   dconf_changeset_set (changeset, "/value/a", g_variant_new_boolean (TRUE));
   g_assert (dconf_changeset_get (changeset, "/value/a", NULL));
+  g_assert (dconf_changeset_get (changeset, "/value/a", &value));
+  g_assert (value != NULL);
+  g_variant_unref (value);
 
   /* record the reset */
   dconf_changeset_set (changeset, "/value/", NULL);
-  g_assert (!dconf_changeset_get (changeset, "/value/a", NULL));
+  g_assert (dconf_changeset_get (changeset, "/value/a", NULL));
+  g_assert (dconf_changeset_get (changeset, "/value/a", &value));
+  g_assert (value == NULL);
 
   /* write it back */
   dconf_changeset_set (changeset, "/value/a", g_variant_new_boolean (TRUE));
   g_assert (dconf_changeset_get (changeset, "/value/a", NULL));
+  g_assert (dconf_changeset_get (changeset, "/value/a", &value));
+  g_assert (value != NULL);
+  g_variant_unref (value);
 
   /* reset again */
   dconf_changeset_set (changeset, "/value/", NULL);
-  g_assert (!dconf_changeset_get (changeset, "/value/a", NULL));
+  g_assert (dconf_changeset_get (changeset, "/value/a", NULL));
+  g_assert (dconf_changeset_get (changeset, "/value/a", &value));
+  g_assert (value == NULL);
 
   /* write again */
   dconf_changeset_set (changeset, "/value/a", g_variant_new_boolean (TRUE));
   g_assert (dconf_changeset_get (changeset, "/value/a", NULL));
+  g_assert (dconf_changeset_get (changeset, "/value/a", &value));
+  g_assert (value != NULL);
+  g_variant_unref (value);
 
   /* reset a different way */
-  dconf_changeset_set (changeset, "/value/a", g_variant_new_boolean (TRUE));
+  dconf_changeset_set (changeset, "/value/a", NULL);
   g_assert (dconf_changeset_get (changeset, "/value/a", NULL));
+  g_assert (dconf_changeset_get (changeset, "/value/a", &value));
+  g_assert (value == NULL);
 
   /* write last time */
   dconf_changeset_set (changeset, "/value/a", g_variant_new_boolean (TRUE));
   g_assert (dconf_changeset_get (changeset, "/value/a", NULL));
+  g_assert (dconf_changeset_get (changeset, "/value/a", &value));
+  g_assert (value != NULL);
+  g_variant_unref (value);
 
   dconf_changeset_unref (changeset);
 }
