@@ -7,6 +7,7 @@ namespace DConf {
 
 		public Client ();
 		public GLib.Variant? read (string key);
+		public GLib.Variant? read_default (string key);
 		public string[] list (string dir);
 		public string[] list_locks (string dir);
 		public bool is_writable (string key);
