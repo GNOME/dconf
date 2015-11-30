@@ -87,7 +87,9 @@ dconf_client_init (DConfClient *client)
 static void
 dconf_client_class_init (DConfClientClass *class)
 {
-  class->finalize = dconf_client_finalize;
+  GObjectClass *object_class = G_OBJECT_CLASS (class);
+
+  object_class->finalize = dconf_client_finalize;
 
   /**
    * DConfClient::changed:

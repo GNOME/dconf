@@ -70,4 +70,6 @@ DConfChangeset *        dconf_changeset_diff                            (DConfCh
 
 void                    dconf_changeset_seal                            (DConfChangeset           *changeset);
 
+G_DEFINE_AUTOPTR_CLEANUP_FUNC(DConfChangeset, dconf_changeset_unref)
+
 #endif /* __dconf_changeset_h__ */
