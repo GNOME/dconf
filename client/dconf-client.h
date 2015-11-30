@@ -39,6 +39,9 @@ DConfClient *           dconf_client_new                                (void);
 GVariant *              dconf_client_read                               (DConfClient          *client,
                                                                          const gchar          *key);
 
+GVariant *              dconf_client_read_default                       (DConfClient          *client,
+                                                                         const gchar          *key);
+
 gchar **                dconf_client_list                               (DConfClient          *client,
                                                                          const gchar          *dir,
                                                                          gint                 *length);

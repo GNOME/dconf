@@ -68,6 +68,7 @@ queue_up_100_writes (DConfClient *client)
 
       /* We should always see the most recently written value. */
       check_and_free (dconf_client_read (client, "/test/value"), g_variant_new_int32 (i));
+      check_and_free (dconf_client_read_default (client, "/test/value"), NULL);
     }
 
   g_assert_cmpint (g_queue_get_length (&dconf_mock_dbus_outstanding_call_handles), ==, 2);
@@ -140,6 +141,7 @@ test_fast (void)
       g_assert (changed_was_called);
 
       check_and_free (dconf_client_read (client, "/test/value"), g_variant_new_int32 (99));
+      check_and_free (dconf_client_read_default (client, "/test/value"), NULL);
     }
 
   /* Because of the pending-merging logic, we should only have had to
@@ -154,6 +156,7 @@ test_fast (void)
 
   /* Should read back now as NULL */
   check_and_free (dconf_client_read (client, "/test/value"), NULL);
+  check_and_free (dconf_client_read_default (client, "/test/value"), NULL);
 
   /* Cleanup */
   g_signal_handlers_disconnect_by_func (client, changed, NULL);
