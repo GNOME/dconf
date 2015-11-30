@@ -33,8 +33,8 @@ void show_help (bool requested, string? command) {
 			break;
 
 		case "read":
-			description = "Read the value of a key";
-			synopsis = " KEY ";
+			description = "Read the value of a key.  -d to read default values.";
+			synopsis = " [-d] KEY ";
 			break;
 
 		case "list":
@@ -161,11 +161,25 @@ void dconf_help (string[] args) throws Error {
 
 void dconf_read (string?[] args) throws Error {
 	var client = new DConf.Client ();
-	var key = args[2];
+	bool read_default = false;
+	var index = 2;
+
+	if (args[index] == "-d") {
+		read_default = true;
+		index++;
+	}
+
+	var key = args[index];
 
 	DConf.verify_key (key);
 
-	var result = client.read (key);
+	Variant? result;
+
+	if (read_default) {
+		result = client.read_default (key);
+	} else {
+		result = client.read (key);
+	}
 
 	if (result != null) {
 		print ("%s\n", result.print (true));
