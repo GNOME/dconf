@@ -42,6 +42,11 @@ void show_help (bool requested, string? command) {
 			synopsis = " DIR ";
 			break;
 
+		case "list-locks":
+			description = "List the locks under a dir";
+			synopsis = " DIR ";
+			break;
+
 		case "write":
 			description = "Write a new value to a key";
 			synopsis = " KEY VALUE ";
@@ -178,6 +183,17 @@ void dconf_list (string?[] args) throws Error {
 	}
 }
 
+void dconf_list_locks (string?[] args) throws Error {
+	var client = new DConf.Client ();
+	var dir = args[2];
+
+	DConf.verify_dir (dir);
+
+	foreach (var item in client.list_locks (dir)) {
+		print ("%s\n", item);
+	}
+}
+
 void dconf_write (string?[] args) throws Error {
 	var client = new DConf.Client ();
 	var key = args[2];
@@ -294,18 +310,19 @@ int main (string[] args) {
 	Intl.setlocale (LocaleCategory.ALL, "");
 
 	var map = new CommandMapping[] {
-		CommandMapping ("help",      dconf_help),
-		CommandMapping ("read",      dconf_read),
-		CommandMapping ("list",      dconf_list),
-		CommandMapping ("write",     dconf_write),
-		CommandMapping ("reset",     dconf_reset),
-		CommandMapping ("compile",   dconf_compile),
-		CommandMapping ("update",    dconf_update),
-		CommandMapping ("watch",     dconf_watch),
-		CommandMapping ("dump",      dconf_dump),
-		CommandMapping ("load",      dconf_load),
-		CommandMapping ("blame",     dconf_blame),
-		CommandMapping ("_complete", dconf_complete)
+		CommandMapping ("help",       dconf_help),
+		CommandMapping ("read",       dconf_read),
+		CommandMapping ("list",       dconf_list),
+		CommandMapping ("list-locks", dconf_list_locks),
+		CommandMapping ("write",      dconf_write),
+		CommandMapping ("reset",      dconf_reset),
+		CommandMapping ("compile",    dconf_compile),
+		CommandMapping ("update",     dconf_update),
+		CommandMapping ("watch",      dconf_watch),
+		CommandMapping ("dump",       dconf_dump),
+		CommandMapping ("load",       dconf_load),
+		CommandMapping ("blame",      dconf_blame),
+		CommandMapping ("_complete",  dconf_complete)
 	};
 
 	try {
