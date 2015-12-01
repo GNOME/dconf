@@ -76,7 +76,7 @@ unref_gvariant0 (gpointer data)
  *
  * Creates a new, empty, #DConfChangeset.
  *
- * Returns: the new #DConfChangeset.
+ * Returns: (transfer full): the new #DConfChangeset.
  **/
 DConfChangeset *
 dconf_changeset_new (void)
@@ -92,7 +92,7 @@ dconf_changeset_new (void)
 
 /**
  * dconf_changeset_new_database:
- * @copy_of: (allow-none): a #DConfChangeset to copy
+ * @copy_of: (nullable): a #DConfChangeset to copy
  *
  * Creates a new #DConfChangeset in "database" mode, possibly
  * initialising it with the values of another changeset.
@@ -114,7 +114,7 @@ dconf_changeset_new (void)
  * If @copy_of is non-%NULL then its contents will be copied into the
  * created changeset.  @copy_of must be a database-mode changeset.
  *
- * Returns: a new #DConfChangeset in "database" mode
+ * Returns: (transfer full): a new #DConfChangeset in "database" mode
  *
  * Since: 0.16
  */
@@ -171,7 +171,7 @@ dconf_changeset_unref (DConfChangeset *changeset)
  *
  * Increases the reference count on @changeset
  *
- * Returns: @changeset
+ * Returns: (transfer full): @changeset
  **/
 DConfChangeset *
 dconf_changeset_ref (DConfChangeset *changeset)
@@ -200,7 +200,8 @@ dconf_changeset_record_dir_reset (DConfChangeset *changeset,
  * dconf_changeset_set:
  * @changeset: a #DConfChangeset
  * @path: a path to modify
- * @value: the value for the key, or %NULL to reset
+ * @value: (nullable): the value for the key, or %NULL to reset. If it has a
+ *  floating reference it's consumed.
  *
  * Adds an operation to modify @path to a #DConfChangeset.
  *
@@ -260,7 +261,7 @@ dconf_changeset_set (DConfChangeset *changeset,
  * dconf_changeset_get:
  * @changeset: a #DConfChangeset
  * @key: the key to check
- * @value: a return location for the value, or %NULL
+ * @value: (transfer full) (optional) (nullable): a return location for the value, or %NULL
  *
  * Checks if a #DConfChangeset has an outstanding request to change
  * the value of the given @key.
@@ -351,7 +352,7 @@ dconf_changeset_is_similar_to (DConfChangeset *changeset,
 /**
  * DConfChangesetPredicate:
  * @path: a path, as per dconf_is_path()
- * @value: a #GVariant, or %NULL
+ * @value: (nullable): a #GVariant, or %NULL
  * @user_data: user data pointer
  *
  * Callback function type for predicates over items in a
@@ -557,9 +558,9 @@ dconf_changeset_seal (DConfChangeset *changeset)
 /**
  * dconf_changeset_describe:
  * @changeset: a #DConfChangeset
- * @prefix: the prefix under which changes have been requested
- * @paths: the list of paths changed, relative to @prefix
- * @values: the list of values changed
+ * @prefix: (transfer none) (optional) (out): the prefix under which changes have been requested
+ * @paths: (transfer none) (optional) (out): the list of paths changed, relative to @prefix
+ * @values: (transfer none) (optional) (out): the list of values changed
  *
  * Describes @changeset.
  *
@@ -610,7 +611,7 @@ dconf_changeset_describe (DConfChangeset       *changeset,
  * The returned value has no particular format and should only be passed
  * to dconf_changeset_deserialise().
  *
- * Returns: a floating #GVariant
+ * Returns: (transfer full): a floating #GVariant
  **/
 GVariant *
 dconf_changeset_serialise (DConfChangeset *changeset)
@@ -630,7 +631,7 @@ dconf_changeset_serialise (DConfChangeset *changeset)
 
 /**
  * dconf_changeset_deserialise:
- * @serialised: a #GVariant from dconf_changeset_serialise()
+ * @serialised: (transfer none): a #GVariant from dconf_changeset_serialise()
  *
  * Creates a #DConfChangeset according to a serialised description
  * returned from an earlier call to dconf_changeset_serialise().
@@ -641,7 +642,7 @@ dconf_changeset_serialise (DConfChangeset *changeset)
  * This call never fails, even if @serialised is not in the correct
  * format.  Improperly-formatted parts are simply ignored.
  *
- * Returns: a new #DConfChangeset
+ * Returns: (transfer full): a new #DConfChangeset
  **/
 DConfChangeset *
 dconf_changeset_deserialise (GVariant *serialised)
@@ -675,7 +676,8 @@ dconf_changeset_deserialise (GVariant *serialised)
 /**
  * dconf_changeset_new_write:
  * @path: a dconf path
- * @value: a #GVariant, or %NULL
+ * @value: (nullable): a #GVariant, or %NULL. If it has a floating reference it's
+ *  consumed.
  *
  * Creates a new #DConfChangeset with one change.  This is equivalent to
  * calling dconf_changeset_new() and then dconf_changeset_set() with
@@ -783,7 +785,7 @@ dconf_changeset_change (DConfChangeset *changeset,
  * dconf_changeset_change() will result in the two changesets being
  * equal.
  *
- * Returns: (transfer full): the changes, or %NULL
+ * Returns: (transfer full) (nullable): the changes, or %NULL
  *
  * Since: 0.16
  */
