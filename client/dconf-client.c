@@ -63,6 +63,7 @@ G_DEFINE_TYPE (DConfClient, dconf_client, G_TYPE_OBJECT)
 enum
 {
   SIGNAL_CHANGED,
+  SIGNAL_WRITABILITY_CHANGED,
   N_SIGNALS
 };
 static guint dconf_client_signals[N_SIGNALS];
@@ -135,6 +136,20 @@ dconf_client_class_init (DConfClientClass *class)
                                                        G_TYPE_STRING | G_SIGNAL_TYPE_STATIC_SCOPE,
                                                        G_TYPE_STRV | G_SIGNAL_TYPE_STATIC_SCOPE,
                                                        G_TYPE_STRING | G_SIGNAL_TYPE_STATIC_SCOPE);
+
+  /**
+   * DConfClient::writability-changed:
+   * @client: the #DConfClient reporting the change
+   * @path: the dir or key that changed
+   *
+   * Signal emitted when writability for a key (or all keys in a dir) changes.
+   * It will be immediately followed by #DConfClient::changed signal for
+   * the path.
+   */
+  dconf_client_signals[SIGNAL_WRITABILITY_CHANGED] = g_signal_new ("writability-changed", DCONF_TYPE_CLIENT,
+                                                                   G_SIGNAL_RUN_LAST, 0, NULL, NULL, NULL,
+                                                                   G_TYPE_NONE, 1,
+                                                                   G_TYPE_STRING | G_SIGNAL_TYPE_STATIC_SCOPE);
 }
 
 typedef struct
@@ -143,12 +158,23 @@ typedef struct
   gchar        *prefix;
   gchar       **changes;
   gchar        *tag;
+  gboolean      is_writability;
 } DConfClientChange;
 
 static gboolean
 dconf_client_dispatch_change_signal (gpointer user_data)
 {
   DConfClientChange *change = user_data;
+
+  if (change->is_writability)
+    {
+      /* We know that the engine does it this way... */
+      g_assert (change->changes[0][0] == '\0' && change->changes[1] == NULL);
+
+      g_signal_emit (change->client,
+                     dconf_client_signals[SIGNAL_WRITABILITY_CHANGED], 0,
+                     change->prefix);
+    }
 
   g_signal_emit (change->client, dconf_client_signals[SIGNAL_CHANGED], 0,
                  change->prefix, change->changes, change->tag);
@@ -187,6 +213,7 @@ dconf_engine_change_notify (DConfEngine         *engine,
   change->prefix = g_strdup (prefix);
   change->changes = g_strdupv ((gchar **) changes);
   change->tag = g_strdup (tag);
+  change->is_writability = is_writability;
 
   g_main_context_invoke (client->context, dconf_client_dispatch_change_signal, change);
 }
