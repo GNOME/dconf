@@ -1,5 +1,5 @@
 AC_INIT([dconf],
-        [0.24.0],
+        [0.25.1],
         [https://bugzilla.gnome.org/enter_bug.cgi?product=dconf],
         [dconf])
 
