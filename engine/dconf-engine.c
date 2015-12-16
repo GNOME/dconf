@@ -429,14 +429,14 @@ dconf_engine_list_locks (DConfEngine *engine,
 }
 
 static gboolean
-dconf_engine_find_key_in_queue (GQueue       *queue,
-                                const gchar  *key,
-                                GVariant    **value)
+dconf_engine_find_key_in_queue (const GQueue  *queue,
+                                const gchar   *key,
+                                GVariant     **value)
 {
   GList *node;
 
   /* Tail to head... */
-  for (node = g_queue_peek_tail_link (queue); node; node = node->prev)
+  for (node = queue->tail; node; node = node->prev)
     if (dconf_changeset_get (node->data, key, value))
       return TRUE;
 
@@ -446,7 +446,7 @@ dconf_engine_find_key_in_queue (GQueue       *queue,
 GVariant *
 dconf_engine_read (DConfEngine    *engine,
                    DConfReadFlags  flags,
-                   GQueue         *read_through,
+                   const GQueue   *read_through,
                    const gchar    *key)
 {
   GVariant *value = NULL;
