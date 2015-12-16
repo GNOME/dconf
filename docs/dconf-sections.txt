@@ -11,7 +11,10 @@ dconf_error_quark
 DConfClient
 dconf_client_new
 dconf_client_read
+DConfReadFlags
+dconf_client_read_full
 dconf_client_list
+dconf_client_list_locks
 dconf_client_is_writable
 dconf_client_write_fast
 dconf_client_write_sync
