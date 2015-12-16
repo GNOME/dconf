@@ -47,7 +47,6 @@ GTK_DOC_CHECK([1.15])
 # Dependencies
 PKG_CHECK_MODULES(glib, glib-2.0 >= 2.44.0)
 PKG_CHECK_MODULES(gio, gio-unix-2.0)
-PKG_CHECK_MODULES(dbus, dbus-1)
 
 AC_ARG_WITH(gio_modules_dir, [  --with-gio-modules-dir=PATH choose directory for the GIO module, [default=LIBDIR/gio/modules]], giomodulesdir="$withval", giomodulesdir=${libdir}/gio/modules)
 AC_SUBST(giomodulesdir)
@@ -83,11 +82,9 @@ AC_CONFIG_FILES([
   engine/Makefile
   gdbus/Makefile
   gsettings/Makefile
-  dbus-1/dconf-dbus-1.pc
   client/dconf.pc
   client/Makefile
   service/Makefile
-  dbus-1/Makefile
   bin/Makefile
   tests/Makefile
   docs/Makefile
