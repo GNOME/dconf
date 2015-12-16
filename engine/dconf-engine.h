@@ -120,7 +120,7 @@ gchar **                dconf_engine_list_locks                         (DConfEn
 G_GNUC_INTERNAL
 GVariant *              dconf_engine_read                               (DConfEngine             *engine,
                                                                          DConfReadFlags           flags,
-                                                                         GQueue                  *read_through,
+                                                                         const GQueue            *read_through,
                                                                          const gchar             *key);
 
 G_GNUC_INTERNAL
