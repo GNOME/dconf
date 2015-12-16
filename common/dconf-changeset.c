@@ -181,7 +181,7 @@ dconf_changeset_ref (DConfChangeset *changeset)
   return changeset;
 }
 
-void
+static void
 dconf_changeset_record_dir_reset (DConfChangeset *changeset,
                                   const gchar    *dir)
 {
