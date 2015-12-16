@@ -245,34 +245,6 @@ dconf_client_read (DConfClient *client,
   return dconf_engine_read (client->engine, DCONF_READ_FLAGS_NONE, NULL, key);
 }
 
-/* This provides a "read through" queue that resets all of the keys.
- * This is a good way to get the default value for a key.
- *
- * We cache the value of this queue in a static instead of generating
- * and freeing it each time.
- */
-static GQueue *
-dconf_client_get_reset_queue (void)
-{
-  static GQueue *reset_queue;
-
-  if (g_once_init_enter (&reset_queue))
-    {
-      DConfChangeset *reset_all;
-      GQueue *tmp;
-
-      reset_all = dconf_changeset_new ();
-      dconf_changeset_set (reset_all, "/", NULL);
-      dconf_changeset_seal (reset_all);
-
-      tmp = g_queue_new ();
-      g_queue_push_tail (tmp, reset_all);
-      g_once_init_leave (&reset_queue, tmp);
-    }
-
-  return reset_queue;
-}
-
 /**
  * dconf_client_read_default:
  * @client: a #DConfClient
@@ -296,7 +268,7 @@ dconf_client_read_default (DConfClient *client,
 {
   g_return_val_if_fail (DCONF_IS_CLIENT (client), NULL);
 
-  return dconf_engine_read (client->engine, DCONF_READ_FLAGS_NONE, dconf_client_get_reset_queue (), key);
+  return dconf_engine_read (client->engine, DCONF_READ_DEFAULT_VALUE, NULL, key);
 }
 
 /**

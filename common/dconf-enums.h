@@ -35,6 +35,7 @@ typedef enum
 typedef enum
 {
   DCONF_READ_FLAGS_NONE                 = 0,
+  DCONF_READ_DEFAULT_VALUE              = (1u << 0),
   DCONF_READ_USER_VALUE                 = (1u << 1)
 } DConfReadFlags;
 

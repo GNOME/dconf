@@ -484,6 +484,12 @@ dconf_engine_read (DConfEngine    *engine,
    *   visible (because of a lock).  This includes any pending value
    *   that is in the read_through or pending queues.
    *
+   *   If DCONF_READ_DEFAULT_VALUE is given then we skip the writable
+   *   database and the queues (including read_through, which is
+   *   meaningless in this case) and skip directly to the non-writable
+   *   databases.  This is defined as the value that the user would see
+   *   if they were to have just done a reset for that key.
+   *
    * With respect to read_through and queued changed:
    *
    *   We only consider read_through and queued changes in the event
@@ -575,8 +581,16 @@ dconf_engine_read (DConfEngine    *engine,
     {
       gboolean found_key = FALSE;
 
+      /* If the user has requested the default value only, then ensure
+       * that we "find" a NULL value here.  This is equivalent to the
+       * user having reset the key, which is the definition of this
+       * flag.
+       */
+      if (flags & DCONF_READ_DEFAULT_VALUE)
+        found_key = TRUE;
+
       /* Step 2.  Check read_through. */
-      if (read_through)
+      if (!found_key && read_through)
         found_key = dconf_engine_find_key_in_queue (read_through, key, &value);
 
       /* Step 3.  Check queued changes if we didn't find it in read_through.
