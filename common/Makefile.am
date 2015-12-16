@@ -3,7 +3,7 @@ include $(top_srcdir)/Makefile.gtester
 dconfcommonincludedir = $(dconfincludedir)/common
 dconfcommoninclude_HEADERS = \
 	dconf-changeset.h	\
-	dconf-error.h		\
+	dconf-enums.h		\
 	dconf-paths.h
 
 noinst_LIBRARIES = libdconf-common.a libdconf-common-shared.a libdconf-common-hidden.a
