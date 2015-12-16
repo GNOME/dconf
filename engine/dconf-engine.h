@@ -21,6 +21,7 @@
 #define __dconf_engine_h__
 
 #include "../common/dconf-changeset.h"
+#include "../common/dconf-enums.h"
 
 #include <gio/gio.h>
 
@@ -118,11 +119,7 @@ gchar **                dconf_engine_list_locks                         (DConfEn
 
 G_GNUC_INTERNAL
 GVariant *              dconf_engine_read                               (DConfEngine             *engine,
-                                                                         GQueue                  *read_through,
-                                                                         const gchar             *key);
-
-G_GNUC_INTERNAL
-GVariant *              dconf_engine_read_user_value                    (DConfEngine             *engine,
+                                                                         DConfReadFlags           flags,
                                                                          GQueue                  *read_through,
                                                                          const gchar             *key);
 

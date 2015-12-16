@@ -242,7 +242,7 @@ dconf_client_read (DConfClient *client,
 {
   g_return_val_if_fail (DCONF_IS_CLIENT (client), NULL);
 
-  return dconf_engine_read (client->engine, NULL, key);
+  return dconf_engine_read (client->engine, DCONF_READ_FLAGS_NONE, NULL, key);
 }
 
 /* This provides a "read through" queue that resets all of the keys.
@@ -296,7 +296,7 @@ dconf_client_read_default (DConfClient *client,
 {
   g_return_val_if_fail (DCONF_IS_CLIENT (client), NULL);
 
-  return dconf_engine_read (client->engine, dconf_client_get_reset_queue (), key);
+  return dconf_engine_read (client->engine, DCONF_READ_FLAGS_NONE, dconf_client_get_reset_queue (), key);
 }
 
 /**
