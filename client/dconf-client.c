@@ -246,29 +246,52 @@ dconf_client_read (DConfClient *client,
 }
 
 /**
- * dconf_client_read_default:
+ * dconf_client_read_full:
  * @client: a #DConfClient
  * @key: the key to read the default value of
+ * @flags: #DConfReadFlags
+ * @read_through: a #GQueue of #DConfChangeset
  *
- * Reads the current default value of @key.
+ * Reads the current value of @key.
  *
- * The default value of the key is the value that the key would have if
- * were to be reset.  This is usually %NULL, but it may be something
- * else in the case that the system administrator has defined a default
- * value for a key.
+ * If @flags contains %DCONF_READ_USER_VALUE then only the user value
+ * will be read.  Locks are ignored, which means that it is possible to
+ * use this API to read "invisible" user values which are hidden by
+ * system locks.
+ *
+ * If @flags contains %DCONF_READ_DEFAULT_VALUE then only non-user
+ * values will be read.  The result will be exactly equivalent to the
+ * value that would be read if the current value of the key were to be
+ * reset.
+ *
+ * Flags may not contain both %DCONF_READ_USER_VALUE and
+ * %DCONF_READ_DEFAULT_VALUE.
+ *
+ * If @read_through is non-%NULL, %DCONF_READ_DEFAULT_VALUE is not
+ * given then @read_through is checked for the key in question, subject
+ * to the restriction that the key in question is writable.  This
+ * effectively answers the question of "what would happen if these
+ * changes were committed".
  *
  * If there are outstanding "fast" changes in progress they may affect
  * the result of this call.
  *
+ * If @flags is %DCONF_READ_FLAGS_NONE and @read_through is %NULL then
+ * this call is exactly equivalent to dconf_client_read().
+ *
  * Returns: a #GVariant, or %NULL
+ *
+ * Since: 0.26
  */
 GVariant *
-dconf_client_read_default (DConfClient *client,
-                           const gchar *key)
+dconf_client_read_full (DConfClient    *client,
+                        const gchar    *key,
+                        DConfReadFlags  flags,
+                        const GQueue   *read_through)
 {
   g_return_val_if_fail (DCONF_IS_CLIENT (client), NULL);
 
-  return dconf_engine_read (client->engine, DCONF_READ_DEFAULT_VALUE, NULL, key);
+  return dconf_engine_read (client->engine, flags, read_through, key);
 }
 
 /**

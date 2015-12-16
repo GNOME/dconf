@@ -161,11 +161,11 @@ void dconf_help (string[] args) throws Error {
 
 void dconf_read (string?[] args) throws Error {
 	var client = new DConf.Client ();
-	bool read_default = false;
+	var flags = DConf.ReadFlags.NONE;
 	var index = 2;
 
 	if (args[index] == "-d") {
-		read_default = true;
+		flags = DConf.ReadFlags.DEFAULT_VALUE;
 		index++;
 	}
 
@@ -173,13 +173,7 @@ void dconf_read (string?[] args) throws Error {
 
 	DConf.verify_key (key);
 
-	Variant? result;
-
-	if (read_default) {
-		result = client.read_default (key);
-	} else {
-		result = client.read (key);
-	}
+	var result = client.read_full (key, flags, null);
 
 	if (result != null) {
 		print ("%s\n", result.print (true));

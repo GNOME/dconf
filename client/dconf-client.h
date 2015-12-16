@@ -22,6 +22,7 @@
 
 #include <gio/gio.h>
 #include "../common/dconf-changeset.h"
+#include "../common/dconf-enums.h"
 
 G_BEGIN_DECLS
 
@@ -33,8 +34,10 @@ DConfClient *           dconf_client_new                                (void);
 GVariant *              dconf_client_read                               (DConfClient          *client,
                                                                          const gchar          *key);
 
-GVariant *              dconf_client_read_default                       (DConfClient          *client,
-                                                                         const gchar          *key);
+GVariant *              dconf_client_read_full                          (DConfClient          *client,
+                                                                         const gchar          *key,
+                                                                         DConfReadFlags        flags,
+                                                                         const GQueue         *read_through);
 
 gchar **                dconf_client_list                               (DConfClient          *client,
                                                                          const gchar          *dir,
