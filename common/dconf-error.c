@@ -19,7 +19,7 @@
 
 #include "config.h"
 
-#include "dconf-error.h"
+#include "dconf-enums.h"
 
 /**
  * SECTION:error

@@ -22,7 +22,7 @@
 
 #include "dconf-paths.h"
 
-#include "dconf-error.h"
+#include "dconf-enums.h"
 
 /**
  * SECTION:paths

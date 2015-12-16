@@ -4,7 +4,7 @@
 
 #include "../engine/dconf-engine.h"
 #include "../engine/dconf-engine-profile.h"
-#include "../common/dconf-error.h"
+#include "../common/dconf-enums.h"
 #include "dconf-mock.h"
 
 #include <glib/gstdio.h>
