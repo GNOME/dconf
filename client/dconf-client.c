@@ -246,6 +246,21 @@ dconf_client_read (DConfClient *client,
 }
 
 /**
+ * DConfReadFlags:
+ * @DCONF_READ_FLAGS_NONE: no flags
+ * @DCONF_READ_DEFAULT_VALUE: read the default value, ignoring any
+ *   values in writable databases or any queued changes.  This is
+ *   effectively equivalent to asking what value would be read after a
+ *   reset was written for the key in question.
+ * @DCONF_READ_USER_VALUE: read the user value, ignoring any system
+ *   databases, including ignoring locks.  It is even possible to read
+ *   "invisible" values in the user database in this way, which would
+ *   have normally been ignored because of locks.
+ *
+ * Since: 0.26
+ */
+
+/**
  * dconf_client_read_full:
  * @client: a #DConfClient
  * @key: the key to read the default value of
@@ -335,6 +350,8 @@ dconf_client_list (DConfClient *client,
  * The returned list will be %NULL-terminated.
  *
  * Returns: an array of strings, never %NULL.
+ *
+ * Since: 0.26
  */
 gchar **
 dconf_client_list_locks (DConfClient *client,
