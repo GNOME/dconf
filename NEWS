@@ -1,3 +1,37 @@
+Changes in dconf 0.25.1
+========================
+
+ - the libdbus-1 backend has been removed.  dconf now always uses GDBus.
+
+ - support has been added for system administration frameworks to set up
+   the dconf profile via a file placed in the XDG_RUNTIME_DIR or in
+   /run/dconf/.  In the case of the file in /run/dconf/, it is not
+   possible to modify the proile, even via the DCONF_PROFILE environment
+   variable, which makes it slightly more difficult to evade lockdown.
+
+ - directory resets are now implemented properly in DConfChangeset which
+   means that reading a subkey through a changeset that contains a reset
+   for a parent directory of that key will return TRUE with a NULL value
+
+ - a new API dconf_client_read_full() has been added which allows
+   reading the user value, the default value, or querying what the
+   effective value would be if a changeset were to be applied.
+
+ - a new API has been added for listing the locks that are in effect:
+   dconf_client_list_locks()
+
+ - DConfClient has a new "writability-changed" signal
+
+ - support for reading default values and listing locks have been added
+   to the dconf commandline tool
+
+ - support for g_autoptr() has been added for DConfClient and
+   DConfChangeset
+
+ - the handling of reading of default values via GSettings has been made
+   more efficient.  More major changes to the GSettings backend are
+   expected in the near future.
+
 Changes in dconf 0.24.0
 ========================
 
