@@ -791,7 +791,7 @@ check_read (DConfEngine *engine,
       database_state /= 7;
     }
 
-  value = dconf_engine_read (engine, NULL, "/value");
+  value = dconf_engine_read (engine, DCONF_READ_FLAGS_NONE, NULL, "/value");
 
   if (expected != -1)
     {
@@ -829,7 +829,7 @@ check_read (DConfEngine *engine,
             our_expected = 123;
         }
 
-      value = dconf_engine_read (engine, &read_through_queues[i], "/value");
+      value = dconf_engine_read (engine, DCONF_READ_FLAGS_NONE, &read_through_queues[i], "/value");
 
       if (our_expected != -1)
         {
@@ -862,7 +862,7 @@ check_read (DConfEngine *engine,
    *
    * Note: we do not consider locks.
    */
-  value = dconf_engine_read_user_value (engine, NULL, "/value");
+  value = dconf_engine_read (engine, DCONF_READ_USER_VALUE, NULL, "/value");
   if (value)
     {
       g_assert (first_contents && !(first_contents & 1) && !(source_types & 1));
@@ -892,7 +892,7 @@ check_read (DConfEngine *engine,
        * We see these values regardless of writability.  We do however
        * ensure that we have a writable database as the first one.
        */
-      value = dconf_engine_read_user_value (engine, &read_through_queues[i], "/value");
+      value = dconf_engine_read (engine, DCONF_READ_USER_VALUE, &read_through_queues[i], "/value");
 
       /* If we have no first source, or the first source is non-user
        * than we should always do nothing (since we can't queue changes
@@ -1336,7 +1336,7 @@ test_change_fast (void)
   g_string_set_size (change_log, 0);
 
   /* Verify that the value is set */
-  value = dconf_engine_read (engine, NULL, "/value");
+  value = dconf_engine_read (engine, DCONF_READ_FLAGS_NONE, NULL, "/value");
   g_assert_cmpstr (g_variant_get_string (value, NULL), ==, "value");
   g_variant_unref (value);
 
@@ -1349,7 +1349,7 @@ test_change_fast (void)
   g_string_set_size (change_log, 0);
 
   /* Verify that the value became unset due to the failure */
-  value = dconf_engine_read (engine, NULL, "value");
+  value = dconf_engine_read (engine, DCONF_READ_FLAGS_NONE, NULL, "value");
   g_assert (value == NULL);
 
   /* Now try a successful write */
@@ -1365,7 +1365,7 @@ test_change_fast (void)
   g_string_set_size (change_log, 0);
 
   /* Verify that the value is set */
-  value = dconf_engine_read (engine, NULL, "/value");
+  value = dconf_engine_read (engine, DCONF_READ_FLAGS_NONE, NULL, "/value");
   g_assert_cmpstr (g_variant_get_string (value, NULL), ==, "value");
   g_variant_unref (value);
 
@@ -1378,7 +1378,7 @@ test_change_fast (void)
 
   /* Verify that the value became unset due to the in-flight queue
    * clearing... */
-  value = dconf_engine_read (engine, NULL, "value");
+  value = dconf_engine_read (engine, DCONF_READ_FLAGS_NONE, NULL, "value");
   g_assert (value == NULL);
 
   /* Do that all again for a changeset with more than one item */
@@ -1389,7 +1389,7 @@ test_change_fast (void)
   g_assert (success);
   g_assert_cmpstr (change_log->str, ==, "/:2:to-reset,value:nil;");
   g_string_set_size (change_log, 0);
-  value = dconf_engine_read (engine, NULL, "/value");
+  value = dconf_engine_read (engine, DCONF_READ_FLAGS_NONE, NULL, "/value");
   g_assert_cmpstr (g_variant_get_string (value, NULL), ==, "value");
   g_variant_unref (value);
   g_test_expect_message ("dconf", G_LOG_LEVEL_WARNING, "failed to commit changes to dconf: something failed");
@@ -1398,7 +1398,7 @@ test_change_fast (void)
   g_clear_error (&error);
   g_assert_cmpstr (change_log->str, ==, "/:2:to-reset,value:nil;");
   g_string_set_size (change_log, 0);
-  value = dconf_engine_read (engine, NULL, "value");
+  value = dconf_engine_read (engine, DCONF_READ_FLAGS_NONE, NULL, "value");
   g_assert (value == NULL);
   dconf_mock_dbus_assert_no_async ();
   g_assert_cmpstr (change_log->str, ==, "");
@@ -1407,14 +1407,14 @@ test_change_fast (void)
   g_assert (success);
   g_assert_cmpstr (change_log->str, ==, "/:2:to-reset,value:nil;");
   g_string_set_size (change_log, 0);
-  value = dconf_engine_read (engine, NULL, "/value");
+  value = dconf_engine_read (engine, DCONF_READ_FLAGS_NONE, NULL, "/value");
   g_assert_cmpstr (g_variant_get_string (value, NULL), ==, "value");
   g_variant_unref (value);
   error = g_error_new_literal (G_FILE_ERROR, G_FILE_ERROR_NOENT, "something failed");
   dconf_mock_dbus_async_reply (g_variant_new ("(s)", "tag"), NULL);
   g_clear_error (&error);
   g_assert_cmpstr (change_log->str, ==, "");
-  value = dconf_engine_read (engine, NULL, "value");
+  value = dconf_engine_read (engine, DCONF_READ_FLAGS_NONE, NULL, "value");
   g_assert (value == NULL);
 
   dconf_engine_unref (engine);

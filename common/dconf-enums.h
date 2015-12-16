@@ -32,4 +32,10 @@ typedef enum
   DCONF_ERROR_NOT_WRITABLE
 } DConfError;
 
+typedef enum
+{
+  DCONF_READ_FLAGS_NONE                 = 0,
+  DCONF_READ_USER_VALUE                 = (1u << 1)
+} DConfReadFlags;
+
 #endif /* __dconf_error_h__ */

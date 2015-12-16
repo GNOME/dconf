@@ -53,12 +53,12 @@ dconf_settings_backend_read (GSettingsBackend   *backend,
       /* Mark the key as having been reset when trying to do the read... */
       read_through = g_queue_new ();
       g_queue_push_tail (read_through, dconf_changeset_new_write (key, NULL));
-      value = dconf_engine_read (dcsb->engine, read_through, key);
+      value = dconf_engine_read (dcsb->engine, DCONF_READ_FLAGS_NONE, read_through, key);
       g_queue_free_full (read_through, (GDestroyNotify) dconf_changeset_unref);
     }
 
   else
-    value = dconf_engine_read (dcsb->engine, NULL, key);
+    value = dconf_engine_read (dcsb->engine, DCONF_READ_FLAGS_NONE, NULL, key);
 
   return value;
 }
@@ -70,7 +70,7 @@ dconf_settings_backend_read_user_value (GSettingsBackend   *backend,
 {
   DConfSettingsBackend *dcsb = (DConfSettingsBackend *) backend;
 
-  return dconf_engine_read_user_value (dcsb->engine, NULL, key);
+  return dconf_engine_read (dcsb->engine, DCONF_READ_USER_VALUE, NULL, key);
 }
 
 static gboolean
