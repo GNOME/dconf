@@ -97,6 +97,7 @@ Commands:
   help              Show this information
   read              Read the value of a key
   list              List the contents of a dir
+  list-locks        List the locks present below a dir
   write             Change the value of a key
   reset             Reset the value of a key or dir
   compile           Compile a binary database from keyfiles
