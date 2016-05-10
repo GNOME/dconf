@@ -252,6 +252,21 @@ dconf_writer_end (DConfWriter *writer)
   return DCONF_WRITER_GET_CLASS (writer)->end (writer);
 }
 
+static void
+dconf_writer_complete_invocation (DConfDBusWriter       *dbus_writer,
+                                  GDBusMethodInvocation *invocation,
+                                  GVariant              *result,
+                                  GError                *error)
+{
+  if (error)
+    {
+      g_dbus_method_invocation_return_gerror (invocation, error);
+      g_error_free (error);
+    }
+  else
+    g_dbus_method_invocation_return_value (invocation, result);
+}
+
 static gboolean
 dconf_writer_handle_init (DConfDBusWriter       *dbus_writer,
                           GDBusMethodInvocation *invocation)
@@ -264,15 +279,7 @@ dconf_writer_handle_init (DConfDBusWriter       *dbus_writer,
   if (dconf_writer_begin (writer, &error))
     dconf_writer_commit (writer, &error);
 
-  if (error)
-    {
-      g_dbus_method_invocation_return_gerror (invocation, error);
-      g_error_free (error);
-    }
-
-  else
-    g_dbus_method_invocation_return_value (invocation, NULL);
-
+  dconf_writer_complete_invocation (dbus_writer, invocation, NULL, error);
   dconf_writer_end (writer);
 
   return TRUE;
@@ -286,7 +293,7 @@ dconf_writer_handle_change (DConfDBusWriter       *dbus_writer,
   DConfWriter *writer = DCONF_WRITER (dbus_writer);
   DConfChangeset *changeset;
   GError *error = NULL;
-  GVariant *tmp, *args;
+  GVariant *tmp, *args, *result = NULL;
   gchar *tag;
 
   dconf_blame_record (invocation);
@@ -316,19 +323,13 @@ dconf_writer_handle_change (DConfDBusWriter       *dbus_writer,
     }
 
 out:
+  if (!error)
+    result = g_variant_new ("(s)", tag);
+
   dconf_changeset_unref (changeset);
-
-  if (error)
-    {
-      g_dbus_method_invocation_return_gerror (invocation, error);
-      g_error_free (error);
-    }
-
-  else
-    g_dbus_method_invocation_return_value (invocation, g_variant_new ("(s)", tag));
-
   g_free (tag);
 
+  dconf_writer_complete_invocation (dbus_writer, invocation, result, error);
   dconf_writer_end (writer);
 
   return TRUE;
