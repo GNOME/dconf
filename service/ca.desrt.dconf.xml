@@ -13,6 +13,11 @@
       <arg name='changes' direction='out' type='as'/>
       <arg name='tag' direction='out' type='s'/>
     </signal>
+    <signal name='Error'>
+      <annotation name='org.gtk.GDBus.C.Name' value='ErrorSignal'/>
+      <arg name='name' direction='out' type='s'/>
+      <arg name='message' direction='out' type='s'/>
+    </signal>
   </interface>
 
   <interface name='ca.desrt.dconf.ServiceInfo'>

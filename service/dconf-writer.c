@@ -260,6 +260,13 @@ dconf_writer_complete_invocation (DConfDBusWriter       *dbus_writer,
 {
   if (error)
     {
+      if (g_error_matches (error, G_FILE_ERROR, G_FILE_ERROR_NOSPC))
+        dconf_dbus_writer_emit_error_signal (dbus_writer, "ca.desrt.dconf.Writer.Error.OutOfSpace",
+                                             "No space left on device");
+      else
+        dconf_dbus_writer_emit_error_signal (dbus_writer, "ca.desrt.dconf.Writer.Error.Failed",
+                                             "Failed to write changes");
+
       g_dbus_method_invocation_return_gerror (invocation, error);
       g_error_free (error);
     }
