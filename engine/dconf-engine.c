@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, see <http://www.gnu.org/licenses/>.
  *
- * Author: Ryan Lortie <desrt@desrt.ca>
+ * Author: Allison Lortie <desrt@desrt.ca>
  */
 
 #include "config.h"
@@ -162,6 +162,7 @@ struct _DConfEngine
   guint64             state;        /* Counter that changes every time a source is refreshed. */
   DConfEngineSource **sources;      /* Array never changes, but each source changes internally. */
   gint                n_sources;
+  gboolean            has_locks;    /* Must be updated when refreshing the source list. */
 
   GMutex              queue_lock;   /* This lock is for pending, in_flight, queue_cond */
   GCond               queue_cond;   /* Signalled when the queues empty */
@@ -195,13 +196,32 @@ struct _DConfEngine
 static void
 dconf_engine_acquire_sources (DConfEngine *engine)
 {
+  gboolean changed = FALSE;
   gint i;
 
   g_mutex_lock (&engine->sources_lock);
 
   for (i = 0; i < engine->n_sources; i++)
-    if (dconf_engine_source_refresh (engine->sources[i]))
+    changed |= dconf_engine_source_refresh (engine->sources[i]);
+
+  if (changed)
+    {
+      gboolean has_locks;
+
+      /* If we have no sources, or if the first source is non-writable, the
+       * effect is as-if everything is locked.
+       *
+       * Note: nothing in this line can change as a result of a refresh.
+       */
+      has_locks = engine->n_sources == 0 || !engine->sources[0]->writable;
+
+      /* Now we check if the refresh had any effect. */
+      for (i = 1; !has_locks && i < engine->n_sources; i++)
+        has_locks |= engine->sources[i]->locks != NULL;
+
+      engine->has_locks = has_locks;
       engine->state++;
+    }
 }
 
 static void
@@ -233,6 +253,12 @@ dconf_engine_new (const gchar    *profile,
   engine->user_data = user_data;
   engine->free_func = free_func;
   engine->ref_count = 1;
+
+  /* The engine starts with zero sources, which means that every key is
+   * effectively locked.  If the engine has more than zero sources, this
+   * will be updated when the first refresh is done.
+   */
+  engine->has_locks = TRUE;
 
   g_mutex_init (&engine->sources_lock);
   g_mutex_init (&engine->queue_lock);
@@ -354,10 +380,13 @@ gboolean
 dconf_engine_is_writable (DConfEngine *engine,
                           const gchar *key)
 {
-  gboolean writable;
+  gboolean writable = TRUE;
 
   dconf_engine_acquire_sources (engine);
-  writable = dconf_engine_is_writable_internal (engine, key);
+
+  if (engine->has_locks)
+    writable = dconf_engine_is_writable_internal (engine, key);
+
   dconf_engine_release_sources (engine);
 
   return writable;
@@ -1115,7 +1144,8 @@ dconf_engine_changeset_changes_only_writable_keys (DConfEngine    *engine,
 
   dconf_engine_acquire_sources (engine);
 
-  if (!dconf_changeset_all (changeset, dconf_engine_is_writable_changeset_predicate, engine))
+  if (engine->has_locks &&
+      !dconf_changeset_all (changeset, dconf_engine_is_writable_changeset_predicate, engine))
     {
       g_set_error_literal (error, DCONF_ERROR, DCONF_ERROR_NOT_WRITABLE,
                            "The operation attempted to modify one or more non-writable keys");
