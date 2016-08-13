@@ -24,7 +24,25 @@
 
 typedef struct _GvdbTable GvdbTable;
 
+typedef struct
+{
+  const gchar *string;
+  guint        components;
+  guint32     *hashes;
+  guint       *lengths;
+  guint32      my_hashes[16];
+  guint        my_lengths[16];
+} GvdbPath;
+
 G_BEGIN_DECLS
+
+G_GNUC_INTERNAL
+void                    gvdb_path_init                                  (GvdbPath     *path,
+                                                                         const gchar  *string,
+                                                                         gchar         separator);
+
+G_GNUC_INTERNAL
+void                    gvdb_path_clear                                 (GvdbPath     *path);
 
 G_GNUC_INTERNAL
 GvdbTable *             gvdb_table_new_from_bytes                       (GBytes       *bytes,
