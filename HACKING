@@ -65,25 +65,10 @@ gsettings/:
 
   This directory produces the libdconfsettings.so GIOModule.
 
-dbus-1/:
-
-  This directory contains a client-side library based on libdbus-1.  It
-  also contains the D-Bus glue code for libdbus-1 (since it is the only
-  client-side library that is using it).
-
-  This directory produces the libdconf-dbus-1.so shared library.
-
-  It also produces libdconf-libdbus-1.a (containing the D-Bus glue) for
-  testing purposes, and its -shared variant.
-
 bin/:
 
   This is the 'dconf' commandline tool.  It uses the library from
   client/ above.
-
-editor/:
-
-  This is the graphical dconf-editor.  It also uses the client/ library.
 
 service/:
 
