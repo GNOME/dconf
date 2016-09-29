@@ -76,6 +76,14 @@ gboolean                gvdb_table_has_value                            (GvdbTab
 G_GNUC_INTERNAL
 gboolean                gvdb_table_is_valid                             (GvdbTable    *table);
 
+G_GNUC_INTERNAL
+GVariant *              gvdb_table_get_value_for_path                   (GvdbTable    *table,
+                                                                         GvdbPath     *path);
+
+G_GNUC_INTERNAL
+GVariant *              gvdb_table_get_best_value_for_path              (GvdbTable    *table,
+                                                                         GvdbPath     *path);
+
 G_END_DECLS
 
 #endif /* __gvdb_reader_h__ */

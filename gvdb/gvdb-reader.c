@@ -340,21 +340,17 @@ gvdb_table_check_name (GvdbTable             *file,
 }
 
 static const struct gvdb_hash_item *
-gvdb_table_lookup (GvdbTable   *file,
-                   const gchar *key,
-                   gchar        type)
+gvdb_table_lookup_with_hash_internal (GvdbTable   *file,
+                                      const gchar *key,
+                                      guint        key_length,
+                                      guint32      hash_value)
 {
-  guint32 hash_value = 5381;
-  guint key_length;
   guint32 bucket;
   guint32 lastno;
   guint32 itemno;
 
   if G_UNLIKELY (file->n_buckets == 0 || file->n_hash_items == 0)
     return NULL;
-
-  for (key_length = 0; key[key_length]; key_length++)
-    hash_value = (hash_value * 33) + ((signed char *) key)[key_length];
 
   if (!gvdb_table_bloom_filter (file, hash_value))
     return NULL;
@@ -372,13 +368,54 @@ gvdb_table_lookup (GvdbTable   *file,
 
       if (hash_value == guint32_from_le (item->hash_value))
         if G_LIKELY (gvdb_table_check_name (file, item, key, key_length))
-          if G_LIKELY (item->type == type)
-            return item;
+          return item;
 
       itemno++;
     }
 
   return NULL;
+}
+
+static const struct gvdb_hash_item *
+gvdb_table_lookup_path_internal (GvdbTable *file,
+                                 GvdbPath  *path)
+{
+  guint32 hash_value = path->hashes[path->components - 1];
+  guint length = path->lengths[path->components - 1];
+
+  return gvdb_table_lookup_with_hash_internal (file, path->string, length, hash_value);
+}
+
+static const struct gvdb_hash_item *
+gvdb_table_lookup_best_internal (GvdbTable *file,
+                                 GvdbPath  *path)
+{
+  const struct gvdb_hash_item *result = NULL;
+  guint i;
+
+  for (i = path->components - 1; i != -1u; i--)
+    {
+      guint32 hash_value = path->hashes[i];
+      guint length = path->lengths[i];
+
+      result = gvdb_table_lookup_with_hash_internal (file, path->string, length, hash_value);
+
+      if (result)
+        break;
+    }
+
+  return result;
+}
+
+static const struct gvdb_hash_item *
+gvdb_table_lookup (GvdbTable   *file,
+                   const gchar *key)
+{
+  GvdbPath path;
+
+  gvdb_path_init (&path, key, '\0'); /* never needs to be cleared */
+
+  return gvdb_table_lookup_path_internal (file, &path);
 }
 
 static gboolean
@@ -577,7 +614,10 @@ gvdb_table_list (GvdbTable   *file,
   guint length;
   guint i;
 
-  if ((item = gvdb_table_lookup (file, key, 'L')) == NULL)
+  if ((item = gvdb_table_lookup (file, key)) == NULL)
+    return NULL;
+
+  if (item->type != 'L')
     return NULL;
 
   if (!gvdb_table_list_from_item (file, item, &list, &length))
@@ -630,9 +670,9 @@ gvdb_table_has_value (GvdbTable    *file,
   static const struct gvdb_hash_item *item;
   gsize size;
 
-  item = gvdb_table_lookup (file, key, 'v');
+  item = gvdb_table_lookup (file, key);
 
-  if (item == NULL)
+  if (item == NULL || item->type != 'v')
     return FALSE;
 
   return gvdb_table_dereference (file, &item->value.pointer, 8, &size) != NULL;
@@ -646,6 +686,9 @@ gvdb_table_value_from_item (GvdbTable                   *table,
   gconstpointer data;
   GBytes *bytes;
   gsize size;
+
+  if (item->type != 'v')
+    return NULL;
 
   data = gvdb_table_dereference (table, &item->value.pointer, 8, &size);
 
@@ -683,7 +726,7 @@ gvdb_table_get_value (GvdbTable    *file,
   const struct gvdb_hash_item *item;
   GVariant *value;
 
-  if ((item = gvdb_table_lookup (file, key, 'v')) == NULL)
+  if ((item = gvdb_table_lookup (file, key)) == NULL)
     return NULL;
 
   value = gvdb_table_value_from_item (file, item);
@@ -717,7 +760,35 @@ gvdb_table_get_raw_value (GvdbTable   *table,
 {
   const struct gvdb_hash_item *item;
 
-  if ((item = gvdb_table_lookup (table, key, 'v')) == NULL)
+  if ((item = gvdb_table_lookup (table, key)) == NULL)
+    return NULL;
+
+  return gvdb_table_value_from_item (table, item);
+}
+
+GVariant *
+gvdb_table_get_value_for_path (GvdbTable *table,
+                               GvdbPath  *path)
+{
+  const struct gvdb_hash_item *item = item;
+
+  item = gvdb_table_lookup_path_internal (table, path);
+
+  if (item == NULL)
+    return NULL;
+
+  return gvdb_table_value_from_item (table, item);
+}
+
+GVariant *
+gvdb_table_get_best_value_for_path (GvdbTable *table,
+                                    GvdbPath  *path)
+{
+  const struct gvdb_hash_item *item = item;
+
+  item = gvdb_table_lookup_best_internal (table, path);
+
+  if (item == NULL)
     return NULL;
 
   return gvdb_table_value_from_item (table, item);
@@ -749,9 +820,9 @@ gvdb_table_get_table (GvdbTable   *file,
   const struct gvdb_hash_item *item;
   GvdbTable *new;
 
-  item = gvdb_table_lookup (file, key, 'H');
+  item = gvdb_table_lookup (file, key);
 
-  if (item == NULL)
+  if (item == NULL || item->type != 'H')
     return NULL;
 
   new = g_slice_new0 (GvdbTable);
