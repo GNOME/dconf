@@ -49,28 +49,6 @@ gvdb_path_append_component (GvdbPath    *path,
 {
   guint this_component = path->components++;
 
-  if G_UNLIKELY (path->components % G_N_ELEMENTS (path->my_hashes) == 0)
-    {
-      guint next_size;
-
-      G_STATIC_ASSERT (sizeof path->my_hashes == sizeof path->my_lengths);
-
-      if (path->hashes == path->my_hashes)
-        {
-          /* It's slightly inefficient to do it this way, but
-           * we're already on the slow path, and this simplifies
-           * the code below.
-           */
-          path->hashes = g_memdup (path->hashes, sizeof path->my_hashes);
-          path->lengths = g_memdup (path->lengths, sizeof path->my_lengths);
-        }
-
-      /* 16 → 32 → etc. */
-      next_size = path->components + G_N_ELEMENTS (path->my_hashes);
-      path->hashes = g_renew (guint32, path->hashes, next_size);
-      path->lengths = g_renew (guint, path->lengths, next_size);
-    }
-
   path->hashes[this_component] = hash_value;
   path->lengths[this_component] = length;
 }
@@ -86,8 +64,6 @@ gvdb_path_init (GvdbPath    *path,
 
   path->string = string;
   path->components = 0;
-  path->hashes = path->my_hashes;
-  path->lengths = path->my_lengths;
 
   /* Find all of the separators, creating components, up to including
    * each one.
@@ -97,7 +73,13 @@ gvdb_path_init (GvdbPath    *path,
       hash_value = (hash_value * 33) + ((signed char) string[i]);
       more = TRUE;
 
-      if (string[i] == separator)
+      /* If we have a separator, and if we will not be using the last
+       * item in the array, add a new split point.
+       *
+       * In effect, this always allows locking of individual keys (at
+       * any depth) but only allows locking paths up to a certain depth.
+       */
+      if (string[i] == separator && path->components + 1 < G_N_ELEMENTS (path->hashes))
         {
           gvdb_path_append_component (path, hash_value, i + 1);
           more = FALSE;
@@ -109,16 +91,6 @@ gvdb_path_init (GvdbPath    *path,
    */
   if (more)
     gvdb_path_append_component (path, hash_value, i);
-}
-
-void
-gvdb_path_clear (GvdbPath *path)
-{
-  if (path->hashes != path->my_hashes)
-    g_free (path->hashes);
-
-  if (path->lengths != path->my_lengths)
-    g_free (path->my_lengths);
 }
 
 static const gchar *
