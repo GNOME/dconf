@@ -345,6 +345,16 @@ dconf_engine_get_state (DConfEngine *engine)
 }
 
 static gboolean
+dconf_engine_source_has_lock (DConfEngineSource *source,
+                              const gchar       *key)
+{
+  if (source->locks == NULL)
+    return FALSE;
+
+  return gvdb_table_has_value (source->locks, key);
+}
+
+static gboolean
 dconf_engine_is_writable_internal (DConfEngine *engine,
                                    const gchar *key)
 {
@@ -370,7 +380,7 @@ dconf_engine_is_writable_internal (DConfEngine *engine,
    * thing to do, or it's non-writable and we caught that case above.
    */
   for (i = 1; i < engine->n_sources; i++)
-    if (engine->sources[i]->locks && gvdb_table_has_value (engine->sources[i]->locks, key))
+    if (dconf_engine_source_has_lock (engine->sources[i], key))
       return FALSE;
 
   return TRUE;
@@ -599,7 +609,7 @@ dconf_engine_read (DConfEngine    *engine,
    */
   if (~flags & DCONF_READ_USER_VALUE)
     for (i = engine->n_sources - 1; i > 0; i--)
-      if (engine->sources[i]->locks && gvdb_table_has_value (engine->sources[i]->locks, key))
+      if (dconf_engine_source_has_lock (engine->sources[i], key))
         {
           lock_level = i;
           break;
