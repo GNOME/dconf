@@ -254,17 +254,17 @@ dconf_engine_new (const gchar    *profile,
   engine->free_func = free_func;
   engine->ref_count = 1;
 
-  /* The engine starts with zero sources, which means that every key is
-   * effectively locked.  If the engine has more than zero sources, this
-   * will be updated when the first refresh is done.
-   */
-  engine->has_locks = TRUE;
-
   g_mutex_init (&engine->sources_lock);
   g_mutex_init (&engine->queue_lock);
   g_cond_init (&engine->queue_cond);
 
   engine->sources = dconf_engine_profile_open (profile, &engine->n_sources);
+
+  /* We need to provide a reasonable initial value here.  We do not
+   * inspect the sources themselves for having locks, because this will
+   * be done the first time the engine is acquired.
+   */
+  engine->has_locks = engine->n_sources == 0 || !engine->sources[0]->writable;
 
   g_mutex_lock (&dconf_engine_global_lock);
   dconf_engine_global_list = g_slist_prepend (dconf_engine_global_list, engine);
