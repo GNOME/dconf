@@ -12,7 +12,10 @@ libdconf_engine_a_SOURCES = \
 	dconf-engine-source-user.c	\
 	dconf-engine-source-service.c	\
 	dconf-engine-source-system.c	\
+	dconf-engine-source-proxied.c	\
 	dconf-engine-source.c		\
+	dconf-engine-confinement.h	\
+	dconf-engine-confinement.c	\
 	dconf-engine.h			\
 	dconf-engine.c
 

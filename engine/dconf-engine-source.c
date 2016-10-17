@@ -128,6 +128,23 @@ dconf_engine_source_new (const gchar *description)
 }
 
 DConfEngineSource *
+dconf_engine_source_new_proxied (guint level)
+{
+  DConfEngineSource *source;
+
+  g_assert (level == 0 || level == 1);
+
+  source = g_malloc0 (dconf_engine_source_proxied_vtable.instance_size);
+  source->vtable = &dconf_engine_source_proxied_vtable;
+  source->name = g_strdup_printf ("%u", level);
+  source->writable = level == 0;
+
+  source->vtable->init (source);
+
+  return source;
+}
+
+DConfEngineSource *
 dconf_engine_source_new_default (void)
 {
   DConfEngineSource *source;

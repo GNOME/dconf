@@ -27,5 +27,6 @@ G_GNUC_INTERNAL extern const DConfEngineSourceVTable dconf_engine_source_file_vt
 G_GNUC_INTERNAL extern const DConfEngineSourceVTable dconf_engine_source_user_vtable;
 G_GNUC_INTERNAL extern const DConfEngineSourceVTable dconf_engine_source_service_vtable;
 G_GNUC_INTERNAL extern const DConfEngineSourceVTable dconf_engine_source_system_vtable;
+G_GNUC_INTERNAL extern const DConfEngineSourceVTable dconf_engine_source_proxied_vtable;
 
 #endif /* __dconf_engine_source_private_h__ */

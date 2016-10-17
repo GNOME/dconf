@@ -61,6 +61,9 @@ G_GNUC_INTERNAL
 DConfEngineSource *     dconf_engine_source_new                         (const gchar        *name);
 
 G_GNUC_INTERNAL
+DConfEngineSource *     dconf_engine_source_new_proxied                 (guint               level);
+
+G_GNUC_INTERNAL
 DConfEngineSource *     dconf_engine_source_new_default                 (void);
 
 #endif /* __dconf_engine_source_h__ */

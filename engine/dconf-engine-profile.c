@@ -20,6 +20,7 @@
 
 #include "config.h"
 
+#include "dconf-engine-confinement.h"
 #include "dconf-engine-profile.h"
 
 #include <string.h>
@@ -101,6 +102,19 @@ dconf_engine_default_profile (gint *n_sources)
   sources = g_new (DConfEngineSource *, 1);
   sources[0] = dconf_engine_source_new_default ();
   *n_sources = 1;
+
+  return sources;
+}
+
+static DConfEngineSource **
+dconf_engine_proxied_profile (gint *n_sources)
+{
+  DConfEngineSource **sources;
+
+  sources = g_new (DConfEngineSource *, 2);
+  sources[0] = dconf_engine_source_new_proxied (0);
+  sources[1] = dconf_engine_source_new_proxied (1);
+  *n_sources = 2;
 
   return sources;
 }
@@ -284,6 +298,10 @@ dconf_engine_profile_open (const gchar *profile,
   /* 1. Mandatory profile */
   if (profile == NULL)
     file = dconf_engine_open_mandatory_profile ();
+
+  /* 2. Proxied profile in case of confinement */
+  if (profile == NULL && file == NULL && dconf_engine_confinement_detect ())
+    return dconf_engine_proxied_profile (n_sources);
 
   /* 2. Environment variable */
   if (profile == NULL && file == NULL)
