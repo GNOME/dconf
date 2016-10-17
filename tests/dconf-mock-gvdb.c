@@ -209,3 +209,24 @@ dconf_mock_gvdb_table_invalidate (GvdbTable *table)
 {
   table->is_valid = FALSE;
 }
+
+GVariant *
+gvdb_table_get_best_value_for_path (GvdbTable *table,
+                                    GvdbPath  *path)
+{
+  /* TODO: make this actually check different path components */
+  return gvdb_table_get_value (table, path->string);
+}
+
+void
+gvdb_path_init (GvdbPath    *path,
+                const gchar *key,
+                gchar        separator)
+{
+  path->string = key;
+}
+
+void
+gvdb_path_clear (GvdbPath *path)
+{
+}

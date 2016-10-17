@@ -346,18 +346,36 @@ dconf_engine_get_state (DConfEngine *engine)
 
 static gboolean
 dconf_engine_source_has_lock (DConfEngineSource *source,
-                              const gchar       *key)
+                              GvdbPath          *path)
 {
+  gboolean locked = FALSE;
+  GVariant *value;
+
   if (source->locks == NULL)
     return FALSE;
 
-  return gvdb_table_has_value (source->locks, key);
+  value = gvdb_table_get_best_value_for_path (source->locks, path);
+  if (value)
+    {
+      /* Historically, the empty string, "" has meant 'locked', so
+       * consider any non-binary value to be TRUE.
+       */
+      locked = TRUE;
+
+      if (g_variant_is_of_type (value, G_VARIANT_TYPE_BOOLEAN))
+        locked = g_variant_get_boolean (value);
+
+      g_variant_unref (value);
+    }
+
+  return locked;
 }
 
 static gboolean
 dconf_engine_is_writable_internal (DConfEngine *engine,
                                    const gchar *key)
 {
+  GvdbPath path;
   gint i;
 
   /* We must check several things:
@@ -374,13 +392,21 @@ dconf_engine_is_writable_internal (DConfEngine *engine,
   if (engine->sources[0]->writable == FALSE)
     return FALSE;
 
+  /* This must be true, because the only way we have locks is if they
+   * are in source #1 or lower, except for the cases that were handled
+   * above.
+   */
+  g_assert (engine->n_sources > 1);
+
+  gvdb_path_init (&path, key, '/');
+
   /* Ignore locks in the first source.
    *
    * Either it is writable and therefore ignoring locks is the right
    * thing to do, or it's non-writable and we caught that case above.
    */
   for (i = 1; i < engine->n_sources; i++)
-    if (dconf_engine_source_has_lock (engine->sources[i], key))
+    if (dconf_engine_source_has_lock (engine->sources[i], &path))
       return FALSE;
 
   return TRUE;
@@ -607,13 +633,19 @@ dconf_engine_read (DConfEngine    *engine,
    *
    * Note: i > 0 (strictly).  Ignore locks for source #0.
    */
-  if (~flags & DCONF_READ_USER_VALUE)
-    for (i = engine->n_sources - 1; i > 0; i--)
-      if (dconf_engine_source_has_lock (engine->sources[i], key))
-        {
-          lock_level = i;
-          break;
-        }
+  if (~flags & DCONF_READ_USER_VALUE && engine->has_locks)
+    {
+      GvdbPath path;
+
+      gvdb_path_init (&path, key, '/');
+
+      for (i = engine->n_sources - 1; i > 0; i--)
+        if (dconf_engine_source_has_lock (engine->sources[i], &path))
+          {
+            lock_level = i;
+            break;
+          }
+    }
 
   /* Only do steps 2 to 4 if we have no locks and we have a writable source. */
   if (!lock_level && engine->n_sources != 0 && engine->sources[0]->writable)
