@@ -94,6 +94,10 @@ dconf_gdbus_get_worker_context (void)
     {
       GMainContext *context;
 
+      /* Work around https://bugzilla.gnome.org/show_bug.cgi?id=674885 */
+      g_type_ensure (G_TYPE_DBUS_CONNECTION);
+      g_type_ensure (G_TYPE_DBUS_PROXY);
+
       context = g_main_context_new ();
       g_thread_new ("dconf worker", dconf_gdbus_worker_thread, context);
       g_once_init_leave (&worker_context, context);
