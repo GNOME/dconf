@@ -86,6 +86,7 @@ AC_CONFIG_FILES([
   client/Makefile
   service/Makefile
   bin/Makefile
+  proxy/Makefile
   tests/Makefile
   docs/Makefile
   Makefile
