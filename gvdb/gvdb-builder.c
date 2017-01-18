@@ -96,11 +96,65 @@ djb_hash (const gchar *key)
   return hash_value;
 }
 
+/* /a/b/ → /a/
+ * /a/b  → /a/
+ * /     → NULL
+ */
+static gchar *
+gvdb_get_parent_name (const gchar *path,
+                      gchar        separator)
+{
+  gsize len;
+
+  len = strlen (path);
+  if (len == 1)
+    return NULL;
+
+  /* '/path/name/' → '/path/name' */
+  if (path[len - 1] == separator)
+    len--;
+
+  /* '/path/name' → '/path/' */
+  while (path[len - 1] != separator)
+    len--;
+
+  return g_strndup (path, len);
+}
+
+static void
+gvdb_hash_table_setup_item_parent (GHashTable *table,
+                                   GvdbItem   *item,
+                                   gchar       separator)
+{
+  GvdbItem *parent;
+  gchar *parent_name;
+
+  parent_name = gvdb_get_parent_name (item->key, separator);
+  if (parent_name == NULL)
+    /* root node */
+    return;
+
+  parent = g_hash_table_lookup (table, parent_name);
+
+  if (parent == NULL)
+    {
+      parent = gvdb_hash_table_insert (table, parent_name);
+      gvdb_hash_table_setup_item_parent (table, parent, separator);
+    }
+
+  gvdb_item_set_parent (item, parent);
+
+  g_free (parent_name);
+}
+
 GvdbItem *
-gvdb_hash_table_insert (GHashTable  *table,
-                        const gchar *key)
+gvdb_hash_table_insert_path (GHashTable  *table,
+                             const gchar *key,
+                             gchar        separator)
 {
   GvdbItem *item;
+
+  g_assert (!separator || key[0] == separator);
 
   item = g_slice_new0 (GvdbItem);
   item->key = g_strdup (key);
@@ -108,7 +162,17 @@ gvdb_hash_table_insert (GHashTable  *table,
 
   g_hash_table_insert (table, g_strdup (key), item);
 
+  if (separator)
+    gvdb_hash_table_setup_item_parent (table, item, separator);
+
   return item;
+}
+
+GvdbItem *
+gvdb_hash_table_insert (GHashTable  *table,
+                        const gchar *key)
+{
+  return gvdb_hash_table_insert_path (table, key, '\0');
 }
 
 void

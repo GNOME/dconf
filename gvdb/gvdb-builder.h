@@ -32,6 +32,10 @@ G_GNUC_INTERNAL
 GvdbItem *              gvdb_hash_table_insert                          (GHashTable    *table,
                                                                          const gchar   *key);
 G_GNUC_INTERNAL
+GvdbItem *              gvdb_hash_table_insert_path                     (GHashTable    *table,
+                                                                         const gchar   *key,
+                                                                         gchar          separator);
+G_GNUC_INTERNAL
 void                    gvdb_hash_table_insert_string                   (GHashTable    *table,
                                                                          const gchar   *key,
                                                                          const gchar   *value);

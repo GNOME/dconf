@@ -32,21 +32,20 @@ typedef struct {
   PermissionList  writable;
 } Permissions;
 
-void
-permission_list_add (PermissionList *self,
-                     const gchar    *string);
-
-void
-permission_list_remove (PermissionList *self,
-                        const gchar    *string);
-
-void
+gboolean
 permission_list_merge (PermissionList *self,
                        PermissionList *to_merge);
 
-void
+gboolean
 permission_list_unmerge (PermissionList *self,
                          PermissionList *to_unmerge);
+
+gboolean
+permission_list_contains (PermissionList *self,
+                          const gchar    *path);
+
+const gchar **
+permission_list_get_strv (PermissionList *self);
 
 void
 permission_list_init (PermissionList  *self,
@@ -55,16 +54,17 @@ permission_list_init (PermissionList  *self,
 void
 permission_list_clear (PermissionList *self);
 
+
 void
 permissions_init (Permissions *permissions);
 
 void
 permissions_clear (Permissions *permissions);
 
-void
+gboolean
 permissions_merge (Permissions *permissions,
                    Permissions *to_merge);
 
-void
+gboolean
 permissions_unmerge (Permissions *permissions,
                      Permissions *to_unmerge);

@@ -36,7 +36,14 @@ confinement_check (GVariant    *credentials,
   *out_is_confined = is_confined;
 
   if (is_confined)
-    *out_confined_permissions = permissions;
+    {
+      /* Implicitly, all writable areas are also readable, so merge them
+       * into the readable list.
+       */
+      permission_list_merge (&permissions.readable, &permissions.writable);
+
+      *out_confined_permissions = permissions;
+    }
 
   return TRUE;
 }

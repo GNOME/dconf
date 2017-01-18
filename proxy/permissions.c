@@ -19,53 +19,107 @@
 
 #include "permissions.h"
 
-void
+static gboolean
 permission_list_add (PermissionList *self,
                      const gchar    *string)
 {
-  gsize current;
+  gsize ref_count;
 
-  current = (gsize) g_hash_table_lookup (self->hash_table, string);
-  g_hash_table_insert (self->hash_table, g_strdup (string), (gpointer) (current + 1));
+  ref_count = (gsize) g_hash_table_lookup (self->hash_table, string);
+
+  ref_count++;
+
+  g_hash_table_insert (self->hash_table, g_strdup (string), (gpointer) ref_count);
+
+  return ref_count == 1;
 }
 
-void
+static gboolean
 permission_list_remove (PermissionList *self,
                         const gchar    *string)
 {
-  gsize current;
+  gsize ref_count;
 
-  current = (gsize) g_hash_table_lookup (self->hash_table, string);
-  g_assert (current != 0);
+  ref_count = (gsize) g_hash_table_lookup (self->hash_table, string);
+  g_assert (ref_count != 0);
 
-  if (current > 1)
-    g_hash_table_insert (self->hash_table, g_strdup (string), (gpointer) (current - 1));
+  ref_count--;
+
+  if (ref_count > 0)
+    g_hash_table_insert (self->hash_table, g_strdup (string), (gpointer) ref_count);
   else
     g_hash_table_remove (self->hash_table, string);
+
+  return ref_count == 0;
 }
 
-void
+gboolean
 permission_list_merge (PermissionList *self,
                        PermissionList *to_merge)
 {
+  gboolean any_changes = FALSE;
   GHashTableIter iter;
   gpointer key;
 
   g_hash_table_iter_init (&iter, to_merge->hash_table);
   while (g_hash_table_iter_next (&iter, &key, NULL))
-    permission_list_add (self, key);
+    any_changes |= permission_list_add (self, key);
+
+  return any_changes;
 }
 
-void
+gboolean
 permission_list_unmerge (PermissionList *self,
                          PermissionList *to_unmerge)
 {
+  gboolean any_changes = FALSE;
   GHashTableIter iter;
   gpointer key;
 
   g_hash_table_iter_init (&iter, to_unmerge->hash_table);
   while (g_hash_table_iter_next (&iter, &key, NULL))
-    permission_list_remove (self, key);
+    any_changes |= permission_list_remove (self, key);
+
+  return any_changes;
+}
+
+static gboolean
+path_contains (const gchar *a,
+               const gchar *b)
+{
+  gint i;
+
+  for (i = 0; b[i]; i++)
+    if (a[i] != b[i])
+      {
+        if (a[i] == '/')
+          return TRUE;
+
+        return FALSE;
+      }
+
+  return a[i] == '\0';
+}
+
+gboolean
+permission_list_contains (PermissionList *self,
+                          const gchar    *path)
+{
+  GHashTableIter iter;
+  gpointer key;
+
+  g_hash_table_iter_init (&iter, self->hash_table);
+  while (g_hash_table_iter_next (&iter, &key, NULL))
+    if (path_contains (key, path))
+      return TRUE;
+
+  return FALSE;
+}
+
+const gchar **
+permission_list_get_strv (PermissionList *self)
+{
+  return (const gchar **) g_hash_table_get_keys_as_array (self->hash_table, NULL);
 }
 
 void
@@ -88,8 +142,7 @@ permission_list_init (PermissionList  *self,
 void
 permission_list_clear (PermissionList *self)
 {
-  g_hash_table_unref (self->hash_table);
-  self->hash_table = NULL;
+  g_clear_pointer (&self->hash_table, g_hash_table_unref);
 }
 
 void
@@ -100,10 +153,13 @@ permissions_init (Permissions *permissions)
 }
 
 void
-permissions_clear (Permissions *permissions)
+permissions_clear (Permissions *self)
 {
-  permission_list_clear (&permissions->readable);
-  permission_list_clear (&permissions->writable);
+  g_clear_pointer (&self->app_id, g_free);
+  g_clear_pointer (&self->ipc_dir, g_free);
+
+  permission_list_clear (&self->readable);
+  permission_list_clear (&self->writable);
 }
 
 static void
@@ -116,22 +172,21 @@ merge_string (gchar       **dest,
   g_assert_cmpstr (*dest, ==, src);
 }
 
-void
+gboolean
 permissions_merge (Permissions *permissions,
                    Permissions *to_merge)
 {
   merge_string (&permissions->app_id, to_merge->app_id);
   merge_string (&permissions->ipc_dir, to_merge->ipc_dir);
 
-  permission_list_merge (&permissions->readable, &to_merge->readable);
-  permission_list_merge (&permissions->writable, &to_merge->writable);
+  return permission_list_merge (&permissions->readable, &to_merge->readable) |
+         permission_list_merge (&permissions->writable, &to_merge->writable);
 }
 
-void
+gboolean
 permissions_unmerge (Permissions *permissions,
                      Permissions *to_unmerge)
 {
-  permission_list_unmerge (&permissions->readable, &to_unmerge->readable);
-  permission_list_unmerge (&permissions->writable, &to_unmerge->writable);
+  return permission_list_unmerge (&permissions->readable, &to_unmerge->readable) |
+         permission_list_unmerge (&permissions->writable, &to_unmerge->writable);
 }
-

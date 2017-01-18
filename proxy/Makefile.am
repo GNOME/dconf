@@ -5,9 +5,12 @@ libexec_PROGRAMS = dconf-proxy
 dbusservice_DATA = ca.desrt.dconf.Proxy.service
 
 dconf_proxy_CFLAGS = $(gio_CFLAGS)
-dconf_proxy_LDADD = $(gio_LIBS)
+dconf_proxy_LDADD = \
+	../client/libdconf.so		\
+	$(gio_LIBS)
 
 dconf_proxy_SOURCES = \
+	../gvdb/gvdb-builder.c		\
 	confinement.c			\
 	confinement-flatpak.c		\
 	confinement.h			\

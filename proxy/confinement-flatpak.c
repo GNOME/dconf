@@ -210,7 +210,7 @@ confinement_check_flatpak (GVariant    *credentials,
                         g_key_file_get_string_list (keyfile, "Policy dconf", "readable", NULL, NULL));
   permission_list_init (&out_permissions->writable,
                         g_key_file_get_string_list (keyfile, "Policy dconf", "writable", NULL, NULL));
-  out_permissions->ipc_dir = g_build_filename (g_get_user_runtime_dir (), "app", appid, NULL);
+  out_permissions->ipc_dir = g_build_filename (g_get_user_runtime_dir (), "app", appid, "dconf", NULL);
   out_permissions->app_id = appid;
 
   *out_is_confined = TRUE;

@@ -2,7 +2,7 @@ include Makefile.gtester
 
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = shm gvdb common engine service proxy gdbus gsettings client bin docs tests
+SUBDIRS = shm gvdb common engine service gdbus gsettings client proxy bin docs tests
 
 DISTCHECK_CONFIGURE_FLAGS = --enable-gtk-doc
 EXTRA_DIST = trim-lcov.py m4
