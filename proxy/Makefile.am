@@ -14,11 +14,18 @@ dconf_proxy_LDADD = \
 dconf_proxy_SOURCES = \
 	../gvdb/gvdb-builder.c		\
 	confinement.c			\
+	confinement-apparmor.c		\
 	confinement-flatpak.c		\
 	confinement.h			\
 	permissions.c			\
 	permissions.h			\
 	proxy.c
+
+if ENABLE_APPARMOR
+dconf_proxy_CPPFLAGS = -DHAVE_APPARMOR
+dconf_proxy_CFLAGS += $(apparmor_CFLAGS)
+dconf_proxy_LDADD += $(apparmor_LIBS)
+endif
 
 DISTCLEANFILES = ca.desrt.dconf.service
 

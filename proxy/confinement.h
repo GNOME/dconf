@@ -30,3 +30,8 @@ gboolean
 confinement_check_flatpak (GVariant    *credentials,
                            gboolean    *out_is_confined,
                            Permissions *out_permissions);
+
+gboolean
+confinement_check_apparmor (GVariant    *credentials,
+                            gboolean    *out_is_confined,
+                            Permissions *out_permissions);

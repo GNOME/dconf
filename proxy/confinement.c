@@ -30,8 +30,8 @@ confinement_check (GVariant    *credentials,
   if (!confinement_check_flatpak (credentials, &is_confined, &permissions))
     return FALSE;
 
-  if (!is_confined)
-    /* snap goes here */;
+  if (!is_confined && !confinement_check_apparmor (credentials, &is_confined, &permissions))
+    return FALSE;
 
   *out_is_confined = is_confined;
 
