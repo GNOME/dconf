@@ -25,5 +25,6 @@ install-data-hook:
 	  $(gio_QUERYMODULES) $(giomodulesdir) ;  \
 	fi
 
+TESTS_ENVIRONMENT = export GSETTINGS_LIB=libdconfsettings.so;
 TESTS = abicheck.sh
 EXTRA_DIST = abicheck.sh
