@@ -27,4 +27,4 @@ install-data-hook:
 
 TESTS_ENVIRONMENT = export GSETTINGS_LIB=libdconfsettings.so;
 TESTS = abicheck.sh
-EXTRA_DIST = abicheck.sh
+EXTRA_DIST = abicheck.sh meson.build

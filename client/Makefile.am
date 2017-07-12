@@ -35,7 +35,7 @@ libdconf_so_1_0_0_LDADD = \
 libdconf_so_1_0_0_LDFLAGS = -shared -Wl,-soname=libdconf.so.1
 libdconf_so_1_0_0_SOURCES = $(libdconf_client_a_SOURCES)
 
-EXTRA_DIST = dconf.vapi dconf.deps
+EXTRA_DIST = dconf.vapi dconf.deps meson.build
 
 vapi_DATA = dconf.vapi dconf.deps
 vapidir = $(datadir)/vala/vapi

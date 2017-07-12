@@ -23,4 +23,4 @@ dconf_SOURCES = \
 
 completiondir = $(datadir)/bash-completion/completions
 completion_DATA = completion/dconf
-EXTRA_DIST = $(completion_DATA)
+EXTRA_DIST = $(completion_DATA) meson.build

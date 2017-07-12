@@ -46,6 +46,6 @@ man_MANS += \
 	dconf.7
 endif
 
-EXTRA_DIST += dconf-service.xml dconf-tool.xml dconf-overview.xml
+EXTRA_DIST += dconf-service.xml dconf-tool.xml dconf-overview.xml meson.build
 
 DISTCLEANFILES = $(man_MANS)

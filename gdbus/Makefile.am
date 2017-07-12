@@ -19,3 +19,5 @@ libdconf_gdbus_filter_a_SOURCES = \
 
 libdconf_gdbus_filter_shared_a_CFLAGS = $(libdconf_gdbus_filter_a_CFLAGS) -fPIC -DPIC
 libdconf_gdbus_filter_shared_a_SOURCES = $(libdconf_gdbus_filter_a_SOURCES)
+
+EXTRA_DIST = meson.build

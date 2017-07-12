@@ -5,7 +5,7 @@ ACLOCAL_AMFLAGS = -I m4
 SUBDIRS = shm gvdb common engine service gdbus gsettings client bin docs tests
 
 DISTCHECK_CONFIGURE_FLAGS = --enable-gtk-doc
-EXTRA_DIST = trim-lcov.py m4
+EXTRA_DIST = trim-lcov.py m4 meson.build meson_options.txt meson_post_install.py
 
 clean-am: lcov-clean gcno-clean
 

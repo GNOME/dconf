@@ -94,3 +94,5 @@ client_LDADD = \
 	libdconf-mock.a				\
 	$(gio_LIBS)
 client_SOURCES = client.c
+
+EXTRA_DIST += meson.build

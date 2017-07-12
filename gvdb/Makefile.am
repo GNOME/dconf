@@ -12,3 +12,5 @@ libgvdb_a_SOURCES = \
 
 libgvdb_shared_a_CFLAGS = $(libgvdb_a_CFLAGS) -fPIC -DPIC
 libgvdb_shared_a_SOURCES = $(libgvdb_a_SOURCES)
+
+EXTRA_DIST = meson.build

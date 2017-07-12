@@ -19,3 +19,5 @@ libdconf_common_shared_a_SOURCES = $(libdconf_common_a_SOURCES)
 
 libdconf_common_hidden_a_CFLAGS = $(libdconf_common_a_CFLAGS) -fPIC -DPIC -fvisibility=hidden
 libdconf_common_hidden_a_SOURCES = $(libdconf_common_a_SOURCES)
+
+EXTRA_DIST = meson.build

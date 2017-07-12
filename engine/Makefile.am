@@ -18,3 +18,5 @@ libdconf_engine_a_SOURCES = \
 
 libdconf_engine_shared_a_CFLAGS = $(libdconf_engine_a_CFLAGS) -fPIC -DPIC
 libdconf_engine_shared_a_SOURCES = $(libdconf_engine_a_SOURCES)
+
+EXTRA_DIST = meson.build

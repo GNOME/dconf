@@ -35,7 +35,7 @@ DISTCLEANFILES = ca.desrt.dconf.service
 BUILT_SOURCES = dconf-generated.c dconf-generated.h
 CLEANFILES = $(BUILT_SOURCES)
 
-EXTRA_DIST = ca.desrt.dconf.xml
+EXTRA_DIST = ca.desrt.dconf.xml meson.build
 
 ca.desrt.dconf.service: Makefile
 	$(AM_V_GEN) (echo '[D-BUS Service]'; \
