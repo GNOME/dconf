@@ -1,6 +1,6 @@
 project(
   'dconf', ['c', 'vala'],
-  version: '0.26.0',
+  version: '0.27.1',
   license: 'LGPL2.1+',
   default_options: [
     'buildtype=debugoptimized',
