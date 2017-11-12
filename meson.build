@@ -53,7 +53,7 @@ foreach define: set_defines
 endforeach
 
 # compiler flags
-common_flags = ['-DHAVE_CONFIG_H']
+common_flags = []
 
 if get_option('buildtype').contains('debug')
   test_cflags = [
