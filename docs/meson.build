@@ -12,9 +12,9 @@ gnome.gtkdoc(
   install_dir: join_paths(dconf_datadir, 'gtk-doc', 'html', meson.project_name())
 )
 
-if get_option('enable-man')
+if get_option('man')
   xsltproc = find_program('xsltproc', required: false)
-  assert(xsltproc.found(), 'xsltproc is required for enable-man')
+  assert(xsltproc.found(), 'xsltproc is required for man generation')
 
   xsltproc_cmd = [
     xsltproc,
