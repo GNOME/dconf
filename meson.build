@@ -2,10 +2,6 @@ project(
   'dconf', ['c', 'vala'],
   version: '0.28.0',
   license: 'LGPL2.1+',
-  default_options: [
-    'buildtype=debugoptimized',
-    'warning_level=1'
-  ],
   meson_version: '>= 0.41.0'
 )
 
