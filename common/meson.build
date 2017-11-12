@@ -38,11 +38,7 @@ libdconf_common_shared = static_library(
   pic: true
 )
 
-test_cflag = '-fvisibility=hidden'
-
-if cc.has_argument(test_cflag)
-  cflags += [test_cflag]
-endif
+cflags += cc.get_supported_arguments('-fvisibility=hidden')
 
 libdconf_common_hidden = static_library(
   name + '-hidden',
