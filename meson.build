@@ -2,7 +2,7 @@ project(
   'dconf', ['c', 'vala'],
   version: '0.28.0',
   license: 'LGPL2.1+',
-  meson_version: '>= 0.41.0'
+  meson_version: '>= 0.43.0'
 )
 
 dconf_version = meson.project_version()
@@ -58,11 +58,7 @@ if get_option('buildtype').contains('debug')
     '-Wwrite-strings'
   ]
 
-  foreach cflag: test_cflags
-    if cc.has_argument(cflag)
-      common_flags += [cflag]
-    endif
-  endforeach
+  common_flags += cc.get_supported_arguments(test_cflags)
 endif
 
 add_project_arguments(common_flags, language: 'c')
