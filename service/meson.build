@@ -1,9 +1,9 @@
-dbus_service_dir = get_option('with-dbus-service-dir').strip()
+dbus_service_dir = get_option('dbus_service_dir')
 if dbus_service_dir == ''
   dbus_service_dir = join_paths(dconf_datadir, 'dbus-1', 'services')
 endif
 
-dbus_system_service_dir = get_option('with-dbus-system-service-dir').strip()
+dbus_system_service_dir = get_option('dbus_system_service_dir')
 if dbus_system_service_dir == ''
   dbus_system_service_dir = join_paths(dconf_datadir, 'dbus-1', 'system-services')
 endif

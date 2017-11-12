@@ -78,7 +78,7 @@ gio_unix_dep = dependency('gio-unix-2.0', version: gio_unix_req_version)
 
 gio_querymodules = find_program('gio-querymodules', required: false)
 if gio_querymodules.found()
-  gio_modules_dir = get_option('with-gio-modules-dir').strip()
+  gio_modules_dir = get_option('gio_modules_dir')
   if gio_modules_dir == ''
     gio_modules_dir = join_paths(dconf_libdir, 'gio', 'modules')
   endif

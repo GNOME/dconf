@@ -1,4 +1,4 @@
-if get_option('enable-gtk-doc')
+if get_option('gtk_doc')
   gnome.gtkdoc(
     meson.project_name(),
     main_xml: meson.project_name() + '-docs.xml',
@@ -14,9 +14,9 @@ if get_option('enable-gtk-doc')
   )
 endif
 
-if get_option('enable-man')
+if get_option('man')
   xsltproc = find_program('xsltproc', required: false)
-  assert(xsltproc.found(), 'xsltproc is required for enable-man')
+  assert(xsltproc.found(), 'xsltproc is required for man generation')
 
   xsltproc_cmd = [
     xsltproc,
