@@ -158,17 +158,20 @@ struct _DConfEngine
   GDestroyNotify      free_func;
   gint                ref_count;
 
-  GMutex              sources_lock; /* This lock is for the sources (ie: refreshing) and state. */
-  guint64             state;        /* Counter that changes every time a source is refreshed. */
-  DConfEngineSource **sources;      /* Array never changes, but each source changes internally. */
+  GMutex              sources_lock;  /* This lock is for the sources (ie: refreshing) and state. */
+  guint64             state;         /* Counter that changes every time a source is refreshed. */
+  DConfEngineSource **sources;       /* Array never changes, but each source changes internally. */
   gint                n_sources;
 
-  GMutex              queue_lock;   /* This lock is for pending, in_flight, queue_cond */
-  GCond               queue_cond;   /* Signalled when the queues empty */
-  GQueue              pending;      /* DConfChangeset */
-  GQueue              in_flight;    /* DConfChangeset */
+  GMutex              queue_lock;    /* This lock is for pending, in_flight, queue_cond */
+  GCond               queue_cond;    /* Signalled when the queues empty */
+  GQueue              pending;       /* DConfChangeset */
+  GQueue              in_flight;     /* DConfChangeset */
 
-  gchar              *last_handled; /* reply tag from last item in in_flight */
+  gchar              *last_handled;  /* reply tag from last item in in_flight */
+
+  GHashTable         *watched_paths; /* list of paths currently being watched for changes */
+  GHashTable         *pending_paths; /* list of paths waiting to enter watched state */
 };
 
 /* When taking the sources lock we check if any of the databases have
@@ -243,6 +246,9 @@ dconf_engine_new (const gchar    *profile,
   g_mutex_lock (&dconf_engine_global_lock);
   dconf_engine_global_list = g_slist_prepend (dconf_engine_global_list, engine);
   g_mutex_unlock (&dconf_engine_global_lock);
+
+  engine->watched_paths = g_hash_table_new (g_str_hash, g_str_equal);
+  engine->pending_paths = g_hash_table_new (g_str_hash, g_str_equal);
 
   return engine;
 }
@@ -801,6 +807,7 @@ typedef struct
 
   guint64 state;
   gint    pending;
+  gchar   *path;
 } OutstandingWatch;
 
 static void
@@ -825,11 +832,13 @@ dconf_engine_watch_established (DConfEngine  *engine,
        * must have changed while our watch requests were on the wire.
        *
        * We don't know what changed, so we can just say that potentially
-       * everything changed.  This case is very rare, anyway...
+       * everything under the path being watched changed.  This case is
+       * very rare, anyway...
        */
-      dconf_engine_change_notify (engine, "/", changes, NULL, FALSE, NULL, engine->user_data);
+      dconf_engine_change_notify (engine, ow->path, changes, NULL, FALSE, NULL, engine->user_data);
     }
 
+  dconf_engine_set_watching(engine, ow->path, TRUE, TRUE);
   dconf_engine_call_handle_free (handle);
 }
 
@@ -837,6 +846,15 @@ void
 dconf_engine_watch_fast (DConfEngine *engine,
                          const gchar *path)
 {
+  if (dconf_engine_is_watching(engine, path, TRUE))
+    {
+      /**
+       * Either there is already a match rule in place for this exact path,
+       * or there is already a request in progress to add a match.
+       */
+      return;
+    }
+
   OutstandingWatch *ow;
   gint i;
 
@@ -855,6 +873,7 @@ dconf_engine_watch_fast (DConfEngine *engine,
   ow = dconf_engine_call_handle_new (engine, dconf_engine_watch_established,
                                      G_VARIANT_TYPE_UNIT, sizeof (OutstandingWatch));
   ow->state = dconf_engine_get_state (engine);
+  ow->path = g_strdup(path);
 
   /* We start getting async calls returned as soon as we start dispatching them,
    * so we must not touch the 'ow' struct after we send the first one.
@@ -869,6 +888,8 @@ dconf_engine_watch_fast (DConfEngine *engine,
                                          "/org/freedesktop/DBus", "org.freedesktop.DBus", "AddMatch",
                                          dconf_engine_make_match_rule (engine->sources[i], path),
                                          &ow->handle, NULL);
+
+  dconf_engine_set_watching(engine, ow->path, TRUE, FALSE);
 }
 
 void
@@ -882,6 +903,8 @@ dconf_engine_unwatch_fast (DConfEngine *engine,
       dconf_engine_dbus_call_async_func (engine->sources[i]->bus_type, "org.freedesktop.DBus",
                                          "/org/freedesktop/DBus", "org.freedesktop.DBus", "RemoveMatch",
                                          dconf_engine_make_match_rule (engine->sources[i], path), NULL, NULL);
+
+  dconf_engine_set_watching(engine, g_strdup(path), FALSE, FALSE);
 }
 
 static void
@@ -920,6 +943,7 @@ dconf_engine_watch_sync (DConfEngine *engine,
                          const gchar *path)
 {
   dconf_engine_handle_match_rule_sync (engine, "AddMatch", path);
+  dconf_engine_set_watching(engine, g_strdup(path), TRUE, TRUE);
 }
 
 void
@@ -927,6 +951,7 @@ dconf_engine_unwatch_sync (DConfEngine *engine,
                            const gchar *path)
 {
   dconf_engine_handle_match_rule_sync (engine, "RemoveMatch", path);
+  dconf_engine_set_watching(engine, g_strdup(path), FALSE, FALSE);
 }
 
 typedef struct
@@ -1384,3 +1409,41 @@ dconf_engine_sync (DConfEngine *engine)
     g_cond_wait (&engine->queue_cond, &engine->queue_lock);
   dconf_engine_unlock_queues (engine);
 }
+
+void
+dconf_engine_set_watching (DConfEngine *engine, const gchar *path, const gboolean is_watching, const gboolean is_established)
+  {
+    gpointer key = (gpointer) path;
+    if (is_watching)
+      {
+        if (is_established)
+          {
+            g_hash_table_add(engine->watched_paths, key);
+            g_hash_table_remove(engine->pending_paths, (gconstpointer) key);
+          }
+        else
+          {
+            g_hash_table_add(engine->pending_paths, key);
+            g_hash_table_remove(engine->watched_paths, (gconstpointer) key);
+          }
+      }
+    else
+      {
+        g_hash_table_remove(engine->watched_paths, (gconstpointer) key);
+        g_hash_table_remove(engine->pending_paths, (gconstpointer) key);
+        g_free(key);
+      }
+  }
+
+gboolean
+dconf_engine_is_watching (DConfEngine *engine, const gchar *path, const gboolean only_established)
+  {
+    gconstpointer key = (gconstpointer) path;
+    if (g_hash_table_contains(engine->watched_paths, key))
+      return TRUE;
+
+    if (!only_established && g_hash_table_contains(engine->pending_paths, key))
+      return TRUE;
+
+    return FALSE;
+  }
