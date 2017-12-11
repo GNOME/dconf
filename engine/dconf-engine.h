@@ -138,6 +138,10 @@ void                    dconf_engine_unwatch_fast                       (DConfEn
                                                                          const gchar             *path);
 
 G_GNUC_INTERNAL
+gboolean                dconf_engine_changeset_has_no_effect            (DConfEngine              *engine,
+                                                                         DConfChangeset           *changeset);
+
+G_GNUC_INTERNAL
 gboolean                dconf_engine_change_fast                        (DConfEngine             *engine,
                                                                          DConfChangeset          *changeset,
                                                                          gpointer                 origin_tag,
