@@ -65,6 +65,9 @@ DConfChangeset *        dconf_changeset_deserialise                     (GVarian
 void                    dconf_changeset_change                          (DConfChangeset           *changeset,
                                                                          DConfChangeset           *changes);
 
+DConfChangeset *        dconf_changeset_filter_changes                  (DConfChangeset           *from,
+                                                                         DConfChangeset           *changes);
+
 DConfChangeset *        dconf_changeset_diff                            (DConfChangeset           *from,
                                                                          DConfChangeset           *to);
 

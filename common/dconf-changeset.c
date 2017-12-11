@@ -771,6 +771,7 @@ dconf_changeset_change (DConfChangeset *changeset,
     }
 }
 
+
 /**
  * dconf_changeset_diff:
  * @from: a database mode changeset
@@ -793,12 +794,68 @@ DConfChangeset *
 dconf_changeset_diff (DConfChangeset *from,
                       DConfChangeset *to)
 {
-  DConfChangeset *changeset = NULL;
+  /* We make no attempt to do dir resets, but we could...
+   *
+   * For now, we just reset each key individually.
+   *
+   * We create our list of changes in two steps:
+   *
+   *   - call dconf_changeset_filter_changes to find values from 'to'
+   *     which are not present in 'from' or hold different values to 'to'
+   *
+   *   - iterate the 'from' changeset and note any keys not present in
+   *     the 'to' changeset, recording resets for them
+   *
+   * This will cover all changes.
+   *
+   * Note: because 'from' and 'to' are database changesets we don't have
+   * to worry about seeing NULL values or dirs.
+   */
+  DConfChangeset *changeset = dconf_changeset_filter_changes (from, to);
+  GHashTableIter iter;
+  gpointer key, val;
+
+  g_return_val_if_fail (to->is_database, NULL);
+
+  g_hash_table_iter_init (&iter, from->table);
+  while (g_hash_table_iter_next (&iter, &key, &val))
+    if (!g_hash_table_lookup (to->table, key))
+      {
+        if (!changeset)
+          changeset = dconf_changeset_new ();
+
+        dconf_changeset_set (changeset, key, NULL);
+      }
+
+  return changeset;
+}
+
+/**
+ * dconf_changeset_filter_changes:
+ * @from: a database mode changeset
+ * @changes: a changeset
+ *
+ * produces a minimal changeset that describes what would happen if
+ * @changes was applied to @to.
+ *
+ * If there would be no changes, %NULL is returned
+ *
+ * Applying the result to @from will yield the same result as applying
+ * @changes to @from
+ *
+ * Returns: (transfer full) (nullable): the minimal changes, or %NULL
+ *
+ * Since: 0.30
+ */
+DConfChangeset *
+dconf_changeset_filter_changes (DConfChangeset *from,
+                                DConfChangeset *changes)
+{
+  DConfChangeset *result = NULL;
   GHashTableIter iter;
   gpointer key, val;
 
   g_return_val_if_fail (from->is_database, NULL);
-  g_return_val_if_fail (to->is_database, NULL);
 
   /* We make no attempt to do dir resets, but we could...
    *
@@ -817,29 +874,19 @@ dconf_changeset_diff (DConfChangeset *from,
    * Note: because 'from' and 'to' are database changesets we don't have
    * to worry about seeing NULL values or dirs.
    */
-  g_hash_table_iter_init (&iter, to->table);
+  g_hash_table_iter_init (&iter, changes->table);
   while (g_hash_table_iter_next (&iter, &key, &val))
     {
       GVariant *from_val = g_hash_table_lookup (from->table, key);
 
       if (from_val == NULL || !g_variant_equal (val, from_val))
         {
-          if (!changeset)
-            changeset = dconf_changeset_new ();
+          if (!result)
+            result = dconf_changeset_new ();
 
-          dconf_changeset_set (changeset, key, val);
+          dconf_changeset_set (result, key, val);
         }
     }
 
-  g_hash_table_iter_init (&iter, from->table);
-  while (g_hash_table_iter_next (&iter, &key, &val))
-    if (!g_hash_table_lookup (to->table, key))
-      {
-        if (!changeset)
-          changeset = dconf_changeset_new ();
-
-        dconf_changeset_set (changeset, key, NULL);
-      }
-
-  return changeset;
+  return result;
 }
