@@ -1619,6 +1619,91 @@ test_change_fast (void)
   change_log = NULL;
 }
 
+/**
+ * Tests that dconf_engine_change_fast() emits local optimistic change
+ * notifications in the right circumstances
+ */
+static void
+test_change_fast_redundant (void)
+{
+  DConfChangeset *change;
+  DConfEngine *engine;
+  change_log = g_string_new (NULL);
+
+  // Initialise an empty engine
+  engine = dconf_engine_new (SRCDIR "/profile/dos", NULL, NULL);
+
+  // Send an empty changeset, which has no effect
+  change = dconf_changeset_new ();
+  dconf_engine_change_fast (engine, change, NULL, NULL);
+  dconf_changeset_unref (change);
+  g_assert_cmpstr (change_log->str, ==, "");
+
+  // Reset the root directory, which has no effect since the database is empty
+  change = dconf_changeset_new_write ("/", NULL);
+  dconf_engine_change_fast (engine, change, NULL, NULL);
+  dconf_changeset_unref (change);
+  g_assert_cmpstr (change_log->str, ==, "");
+
+  // Set apple to NULL, which has no effect because it was already unset
+  change = dconf_changeset_new_write ("/apple", NULL);
+  dconf_engine_change_fast (engine, change, NULL, NULL);
+  dconf_changeset_unref (change);
+  g_assert_cmpstr (change_log->str, ==, "");
+
+  // Set apple to apple
+  change = dconf_changeset_new_write ("/apple", g_variant_new_string ("apple"));
+  dconf_engine_change_fast (engine, change, NULL, NULL);
+  dconf_changeset_unref (change);
+  g_assert_cmpstr (change_log->str, ==, "/apple:1::nil;");
+  g_string_set_size (change_log, 0);
+
+  // Set apple to apple, which has no effect because it is the same as the old value
+  change = dconf_changeset_new_write ("/apple", g_variant_new_string ("apple"));
+  dconf_engine_change_fast (engine, change, NULL, NULL);
+  dconf_changeset_unref (change);
+  g_assert_cmpstr (change_log->str, ==, "");
+  g_string_set_size (change_log, 0);
+
+  // Set apple to orange, which has an effect because it is different to the old value
+  change = dconf_changeset_new_write ("/apple", g_variant_new_string ("orange"));
+  dconf_engine_change_fast (engine, change, NULL, NULL);
+  dconf_changeset_unref (change);
+  g_assert_cmpstr (change_log->str, ==, "/apple:1::nil;");
+  g_string_set_size (change_log, 0);
+
+  // Set apple to NULL, which has an effect because it was previously set
+  change = dconf_changeset_new_write ("/apple", NULL);
+  dconf_engine_change_fast (engine, change, NULL, NULL);
+  dconf_changeset_unref (change);
+  g_assert_cmpstr (change_log->str, ==, "/apple:1::nil;");
+  g_string_set_size (change_log, 0);
+
+  // Set apple to apple
+  change = dconf_changeset_new_write ("/apple", g_variant_new_string ("apple"));
+  dconf_engine_change_fast (engine, change, NULL, NULL);
+  dconf_changeset_unref (change);
+  g_assert_cmpstr (change_log->str, ==, "/apple:1::nil;");
+  g_string_set_size (change_log, 0);
+
+  // Reset the root directory, which has an effect since the database is not empty
+  change = dconf_changeset_new_write ("/", NULL);
+  dconf_engine_change_fast (engine, change, NULL, NULL);
+  dconf_changeset_unref (change);
+  g_assert_cmpstr (change_log->str, ==, "/:1::nil;");
+  g_string_set_size (change_log, 0);
+
+  // Reset the root directory again, which has no effect since the database is empty
+  change = dconf_changeset_new_write ("/", NULL);
+  dconf_engine_change_fast (engine, change, NULL, NULL);
+  dconf_changeset_unref (change);
+  g_assert_cmpstr (change_log->str, ==, "");
+
+  dconf_engine_unref (engine);
+  g_string_free (change_log, TRUE);
+  change_log = NULL;
+}
+
 static GError *change_sync_error;
 static GVariant *change_sync_result;
 
@@ -2087,6 +2172,7 @@ main (int argc, char **argv)
   g_test_add_func ("/engine/watch/fast/short_lived", test_watch_fast_short_lived_subscriptions);
   g_test_add_func ("/engine/watch/sync", test_watch_sync);
   g_test_add_func ("/engine/change/fast", test_change_fast);
+  g_test_add_func ("/engine/change/fast_redundant", test_change_fast_redundant);
   g_test_add_func ("/engine/change/sync", test_change_sync);
   g_test_add_func ("/engine/signals", test_signals);
   g_test_add_func ("/engine/sync", test_sync);
