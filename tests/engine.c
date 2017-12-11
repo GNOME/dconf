@@ -1466,7 +1466,7 @@ test_watch_sync (void)
 static void
 test_change_fast (void)
 {
-  DConfChangeset *empty, *good_write, *bad_write, *very_good_write, *slightly_bad_write;
+  DConfChangeset *empty, *good_write, *good_write2, *bad_write, *very_good_write, *slightly_bad_write;
   GvdbTable *table, *locks;
   DConfEngine *engine;
   gboolean success;
@@ -1483,6 +1483,7 @@ test_change_fast (void)
 
   empty = dconf_changeset_new ();
   good_write = dconf_changeset_new_write ("/value", g_variant_new_string ("value"));
+  good_write2 = dconf_changeset_new_write ("/value2", g_variant_new_string ("value2"));
   bad_write = dconf_changeset_new_write ("/locked", g_variant_new_string ("value"));
   very_good_write = dconf_changeset_new_write ("/value", g_variant_new_string ("value"));
   dconf_changeset_set (very_good_write, "/to-reset", NULL);
@@ -1517,6 +1518,15 @@ test_change_fast (void)
   dconf_mock_dbus_assert_no_async ();
   g_assert_cmpstr (change_log->str, ==, "");
 
+  /* Verify that value is unset initially */
+  value = dconf_engine_read (engine, DCONF_READ_FLAGS_NONE, NULL, "/value");
+  g_assert (value == NULL);
+
+  /* Verify that value2 is unset initially */
+  value = dconf_engine_read (engine, DCONF_READ_FLAGS_NONE, NULL, "/value2");
+  g_assert (value == NULL);
+
+  /* change /value */
   success = dconf_engine_change_fast (engine, good_write, NULL, &error);
   g_assert_no_error (error);
   g_assert (success);
@@ -1530,7 +1540,48 @@ test_change_fast (void)
   g_assert_cmpstr (g_variant_get_string (value, NULL), ==, "value");
   g_variant_unref (value);
 
-  /* Fail the attempted write.  This should cause a warning and a change. */
+  /* Repeat the same write for /value (which is already in the in_flight queue) */
+  success = dconf_engine_change_fast (engine, good_write, NULL, &error);
+  g_assert_no_error (error);
+  g_assert (success);
+
+  /* Verify that /value is (still) set */
+  value = dconf_engine_read (engine, DCONF_READ_FLAGS_NONE, NULL, "/value");
+  g_assert_cmpstr (g_variant_get_string (value, NULL), ==, "value");
+  g_variant_unref (value);
+
+  /* That should not have emitted a synthetic change event, since the (local) value did not change */
+  g_assert_cmpstr (change_log->str, ==, "");
+  g_string_set_size (change_log, 0);
+
+  /* change /value2 */
+  success = dconf_engine_change_fast (engine, good_write2, NULL, &error);
+  g_assert_no_error (error);
+  g_assert (success);
+
+  /* That should have emitted a synthetic change event */
+  g_assert_cmpstr (change_log->str, ==, "/value2:1::nil;");
+  g_string_set_size (change_log, 0);
+
+  /* Verify that /value2 is set */
+  value = dconf_engine_read (engine, DCONF_READ_FLAGS_NONE, NULL, "/value2");
+  g_assert_cmpstr (g_variant_get_string (value, NULL), ==, "value2");
+  g_variant_unref (value);
+
+  /* change /value2 a second time */
+  success = dconf_engine_change_fast (engine, good_write2, NULL, &error);
+  g_assert_no_error (error);
+  g_assert (success);
+
+  /* That should not have emitted a synthetic change event because the (local) value didn't change */
+  g_assert_cmpstr (change_log->str, ==, "");
+
+  /* Verify that /value2 is still set */
+  value = dconf_engine_read (engine, DCONF_READ_FLAGS_NONE, NULL, "/value2");
+  g_assert_cmpstr (g_variant_get_string (value, NULL), ==, "value2");
+  g_variant_unref (value);
+
+  /* Fail the first attempted write.  This should cause a warning and a signal. */
   error = g_error_new_literal (G_FILE_ERROR, G_FILE_ERROR_NOENT, "something failed");
   dconf_mock_dbus_async_reply (NULL, error);
   g_clear_error (&error);
@@ -1539,8 +1590,25 @@ test_change_fast (void)
 
   assert_pop_message ("dconf", G_LOG_LEVEL_WARNING, "failed to commit changes to dconf: something failed");
 
-  /* Verify that the value became unset due to the failure */
-  value = dconf_engine_read (engine, DCONF_READ_FLAGS_NONE, NULL, "value");
+  /* Verify that /value is still set (because the second write is in progress) */
+  value = dconf_engine_read (engine, DCONF_READ_FLAGS_NONE, NULL, "/value");
+  g_assert_cmpstr (g_variant_get_string (value, NULL), ==, "value");
+  g_variant_unref (value);
+
+  /* Verify that /value2 is still set because the write is in progress */
+  value = dconf_engine_read (engine, DCONF_READ_FLAGS_NONE, NULL, "/value2");
+  g_assert_cmpstr (g_variant_get_string (value, NULL), ==, "value2");
+  g_variant_unref (value);
+
+  /* Now allow the second set of writes to succeed */
+  dconf_mock_dbus_async_reply (g_variant_new ("(s)", "tag"), NULL);
+
+  /* Verify that /value became unset due to the in flight queue clearing */
+  value = dconf_engine_read (engine, DCONF_READ_FLAGS_NONE, NULL, "/value");
+  g_assert (value == NULL);
+
+  /* Verify that /value2 became unset due to the in flight queue clearing */
+  value = dconf_engine_read (engine, DCONF_READ_FLAGS_NONE, NULL, "/value2");
   g_assert (value == NULL);
 
   /* Now try a successful write */
@@ -1615,6 +1683,91 @@ test_change_fast (void)
   dconf_changeset_unref (very_good_write);
   dconf_changeset_unref (bad_write);
   dconf_changeset_unref (slightly_bad_write);
+  g_string_free (change_log, TRUE);
+  change_log = NULL;
+}
+
+/**
+ * Tests that dconf_engine_change_fast() emits local optimistic change
+ * notifications in the right circumstances
+ */
+static void
+test_change_fast_redundant (void)
+{
+  DConfChangeset *change;
+  DConfEngine *engine;
+  change_log = g_string_new (NULL);
+
+  // Initialise an empty engine
+  engine = dconf_engine_new (SRCDIR "/profile/dos", NULL, NULL);
+
+  // Send an empty changeset, which has no effect
+  change = dconf_changeset_new ();
+  dconf_engine_change_fast (engine, change, NULL, NULL);
+  dconf_changeset_unref (change);
+  g_assert_cmpstr (change_log->str, ==, "");
+
+  // Reset the root directory, which has no effect since the database is empty
+  change = dconf_changeset_new_write ("/", NULL);
+  dconf_engine_change_fast (engine, change, NULL, NULL);
+  dconf_changeset_unref (change);
+  g_assert_cmpstr (change_log->str, ==, "");
+
+  // Set apple to NULL, which has no effect because it was already unset
+  change = dconf_changeset_new_write ("/apple", NULL);
+  dconf_engine_change_fast (engine, change, NULL, NULL);
+  dconf_changeset_unref (change);
+  g_assert_cmpstr (change_log->str, ==, "");
+
+  // Set apple to apple
+  change = dconf_changeset_new_write ("/apple", g_variant_new_string ("apple"));
+  dconf_engine_change_fast (engine, change, NULL, NULL);
+  dconf_changeset_unref (change);
+  g_assert_cmpstr (change_log->str, ==, "/apple:1::nil;");
+  g_string_set_size (change_log, 0);
+
+  // Set apple to apple, which has no effect because it is the same as the old value
+  change = dconf_changeset_new_write ("/apple", g_variant_new_string ("apple"));
+  dconf_engine_change_fast (engine, change, NULL, NULL);
+  dconf_changeset_unref (change);
+  g_assert_cmpstr (change_log->str, ==, "");
+  g_string_set_size (change_log, 0);
+
+  // Set apple to orange, which has an effect because it is different to the old value
+  change = dconf_changeset_new_write ("/apple", g_variant_new_string ("orange"));
+  dconf_engine_change_fast (engine, change, NULL, NULL);
+  dconf_changeset_unref (change);
+  g_assert_cmpstr (change_log->str, ==, "/apple:1::nil;");
+  g_string_set_size (change_log, 0);
+
+  // Set apple to NULL, which has an effect because it was previously set
+  change = dconf_changeset_new_write ("/apple", NULL);
+  dconf_engine_change_fast (engine, change, NULL, NULL);
+  dconf_changeset_unref (change);
+  g_assert_cmpstr (change_log->str, ==, "/apple:1::nil;");
+  g_string_set_size (change_log, 0);
+
+  // Set apple to apple
+  change = dconf_changeset_new_write ("/apple", g_variant_new_string ("apple"));
+  dconf_engine_change_fast (engine, change, NULL, NULL);
+  dconf_changeset_unref (change);
+  g_assert_cmpstr (change_log->str, ==, "/apple:1::nil;");
+  g_string_set_size (change_log, 0);
+
+  // Reset the root directory, which has an effect since the database is not empty
+  change = dconf_changeset_new_write ("/", NULL);
+  dconf_engine_change_fast (engine, change, NULL, NULL);
+  dconf_changeset_unref (change);
+  g_assert_cmpstr (change_log->str, ==, "/:1::nil;");
+  g_string_set_size (change_log, 0);
+
+  // Reset the root directory again, which has no effect since the database is empty
+  change = dconf_changeset_new_write ("/", NULL);
+  dconf_engine_change_fast (engine, change, NULL, NULL);
+  dconf_changeset_unref (change);
+  g_assert_cmpstr (change_log->str, ==, "");
+
+  dconf_engine_unref (engine);
   g_string_free (change_log, TRUE);
   change_log = NULL;
 }
@@ -2087,6 +2240,7 @@ main (int argc, char **argv)
   g_test_add_func ("/engine/watch/fast/short_lived", test_watch_fast_short_lived_subscriptions);
   g_test_add_func ("/engine/watch/sync", test_watch_sync);
   g_test_add_func ("/engine/change/fast", test_change_fast);
+  g_test_add_func ("/engine/change/fast_redundant", test_change_fast_redundant);
   g_test_add_func ("/engine/change/sync", test_change_sync);
   g_test_add_func ("/engine/signals", test_signals);
   g_test_add_func ("/engine/sync", test_sync);
