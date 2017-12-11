@@ -772,6 +772,57 @@ dconf_changeset_change (DConfChangeset *changeset,
 }
 
 /**
+ * dconf_changeset_filter_changes:
+ * @base: a database mode changeset
+ * @changes: a changeset
+ *
+ * Produces a changeset that contains all the changes in @changes that
+ * are not already present in @base
+ *
+ * If there are no such changes, %NULL is returned
+ *
+ * Applying the result to @base will yield the same result as applying
+ * @changes to @base
+ *
+ * Returns: (transfer full) (nullable): the minimal changes, or %NULL
+ *
+ * Since: 0.35.1
+ */
+DConfChangeset *
+dconf_changeset_filter_changes (DConfChangeset *base,
+                                DConfChangeset *changes)
+{
+  DConfChangeset *result = NULL;
+  GHashTableIter iter;
+  gpointer key, val;
+
+  g_return_val_if_fail (base->is_database, NULL);
+
+  /* We create the list of changes by iterating the 'changes' changeset
+   * and noting any keys that are not in the 'base' changeset or do not
+   * have the same value in the 'base' changeset
+   *
+   * Note: because 'base' is a database changeset we don't have to
+   * worry about it containing NULL values (dir resets).
+   */
+  g_hash_table_iter_init (&iter, changes->table);
+  while (g_hash_table_iter_next (&iter, &key, &val))
+    {
+      GVariant *base_val = g_hash_table_lookup (base->table, key);
+
+      if (base_val == NULL || !g_variant_equal (val, base_val))
+        {
+          if (!result)
+            result = dconf_changeset_new ();
+
+          dconf_changeset_set (result, key, val);
+        }
+    }
+
+  return result;
+}
+
+/**
  * dconf_changeset_diff:
  * @from: a database mode changeset
  * @to: a database mode changeset
@@ -793,7 +844,7 @@ DConfChangeset *
 dconf_changeset_diff (DConfChangeset *from,
                       DConfChangeset *to)
 {
-  DConfChangeset *changeset = NULL;
+  DConfChangeset *changeset;
   GHashTableIter iter;
   gpointer key, val;
 
@@ -806,8 +857,8 @@ dconf_changeset_diff (DConfChangeset *from,
    *
    * We create our list of changes in two steps:
    *
-   *   - iterate the 'to' changeset and note any keys that do not have
-   *     the same value in the 'from' changeset
+   *   - call dconf_changeset_filter_changes to find values from 'to'
+   *     which are not present in 'from' or hold different values to 'to'
    *
    *   - iterate the 'from' changeset and note any keys not present in
    *     the 'to' changeset, recording resets for them
@@ -817,19 +868,8 @@ dconf_changeset_diff (DConfChangeset *from,
    * Note: because 'from' and 'to' are database changesets we don't have
    * to worry about seeing NULL values or dirs.
    */
-  g_hash_table_iter_init (&iter, to->table);
-  while (g_hash_table_iter_next (&iter, &key, &val))
-    {
-      GVariant *from_val = g_hash_table_lookup (from->table, key);
 
-      if (from_val == NULL || !g_variant_equal (val, from_val))
-        {
-          if (!changeset)
-            changeset = dconf_changeset_new ();
-
-          dconf_changeset_set (changeset, key, val);
-        }
-    }
+  changeset = dconf_changeset_filter_changes (from, to);
 
   g_hash_table_iter_init (&iter, from->table);
   while (g_hash_table_iter_next (&iter, &key, &val))
