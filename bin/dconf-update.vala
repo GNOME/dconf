@@ -247,8 +247,11 @@ void dconf_compile (string[] args) throws GLib.Error {
 	}
 }
 
+[CCode (cname = "SYSCONFDIR")]
+extern const string CONFIG_SYSCONFDIR;
+
 void dconf_update (string[] args) throws GLib.Error {
-	update_all ("/etc/dconf/db");
+	update_all (CONFIG_SYSCONFDIR + "/dconf/db");
 }
 
 // vim:noet ts=4 sw=4
