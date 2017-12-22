@@ -14,7 +14,7 @@
 #include <dlfcn.h>
 #include <math.h>
 
-/* Interpose to catch fopen("/etc/dconf/profile/user") */
+/* Interpose to catch fopen(SYSCONFDIR "/dconf/profile/user") */
 static const gchar *filename_to_replace;
 static const gchar *filename_to_replace_it_with;
 
@@ -116,7 +116,7 @@ test_five_times (const gchar *filename,
   g_unsetenv ("DCONF_PROFILE");
 
   /* next try supplying a profile name via API and intercepting fopen */
-  filename_to_replace = "/etc/dconf/profile/myprofile";
+  filename_to_replace = SYSCONFDIR "/dconf/profile/myprofile";
   filename_to_replace_it_with = filename;
   g_assert (g_getenv ("DCONF_PROFILE") == NULL);
   sources = dconf_engine_profile_open ("myprofile", &n_sources);
@@ -125,7 +125,7 @@ test_five_times (const gchar *filename,
 
   /* next try the same, via the environment */
   g_setenv ("DCONF_PROFILE", "myprofile", TRUE);
-  filename_to_replace = "/etc/dconf/profile/myprofile";
+  filename_to_replace = SYSCONFDIR "/dconf/profile/myprofile";
   filename_to_replace_it_with = filename;
   sources = dconf_engine_profile_open (NULL, &n_sources);
   verify_and_free (sources, n_sources, expected_names, n_expected);
@@ -133,7 +133,7 @@ test_five_times (const gchar *filename,
   filename_to_replace = NULL;
 
   /* next try to have dconf pick it up as the default user profile */
-  filename_to_replace = "/etc/dconf/profile/user";
+  filename_to_replace = SYSCONFDIR "/dconf/profile/user";
   filename_to_replace_it_with = filename;
   g_assert (g_getenv ("DCONF_PROFILE") == NULL);
   sources = dconf_engine_profile_open (NULL, &n_sources);
@@ -202,7 +202,7 @@ test_profile_parser (void)
   /* finally, test that we get the default profile if the user profile
    * file cannot be located and we do not specify another profile.
    */
-  filename_to_replace = "/etc/dconf/profile/user";
+  filename_to_replace = SYSCONFDIR "/dconf/profile/user";
   filename_to_replace_it_with = SRCDIR "/profile/this-file-does-not-exist";
   g_assert (g_getenv ("DCONF_PROFILE") == NULL);
   sources = dconf_engine_profile_open (NULL, &n_sources);
@@ -563,7 +563,7 @@ test_system_source (void)
 
       /* Create the file after the fact and make sure it opens properly */
       first_table = dconf_mock_gvdb_table_new ();
-      dconf_mock_gvdb_install ("/etc/dconf/db/site", first_table);
+      dconf_mock_gvdb_install (SYSCONFDIR "/dconf/db/site", first_table);
 
       reopened = dconf_engine_source_refresh (source);
       g_assert (reopened);
@@ -580,7 +580,7 @@ test_system_source (void)
 
   /* Create the file before the first refresh attempt */
   first_table = dconf_mock_gvdb_table_new ();
-  dconf_mock_gvdb_install ("/etc/dconf/db/site", first_table);
+  dconf_mock_gvdb_install (SYSCONFDIR "/dconf/db/site", first_table);
   /* Hang on to a copy for ourselves for below... */
   dconf_mock_gvdb_table_ref (first_table);
 
@@ -596,7 +596,7 @@ test_system_source (void)
 
   /* Replace the table on "disk" but don't invalidate the old one */
   next_table = dconf_mock_gvdb_table_new ();
-  dconf_mock_gvdb_install ("/etc/dconf/db/site", next_table);
+  dconf_mock_gvdb_install (SYSCONFDIR "/dconf/db/site", next_table);
 
   /* Make sure the old table remains open (ie: no IO performed) */
   reopened = dconf_engine_source_refresh (source);
@@ -611,7 +611,7 @@ test_system_source (void)
   g_assert (source->values == next_table);
 
   /* Remove the file entirely and do the same thing */
-  dconf_mock_gvdb_install ("/etc/dconf/db/site", NULL);
+  dconf_mock_gvdb_install (SYSCONFDIR "/dconf/db/site", NULL);
   reopened = dconf_engine_source_refresh (source);
   g_assert (!reopened);
 
@@ -688,7 +688,7 @@ setup_state (guint     n_sources,
                 state[i] = NULL;
             }
 
-          filename = g_strdup_printf ("/etc/dconf/db/db%d", i);
+          filename = g_strdup_printf (SYSCONFDIR "/dconf/db/db%d", i);
         }
       else
         {
@@ -1160,7 +1160,7 @@ test_watch_fast (void)
   table = dconf_mock_gvdb_table_new ();
   dconf_mock_gvdb_install ("/HOME/.config/dconf/user", table);
   table = dconf_mock_gvdb_table_new ();
-  dconf_mock_gvdb_install ("/etc/dconf/db/site", table);
+  dconf_mock_gvdb_install (SYSCONFDIR "/dconf/db/site", table);
 
   triv = g_variant_ref_sink (g_variant_new ("()"));
 
@@ -1225,7 +1225,7 @@ test_watch_fast (void)
   dconf_mock_dbus_assert_no_async ();
 
   dconf_mock_gvdb_install ("/HOME/.config/dconf/user", NULL);
-  dconf_mock_gvdb_install ("/etc/dconf/db/site", NULL);
+  dconf_mock_gvdb_install (SYSCONFDIR "/dconf/db/site", NULL);
   dconf_engine_unref (engine);
   g_string_free (change_log, TRUE);
   change_log = NULL;
@@ -1508,7 +1508,7 @@ test_change_fast (void)
   locks = dconf_mock_gvdb_table_new ();
   dconf_mock_gvdb_table_insert (locks, "/locked", g_variant_new_boolean (TRUE), NULL);
   dconf_mock_gvdb_table_insert (table, ".locks", NULL, locks);
-  dconf_mock_gvdb_install ("/etc/dconf/db/site", table);
+  dconf_mock_gvdb_install (SYSCONFDIR "/dconf/db/site", table);
 
   empty = dconf_changeset_new ();
   good_write = dconf_changeset_new_write ("/value", g_variant_new_string ("value"));
@@ -1686,7 +1686,7 @@ test_change_sync (void)
   locks = dconf_mock_gvdb_table_new ();
   dconf_mock_gvdb_table_insert (locks, "/locked", g_variant_new_boolean (TRUE), NULL);
   dconf_mock_gvdb_table_insert (table, ".locks", NULL, locks);
-  dconf_mock_gvdb_install ("/etc/dconf/db/site", table);
+  dconf_mock_gvdb_install (SYSCONFDIR "/dconf/db/site", table);
 
   empty = dconf_changeset_new ();
   good_write = dconf_changeset_new_write ("/value", g_variant_new_string ("value"));

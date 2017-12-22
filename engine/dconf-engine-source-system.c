@@ -47,7 +47,7 @@ dconf_engine_source_system_reopen (DConfEngineSource *source)
   GvdbTable *table;
   gchar *filename;
 
-  filename = g_build_filename ("/etc/dconf/db", source->name, NULL);
+  filename = g_build_filename (SYSCONFDIR "/dconf/db", source->name, NULL);
   table = gvdb_table_new (filename, FALSE, &error);
 
   if (table == NULL)

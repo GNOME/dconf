@@ -10,6 +10,7 @@ dconf_datadir = join_paths(dconf_prefix, get_option('datadir'))
 dconf_libdir = join_paths(dconf_prefix, get_option('libdir'))
 dconf_libexecdir = join_paths(dconf_prefix, get_option('libexecdir'))
 dconf_mandir = join_paths(dconf_prefix, get_option('mandir'))
+dconf_sysconfdir = join_paths(dconf_prefix, get_option('sysconfdir'))
 
 dconf_namespace = 'ca.desrt.dconf'
 
@@ -22,7 +23,7 @@ cc = meson.get_compiler('c')
 valac = meson.get_compiler('vala')
 
 # compiler flags
-common_flags = []
+common_flags = ['-DSYSCONFDIR="@0@"'.format(dconf_sysconfdir)]
 
 if get_option('buildtype').contains('debug')
   common_flags += cc.get_supported_arguments([
