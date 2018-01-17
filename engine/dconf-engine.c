@@ -987,7 +987,7 @@ dconf_engine_changeset_has_no_effect (DConfEngine *engine, DConfChangeset *chang
   gpointer key, new_value;
   GVariant *current_value;
 
-  dconf_changeset_table_iter_init(changeset, &iter);
+  dconf_changeset_table_iter_init (changeset, &iter);
   while (g_hash_table_iter_next (&iter, &key, &new_value))
     {
       GVariant *current_value = dconf_engine_read (engine,
@@ -1003,16 +1003,16 @@ dconf_engine_changeset_has_no_effect (DConfEngine *engine, DConfChangeset *chang
         {
           if (new_value == NULL)
             {
-              g_variant_unref(current_value);
+              g_variant_unref (current_value);
               return FALSE;
             }
-          else if (!g_variant_equal(current_value, new_value))
+          else if (!g_variant_equal (current_value, new_value))
             {
-              g_variant_unref(current_value);
+              g_variant_unref (current_value);
               return FALSE;
             }
 
-          g_variant_unref(current_value);
+          g_variant_unref (current_value);
         }
     }
 

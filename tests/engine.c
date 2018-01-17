@@ -1537,14 +1537,14 @@ test_change_effect (void)
   engine = dconf_engine_new (SRCDIR "/profile/dos", NULL, NULL);
   change = dconf_changeset_new_write ("/value", g_variant_new_string ("value"));
   empty_change = dconf_changeset_new();
-  g_assert_false(dconf_engine_changeset_has_no_effect(engine, change));
-  dconf_engine_change_fast(engine, change, NULL, NULL);
-  g_assert_true(dconf_engine_changeset_has_no_effect(engine, change));
-  g_assert_true(dconf_engine_changeset_has_no_effect(engine, empty_change));
+  g_assert_false (dconf_engine_changeset_has_no_effect (engine, change));
+  dconf_engine_change_fast (engine, change, NULL, NULL);
+  g_assert_true (dconf_engine_changeset_has_no_effect (engine, change));
+  g_assert_true (dconf_engine_changeset_has_no_effect (engine, empty_change));
 
-  dconf_changeset_unref(change);
-  dconf_changeset_unref(empty_change);
-  dconf_engine_unref(engine);
+  dconf_changeset_unref (change);
+  dconf_changeset_unref (empty_change);
+  dconf_engine_unref (engine);
 }
 
 static void
