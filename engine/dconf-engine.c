@@ -995,13 +995,25 @@ dconf_engine_changeset_has_no_effect (DConfEngine *engine, DConfChangeset *chang
                                                    NULL,
                                                    key);
 
-      if (!g_variant_equal(current_value, new_value))
+      if (current_value == NULL)
         {
-          g_variant_unref(current_value);
           return FALSE;
         }
+      else
+        {
+          if (new_value == NULL)
+            {
+              g_variant_unref(current_value);
+              return FALSE;
+            }
+          else if (!g_variant_equal(current_value, new_value))
+            {
+              g_variant_unref(current_value);
+              return FALSE;
+            }
 
-      g_variant_unref(current_value);
+          g_variant_unref(current_value);
+        }
     }
 
   return TRUE;
@@ -1180,7 +1192,7 @@ dconf_engine_change_fast (DConfEngine     *engine,
   if (dconf_changeset_is_empty (changeset))
     return TRUE;
 
-  gboolean has_no_effect = !dconf_engine_changeset_has_no_effect (engine, changeset);
+  gboolean has_no_effect = dconf_engine_changeset_has_no_effect (engine, changeset);
 
   if (!dconf_engine_changeset_changes_only_writable_keys (engine, changeset, error))
     return FALSE;
