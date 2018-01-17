@@ -129,8 +129,8 @@ dconf_writer_real_change (DConfWriter    *writer,
                           const gchar    *tag)
 {
   g_return_if_fail (writer->priv->uncommited_values != NULL);
-  DConfChangeset *effective_changeset = dconf_changeset_filter_changes(writer->priv->commited_values,
-                                                                       changeset);
+  DConfChangeset *effective_changeset = dconf_changeset_filter_changes (writer->priv->commited_values,
+                                                                        changeset);
 
   if (effective_changeset)
     {

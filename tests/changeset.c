@@ -586,16 +586,16 @@ test_filter_changes (void)
   base = dconf_changeset_new_database (NULL);
   changes = dconf_changeset_new ();
   /* an empty changeset would not change an empty database */
-  g_assert_null (dconf_changeset_filter_changes(base, changes));
+  g_assert_null (dconf_changeset_filter_changes (base, changes));
   dconf_changeset_set (base, "/a", value1);
   /* an empty changeset would not change a database with values */
-  g_assert_null (dconf_changeset_filter_changes(base, changes));
+  g_assert_null (dconf_changeset_filter_changes (base, changes));
   dconf_changeset_set (changes, "/a", value1);
   /* a changeset would not change a database with the same values */
-  g_assert_null (dconf_changeset_filter_changes(base, changes));
+  g_assert_null (dconf_changeset_filter_changes (base, changes));
   dconf_changeset_set (changes, "/a", value2);
   /* a changeset would change a database with the same keys but different values */
-  g_assert_nonnull (dconf_changeset_filter_changes(base, changes));
+  g_assert_nonnull (dconf_changeset_filter_changes (base, changes));
 
   dconf_changeset_unref (base);
   dconf_changeset_unref (changes);

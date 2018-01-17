@@ -868,7 +868,7 @@ dconf_changeset_diff (DConfChangeset *from,
    * Note: because 'from' and 'to' are database changesets we don't have
    * to worry about seeing NULL values or dirs.
    */
-  DConfChangeset *changeset = dconf_changeset_filter_changes(from, to);
+  DConfChangeset *changeset = dconf_changeset_filter_changes (from, to);
   GHashTableIter iter;
   gpointer key, val;
 
