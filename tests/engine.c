@@ -1274,6 +1274,54 @@ test_watch_sync (void)
 }
 
 static void
+test_watching (void)
+{
+  DConfEngine *engine;
+  const gchar *apple = "apple";
+  const gchar *orange = "orange";
+  const gchar *banana = "banana";
+
+  engine = dconf_engine_new (SRCDIR "/profile/dos", NULL, NULL);
+
+  g_assert (!dconf_engine_is_watching(engine, apple, TRUE));
+  g_assert (!dconf_engine_is_watching(engine, apple, FALSE));
+  g_assert (!dconf_engine_is_watching(engine, orange, TRUE));
+  g_assert (!dconf_engine_is_watching(engine, orange, FALSE));
+  g_assert (!dconf_engine_is_watching(engine, banana, TRUE));
+  g_assert (!dconf_engine_is_watching(engine, banana, FALSE));
+
+  dconf_engine_set_watching (engine, apple, FALSE, FALSE);
+  dconf_engine_set_watching (engine, orange, TRUE, FALSE);
+  dconf_engine_set_watching (engine, banana, TRUE, TRUE);
+
+  g_assert (!dconf_engine_is_watching(engine, apple, TRUE));
+  g_assert (!dconf_engine_is_watching(engine, apple, FALSE));
+  g_assert (!dconf_engine_is_watching(engine, orange, TRUE));
+  g_assert (dconf_engine_is_watching(engine, orange, FALSE));
+  g_assert (dconf_engine_is_watching(engine, banana, TRUE));
+  g_assert (dconf_engine_is_watching(engine, banana, FALSE));
+
+  dconf_engine_set_watching (engine, orange, TRUE, TRUE);
+  dconf_engine_set_watching (engine, banana, FALSE, FALSE);
+
+  g_assert (!dconf_engine_is_watching(engine, apple, TRUE));
+  g_assert (!dconf_engine_is_watching(engine, apple, FALSE));
+  g_assert (dconf_engine_is_watching(engine, orange, TRUE));
+  g_assert (dconf_engine_is_watching(engine, orange, FALSE));
+  g_assert (!dconf_engine_is_watching(engine, banana, TRUE));
+  g_assert (!dconf_engine_is_watching(engine, banana, FALSE));
+
+  dconf_engine_set_watching (engine, orange, FALSE, FALSE);
+
+  g_assert (!dconf_engine_is_watching(engine, apple, TRUE));
+  g_assert (!dconf_engine_is_watching(engine, apple, FALSE));
+  g_assert (!dconf_engine_is_watching(engine, orange, TRUE));
+  g_assert (!dconf_engine_is_watching(engine, orange, FALSE));
+  g_assert (!dconf_engine_is_watching(engine, banana, TRUE));
+  g_assert (!dconf_engine_is_watching(engine, banana, FALSE));
+}
+
+static void
 test_change_fast (void)
 {
   DConfChangeset *empty, *good_write, *bad_write, *very_good_write, *slightly_bad_write;
@@ -1758,6 +1806,7 @@ main (int argc, char **argv)
   g_test_add_func ("/engine/read", test_read);
   g_test_add_func ("/engine/watch/fast", test_watch_fast);
   g_test_add_func ("/engine/watch/sync", test_watch_sync);
+  g_test_add_func ("/engine/watch/watching", test_watching);
   g_test_add_func ("/engine/change/fast", test_change_fast);
   g_test_add_func ("/engine/change/sync", test_change_sync);
   g_test_add_func ("/engine/signals", test_signals);

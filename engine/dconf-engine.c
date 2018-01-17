@@ -247,8 +247,8 @@ dconf_engine_new (const gchar    *profile,
   dconf_engine_global_list = g_slist_prepend (dconf_engine_global_list, engine);
   g_mutex_unlock (&dconf_engine_global_lock);
 
-  engine->watched_paths = g_hash_table_new (g_str_hash, g_str_equal);
-  engine->pending_paths = g_hash_table_new (g_str_hash, g_str_equal);
+  engine->watched_paths = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+  engine->pending_paths = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
 
   return engine;
 }
@@ -838,7 +838,7 @@ dconf_engine_watch_established (DConfEngine  *engine,
       dconf_engine_change_notify (engine, ow->path, changes, NULL, FALSE, NULL, engine->user_data);
     }
 
-  dconf_engine_set_watching(engine, ow->path, TRUE, TRUE);
+  dconf_engine_set_watching (engine, ow->path, TRUE, TRUE);
   dconf_engine_call_handle_free (handle);
 }
 
@@ -889,7 +889,7 @@ dconf_engine_watch_fast (DConfEngine *engine,
                                          dconf_engine_make_match_rule (engine->sources[i], path),
                                          &ow->handle, NULL);
 
-  dconf_engine_set_watching(engine, ow->path, TRUE, FALSE);
+  dconf_engine_set_watching (engine, ow->path, TRUE, FALSE);
 }
 
 void
@@ -904,7 +904,7 @@ dconf_engine_unwatch_fast (DConfEngine *engine,
                                          "/org/freedesktop/DBus", "org.freedesktop.DBus", "RemoveMatch",
                                          dconf_engine_make_match_rule (engine->sources[i], path), NULL, NULL);
 
-  dconf_engine_set_watching(engine, g_strdup(path), FALSE, FALSE);
+  dconf_engine_set_watching (engine, path, FALSE, FALSE);
 }
 
 static void
@@ -943,7 +943,7 @@ dconf_engine_watch_sync (DConfEngine *engine,
                          const gchar *path)
 {
   dconf_engine_handle_match_rule_sync (engine, "AddMatch", path);
-  dconf_engine_set_watching(engine, g_strdup(path), TRUE, TRUE);
+  dconf_engine_set_watching (engine, path, TRUE, TRUE);
 }
 
 void
@@ -951,7 +951,7 @@ dconf_engine_unwatch_sync (DConfEngine *engine,
                            const gchar *path)
 {
   dconf_engine_handle_match_rule_sync (engine, "RemoveMatch", path);
-  dconf_engine_set_watching(engine, g_strdup(path), FALSE, FALSE);
+  dconf_engine_set_watching (engine, path, FALSE, FALSE);
 }
 
 typedef struct
@@ -1413,25 +1413,23 @@ dconf_engine_sync (DConfEngine *engine)
 void
 dconf_engine_set_watching (DConfEngine *engine, const gchar *path, const gboolean is_watching, const gboolean is_established)
   {
-    gpointer key = (gpointer) path;
     if (is_watching)
       {
         if (is_established)
           {
-            g_hash_table_add(engine->watched_paths, key);
-            g_hash_table_remove(engine->pending_paths, (gconstpointer) key);
+            g_hash_table_add(engine->watched_paths, g_strdup(path));
+            g_hash_table_remove(engine->pending_paths, path);
           }
         else
           {
-            g_hash_table_add(engine->pending_paths, key);
-            g_hash_table_remove(engine->watched_paths, (gconstpointer) key);
+            g_hash_table_add(engine->pending_paths, g_strdup(path));
+            g_hash_table_remove(engine->watched_paths, path);
           }
       }
     else
       {
-        g_hash_table_remove(engine->watched_paths, (gconstpointer) key);
-        g_hash_table_remove(engine->pending_paths, (gconstpointer) key);
-        g_free(key);
+        g_hash_table_remove(engine->watched_paths, path);
+        g_hash_table_remove(engine->pending_paths, path);
       }
   }
 
