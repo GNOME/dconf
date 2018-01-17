@@ -572,6 +572,34 @@ test_diff (void)
     }
 }
 
+static void
+test_filter_changes (void)
+{
+  DConfChangeset *base, *changes;
+  GVariant *value1 = g_variant_new_string ("value1");
+  GVariant *value2 = g_variant_new_string ("value2");
+
+  /* These tests are mostly negative, since dconf_changeset_filter_changes
+   * is called from dconf_changeset_diff */
+
+  base = dconf_changeset_new_database (NULL);
+  changes = dconf_changeset_new ();
+  /* an empty changeset would not change an empty database */
+  g_assert_null (dconf_changeset_filter_changes (base, changes));
+  dconf_changeset_set (base, "/a", value1);
+  /* an empty changeset would not change a database with values */
+  g_assert_null (dconf_changeset_filter_changes (base, changes));
+  dconf_changeset_set (changes, "/a", value1);
+  /* a changeset would not change a database with the same values */
+  g_assert_null (dconf_changeset_filter_changes (base, changes));
+  dconf_changeset_set (changes, "/a", value2);
+  /* a changeset would change a database with the same keys but different values */
+  g_assert_nonnull (dconf_changeset_filter_changes (base, changes));
+
+  dconf_changeset_unref (base);
+  dconf_changeset_unref (changes);
+}
+
 int
 main (int argc, char **argv)
 {
@@ -584,6 +612,7 @@ main (int argc, char **argv)
   g_test_add_func ("/changeset/serialiser", test_serialiser);
   g_test_add_func ("/changeset/change", test_change);
   g_test_add_func ("/changeset/diff", test_diff);
+  g_test_add_func ("/changeset/filter", test_filter_changes);
 
   return g_test_run ();
 }
