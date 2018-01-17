@@ -1153,7 +1153,7 @@ test_watch_fast (void)
   DConfEngine *engine;
   GvdbTable *table;
   GVariant *triv;
-  guint64 a, b;
+  guint64 a, b, c;
 
   change_log = g_string_new (NULL);
 
@@ -1202,7 +1202,20 @@ test_watch_fast (void)
   dconf_mock_dbus_assert_no_async ();
   b = dconf_engine_get_state (engine);
   g_assert_cmpuint (a, !=, b);
-  g_assert_cmpstr (change_log->str, ==, "/:1::nil;");
+  g_assert_cmpstr (change_log->str, ==, "/a/b/c:1::nil;");
+  /* Try to establish a watch again for the same path */
+  dconf_engine_watch_fast (engine, "/a/b/c");
+  g_assert (!dconf_engine_has_outstanding (engine));
+  dconf_engine_sync (engine);
+  c = dconf_engine_get_state (engine);
+  g_assert_cmpuint (b, ==, c);
+  /* The watch result was not sent, because the path was already watched */
+  dconf_mock_dbus_assert_no_async();
+  c = dconf_engine_get_state (engine);
+  g_assert_cmpuint (b, ==, c);
+  /* Since the path was already being watched,
+   * do not expect a second false change notification */
+  g_assert_cmpstr (change_log->str, ==, "/a/b/c:1::nil;");
   dconf_engine_unwatch_fast (engine, "/a/b/c");
   dconf_mock_dbus_async_reply (triv, NULL);
   dconf_mock_dbus_async_reply (triv, NULL);
