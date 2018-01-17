@@ -1529,6 +1529,25 @@ test_change_sync (void)
 }
 
 static void
+test_change_effect (void)
+{
+  DConfChangeset *change, *empty_change;
+  DConfEngine *engine;
+
+  engine = dconf_engine_new (SRCDIR "/profile/dos", NULL, NULL);
+  change = dconf_changeset_new_write ("/value", g_variant_new_string ("value"));
+  empty_change = dconf_changeset_new();
+  g_assert_false(dconf_engine_changeset_has_no_effect(engine, change));
+  dconf_engine_change_fast(engine, change, NULL, NULL);
+  g_assert_true(dconf_engine_changeset_has_no_effect(engine, change));
+  g_assert_true(dconf_engine_changeset_has_no_effect(engine, empty_change));
+
+  dconf_changeset_unref(change);
+  dconf_changeset_unref(empty_change);
+  dconf_engine_unref(engine);
+}
+
+static void
 send_signal (GBusType     type,
              const gchar *name,
              const gchar *path,
@@ -1760,6 +1779,7 @@ main (int argc, char **argv)
   g_test_add_func ("/engine/watch/sync", test_watch_sync);
   g_test_add_func ("/engine/change/fast", test_change_fast);
   g_test_add_func ("/engine/change/sync", test_change_sync);
+  g_test_add_func ("/engine/change/effect", test_change_effect);
   g_test_add_func ("/engine/signals", test_signals);
   g_test_add_func ("/engine/sync", test_sync);
 
