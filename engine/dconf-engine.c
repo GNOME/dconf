@@ -247,8 +247,8 @@ dconf_engine_new (const gchar    *profile,
   dconf_engine_global_list = g_slist_prepend (dconf_engine_global_list, engine);
   g_mutex_unlock (&dconf_engine_global_lock);
 
-  engine->watched_paths = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
-  engine->pending_paths = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+  engine->watched_paths = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+  engine->pending_paths = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
 
   return engine;
 }
