@@ -572,6 +572,131 @@ test_diff (void)
     }
 }
 
+static DConfChangeset *
+changeset_from_string (const gchar *string, gboolean is_database)
+{
+  GVariant *parsed;
+  DConfChangeset *changes, *parsed_changes;
+
+  if (is_database)
+    changes = dconf_changeset_new_database (NULL);
+  else
+    changes = dconf_changeset_new ();
+
+  if (string != NULL)
+    {
+      parsed = g_variant_parse (NULL, string, NULL, NULL, NULL);
+      parsed_changes = dconf_changeset_deserialise (parsed);
+      dconf_changeset_change (changes, parsed_changes);
+      dconf_changeset_unref (parsed_changes);
+      g_variant_unref (parsed);
+    }
+
+  return changes;
+}
+
+static gchar *
+string_from_changeset (DConfChangeset *changeset)
+{
+  GVariant *serialised;
+  gchar *string;
+
+  if (dconf_changeset_is_empty (changeset))
+    return NULL;
+
+  serialised = dconf_changeset_serialise (changeset);
+  string = g_variant_print (serialised, TRUE);
+  g_variant_unref (serialised);
+  return string;
+}
+
+static gchar*
+call_filter_changes (const gchar *base_string, const gchar *changes_string)
+{
+  DConfChangeset *base, *changes, *filtered;
+  gchar *filtered_string = NULL;
+
+  base = changeset_from_string (base_string, TRUE);
+  changes = changeset_from_string (changes_string, FALSE);
+  filtered = dconf_changeset_filter_changes (base, changes);
+  if (filtered != NULL)
+    {
+      filtered_string = string_from_changeset (filtered);
+      dconf_changeset_unref (filtered);
+    }
+
+  dconf_changeset_unref (base);
+  dconf_changeset_unref (changes);
+  return filtered_string;
+}
+
+static void
+test_filter_changes (void)
+{
+  /* These tests are mostly negative, since dconf_changeset_filter_changes
+   * is called from dconf_changeset_diff */
+
+  // Define test changesets as serialised g_variant strings
+  const gchar *empty = NULL;
+  const gchar *a1 = "{'/a': @mv <'value1'>}";
+  const gchar *a_null = "{'/a': @mv nothing}";
+  const gchar *a2 = "{'/a': @mv <'value2'>}";
+  const gchar *b2 = "{'/b': @mv <'value2'>}";
+  const gchar *a1b1 = "{'/a': @mv <'value1'>, '/b': @mv <'value1'>}";
+  const gchar *a1b2 = "{'/a': @mv <'value1'>, '/b': @mv <'value2'>}";
+  const gchar *reset = "{'/': @mv nothing}";
+  gchar *filtered;
+
+  /* an empty changeset would not change an empty database */
+  g_assert_null (call_filter_changes (empty, empty));
+
+  /* an empty changeset would not change a database with values */
+  g_assert_null (call_filter_changes (a1, empty));
+
+  /* a changeset would not change a database with the same values */
+  g_assert_null (call_filter_changes (a1, a1));
+  g_assert_null (call_filter_changes (a1b2, a1b2));
+
+  /* A non-empty changeset would change an empty database */
+  filtered = call_filter_changes (empty, a1);
+  g_assert_cmpstr (filtered, ==, a1);
+  g_free (filtered);
+
+  /* a changeset would change a database with the same keys but different values */
+  filtered = call_filter_changes (a1, a2);
+  g_assert_cmpstr (filtered, ==, a2);
+  g_free (filtered);
+  filtered = call_filter_changes (a1b1, a1b2);
+  g_assert_cmpstr (filtered, ==, b2);
+  g_free (filtered);
+
+  /* A changeset would change a database with disjoint values */
+  filtered = call_filter_changes (a1, b2);
+  g_assert_cmpstr (filtered, ==, b2);
+  g_free (filtered);
+
+  /* A changeset would change a database with some equal and some new values */
+  filtered = call_filter_changes (a1, a1b2);
+  g_assert_cmpstr (filtered, ==, b2);
+  g_free (filtered);
+
+  /* A changeset would not change a database with some equal and some new values */
+  g_assert_null (call_filter_changes (a1b2, a1));
+
+  /* Resets should count when there are values to be reset */
+  filtered = call_filter_changes (a_null, reset);
+  g_assert_cmpstr (filtered, ==, reset);
+  g_free (filtered);
+  filtered = call_filter_changes (a1b2, reset);
+  g_assert_cmpstr (filtered, ==, reset);
+  g_free (filtered);
+
+  /* FIXME: ideally, a reset would have no effect on an empty database */
+  filtered = call_filter_changes (empty, reset);
+  g_assert_cmpstr (filtered, ==, reset);
+  g_free (filtered);
+}
+
 int
 main (int argc, char **argv)
 {
@@ -584,6 +709,7 @@ main (int argc, char **argv)
   g_test_add_func ("/changeset/serialiser", test_serialiser);
   g_test_add_func ("/changeset/change", test_change);
   g_test_add_func ("/changeset/diff", test_diff);
+  g_test_add_func ("/changeset/filter", test_filter_changes);
 
   return g_test_run ();
 }
