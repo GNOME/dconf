@@ -1417,19 +1417,19 @@ dconf_engine_set_watching (DConfEngine *engine, const gchar *path, const gboolea
       {
         if (is_established)
           {
-            g_hash_table_add(engine->watched_paths, g_strdup(path));
-            g_hash_table_remove(engine->pending_paths, path);
+            g_hash_table_add (engine->watched_paths, g_strdup (path));
+            g_hash_table_remove (engine->pending_paths, path);
           }
         else
           {
-            g_hash_table_add(engine->pending_paths, g_strdup(path));
-            g_hash_table_remove(engine->watched_paths, path);
+            g_hash_table_add (engine->pending_paths, g_strdup (path));
+            g_hash_table_remove (engine->watched_paths, path);
           }
       }
     else
       {
-        g_hash_table_remove(engine->watched_paths, path);
-        g_hash_table_remove(engine->pending_paths, path);
+        g_hash_table_remove (engine->watched_paths, path);
+        g_hash_table_remove (engine->pending_paths, path);
       }
   }
 
@@ -1437,10 +1437,10 @@ gboolean
 dconf_engine_is_watching (DConfEngine *engine, const gchar *path, const gboolean only_established)
   {
     gconstpointer key = (gconstpointer) path;
-    if (g_hash_table_contains(engine->watched_paths, key))
+    if (g_hash_table_contains (engine->watched_paths, key))
       return TRUE;
 
-    if (!only_established && g_hash_table_contains(engine->pending_paths, key))
+    if (!only_established && g_hash_table_contains (engine->pending_paths, key))
       return TRUE;
 
     return FALSE;
