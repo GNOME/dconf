@@ -805,8 +805,8 @@ typedef struct
 {
   DConfEngineCallHandle handle;
 
-  guint64 state;
-  gint    pending;
+  guint64  state;
+  gint     pending;
   gchar   *path;
 } OutstandingWatch;
 
@@ -873,7 +873,7 @@ dconf_engine_watch_fast (DConfEngine *engine,
   ow = dconf_engine_call_handle_new (engine, dconf_engine_watch_established,
                                      G_VARIANT_TYPE_UNIT, sizeof (OutstandingWatch));
   ow->state = dconf_engine_get_state (engine);
-  ow->path = g_strdup(path);
+  ow->path = g_strdup (path);
 
   /* We start getting async calls returned as soon as we start dispatching them,
    * so we must not touch the 'ow' struct after we send the first one.
