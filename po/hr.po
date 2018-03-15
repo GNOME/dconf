@@ -1,0 +1,185 @@
+# Croatian translation for dconf.
+# Copyright (C) 2018 dconf's COPYRIGHT HOLDER
+# This file is distributed under the same license as the dconf package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: dconf dconf-0.22\n"
+"Report-Msgid-Bugs-To: http://bugzilla.gnome.org/enter_bug.cgi?"
+"product=dconf&keywords=I18N+L10N&component=general\n"
+"POT-Creation-Date: 2016-05-19 15:23+0000\n"
+"PO-Revision-Date: 2018-03-15 12:25+0100\n"
+"Language-Team: Croatian <hr@li.org>\n"
+"Language: hr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Last-Translator: \n"
+"X-Generator: Poedit 2.0.6\n"
+
+#: ../editor/ca.desrt.dconf-editor.desktop.in.in.h:1
+#: ../editor/dconf-editor.vala:43 ../editor/dconf-editor.vala:62
+#: ../editor/dconf-editor.vala:412
+msgid "dconf Editor"
+msgstr "dconf uređivač"
+
+#: ../editor/ca.desrt.dconf-editor.desktop.in.in.h:2
+#: ../editor/dconf-editor.vala:415
+msgid "Directly edit your entire configuration database"
+msgstr "Izravno uređujete svoju cjelokupnu bazu podataka podešavanja"
+
+#: ../editor/ca.desrt.dconf-editor.desktop.in.in.h:3
+msgid "settings;configuration;"
+msgstr "postavke;podešavanje;"
+
+#: ../editor/ca.desrt.dconf-editor.gschema.xml.h:1
+msgid "The width of the window"
+msgstr "Širina prozora"
+
+#: ../editor/ca.desrt.dconf-editor.gschema.xml.h:2
+msgid "The width of the main window in pixels."
+msgstr "Širina glavnog prozora u pikselima."
+
+#: ../editor/ca.desrt.dconf-editor.gschema.xml.h:3
+msgid "The height of the window"
+msgstr "Visina prozora"
+
+#: ../editor/ca.desrt.dconf-editor.gschema.xml.h:4
+msgid "The height of the main window in pixels."
+msgstr "Visina glavnog prozora u pikselima."
+
+#: ../editor/ca.desrt.dconf-editor.gschema.xml.h:5
+msgid "A flag to enable maximized mode"
+msgstr "Oznaka za omogućavanje uvećanog stanja"
+
+#: ../editor/ca.desrt.dconf-editor.gschema.xml.h:6
+msgid "A flag to enable fullscreen mode"
+msgstr "Oznaka za omogućavanje cjelozaslonskog stanja"
+
+#: ../editor/dconf-editor-menu.ui.h:1
+msgid "_Find…"
+msgstr "_Pretraži…"
+
+#: ../editor/dconf-editor-menu.ui.h:2
+msgid "_About"
+msgstr "_O programu"
+
+#: ../editor/dconf-editor-menu.ui.h:3
+msgid "_Quit"
+msgstr "_Zatvori"
+
+#: ../editor/dconf-editor.ui.h:1
+msgid "Set to Default"
+msgstr "Postavi kako zadano"
+
+#: ../editor/dconf-editor.ui.h:2
+msgid "Schema:"
+msgstr "Shema:"
+
+#: ../editor/dconf-editor.ui.h:3
+msgid "Summary:"
+msgstr "Sažetak:"
+
+#: ../editor/dconf-editor.ui.h:4
+msgid "Description:"
+msgstr "Opis:"
+
+#. Translators: as in datatype (integer, boolean, string, etc)
+#: ../editor/dconf-editor.ui.h:6
+msgid "Type:"
+msgstr "Vrsta:"
+
+#: ../editor/dconf-editor.ui.h:7
+msgid "Default:"
+msgstr "Zadana:"
+
+#: ../editor/dconf-editor.ui.h:8
+msgid "Next"
+msgstr "Sljedeće"
+
+#: ../editor/dconf-editor.vala:185
+#, c-format
+msgid "Integer [%s..%s]"
+msgstr "Cijeli broj [%s..%s]"
+
+#: ../editor/dconf-editor.vala:198
+#, c-format
+msgid "Double [%s..%s]"
+msgstr "Duplikat [%s..%s]"
+
+#: ../editor/dconf-editor.vala:200
+msgid "Boolean"
+msgstr "Boolean"
+
+#: ../editor/dconf-editor.vala:202
+msgid "String"
+msgstr "Izraz"
+
+#: ../editor/dconf-editor.vala:204
+msgid "Enumeration"
+msgstr "Nabrajanje"
+
+#: ../editor/dconf-editor.vala:252
+msgid "No schema"
+msgstr "Nema sheme"
+
+#: ../editor/dconf-editor.vala:362
+msgid "Not found"
+msgstr "Nije pronađeno"
+
+#: ../editor/dconf-editor.vala:410
+msgid ""
+"This program is free software; you can redistribute it and/or modify it "
+"under the terms of the GNU General Public License as published by the Free "
+"Software Foundation; either version 2 of the License, or (at your option) "
+"any later version.\n"
+"\n"
+"This program is distributed in the hope that it will be useful, but WITHOUT "
+"ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or "
+"FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for "
+"more details.\n"
+"\n"
+"You should have received a copy of the GNU General Public License along with "
+"this program; if not, write to the Free Software Foundation, Inc., 51 "
+"Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA"
+msgstr ""
+"Ovaj program je slobodan softver; možete ga redistribuirati i/ili mijenjati "
+"pod uvjetima GNU Opće Javne Licence koja je objavljena od strane Zaklade "
+"slobodnog softvera, ili inačice 2 licence ili (po vašem izboru) svake novije "
+"inačice.\n"
+"\n"
+"OvJaj program se distribuira u nadi da će biti koristan, ali BEZ IKAKVIH "
+"JAMSTAVA; čak i bez podrazumijevanih jamstava UPORABLJIVOSTI ZA ODREĐENU "
+"SVRHU.  Pogledajte GNU Opću Javnu Licencu za više pojedinosti.\n"
+"\n"
+"Trebali ste primiti kopiju GNU Opće Javne Licence uz uz ovaj program; ako "
+"niste, pišite na adresu; Free Software Foundation, Inc., 51 Franklin St, "
+"Fifth Floor, Boston, MA 02110-1301 USA"
+
+#: ../editor/dconf-editor.vala:416
+msgid "Copyright © Canonical Ltd"
+msgstr "Autorsko pravo © Canonical Ltd"
+
+#: ../editor/dconf-editor.vala:420
+msgid "translator-credits"
+msgstr ""
+"Launchpad Contributions:\n"
+"  gogo https://launchpad.net/~trebelnik-stefina"
+
+#: ../editor/dconf-view.vala:268
+#, c-format
+msgid "Error setting value: %s"
+msgstr "Greška postavljanja vrijednosti: %s"
+
+#. Translators: this is the column header label in the main view
+#: ../editor/dconf-view.vala:322
+msgid "Name"
+msgstr "Naziv"
+
+#. Translators: this is the column header label in the main view
+#: ../editor/dconf-view.vala:326
+msgid "Value"
+msgstr "Vrijednost"
