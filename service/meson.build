@@ -1,13 +1,3 @@
-dbus_service_dir = get_option('dbus_service_dir')
-if dbus_service_dir == ''
-  dbus_service_dir = join_paths(dconf_datadir, 'dbus-1', 'services')
-endif
-
-dbus_system_service_dir = get_option('dbus_system_service_dir')
-if dbus_system_service_dir == ''
-  dbus_system_service_dir = join_paths(dconf_datadir, 'dbus-1', 'system-services')
-endif
-
 service_conf = configuration_data()
 service_conf.set('libexecdir', dconf_libexecdir)
 
@@ -17,7 +7,7 @@ configure_file(
   input: service + '.in',
   output: service,
   install: true,
-  install_dir: dbus_service_dir,
+  install_dir: dbus_session_service_dir,
   configuration: service_conf
 )
 
