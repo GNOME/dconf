@@ -68,15 +68,8 @@ gio_unix_req_version = '>= 2.25.7'
 glib_dep = dependency('glib-2.0', version: '>= 2.44.0')
 gio_unix_dep = dependency('gio-unix-2.0', version: gio_unix_req_version)
 
-gio_querymodules = find_program('gio-querymodules', required: false)
-if gio_querymodules.found()
-  gio_modules_dir = get_option('gio_modules_dir')
-  if gio_modules_dir == ''
-    gio_modules_dir = join_paths(dconf_libdir, 'gio', 'modules')
-  endif
-
-  meson.add_install_script('meson_post_install.py', gio_querymodules.path(), gio_modules_dir)
-endif
+gio_module_dir = dependency('gio-2.0').get_pkgconfig_variable('giomoduledir', define_variable: ['libdir', dconf_libdir])
+dbus_session_service_dir = dependency('dbus-1').get_pkgconfig_variable('session_bus_services_dir', define_variable: ['datadir', dconf_datadir])
 
 configure_file(
   output: 'config.h',
@@ -105,3 +98,5 @@ subdir('client')
 subdir('bin')
 subdir('docs')
 subdir('tests')
+
+meson.add_install_script('meson_post_install.py', gio_module_dir)

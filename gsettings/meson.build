@@ -16,7 +16,7 @@ libdconf_settings = shared_library(
     libgvdb_shared
   ],
   install: true,
-  install_dir: join_paths(dconf_libdir, 'gio', 'modules')
+  install_dir: gio_module_dir
 )
 
 envs = test_env + [
