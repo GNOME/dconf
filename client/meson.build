@@ -36,8 +36,7 @@ libdconf = shared_library(
   include_directories: top_inc,
   dependencies: deps,
   c_args: cflags,
-  install: true,
-  install_dir: dconf_libdir
+  install: true
 )
 
 libdconf_dep = declare_dependency(
@@ -48,14 +47,13 @@ libdconf_dep = declare_dependency(
 
 pkg.generate(
   libraries: libdconf,
-  version: dconf_version,
+  version: meson.project_version(),
   name: meson.project_name(),
   description: meson.project_name() + ' client library',
   filebase: meson.project_name(),
   subdirs: meson.project_name(),
   requires: 'gio-2.0 ' + gio_req_version,
-  variables: 'exec_prefix=' + dconf_libexecdir,
-  install_dir: join_paths(dconf_libdir, 'pkgconfig')
+  variables: 'exec_prefix=' + dconf_libexecdir
 )
 
 libdconf_vapi = files(meson.project_name() + '.vapi')

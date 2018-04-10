@@ -17,8 +17,7 @@ executable(
   include_directories: top_inc,
   dependencies: deps,
   c_args: '-w',
-  install: true,
-  install_dir: dconf_bindir
+  install: true
 )
 
 install_data(
