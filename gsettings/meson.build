@@ -10,10 +10,10 @@ libdconf_settings = shared_library(
   c_args: cflags,
   link_with: [
     libdconf_common_hidden,
-    libdconf_engine_shared,
-    libdconf_gdbus_thread_shared,
-    libdconf_shm_shared,
-    libgvdb_shared
+    libdconf_engine,
+    libdconf_gdbus_thread,
+    libdconf_shm,
+    libgvdb
   ],
   install: true,
   install_dir: gio_module_dir
