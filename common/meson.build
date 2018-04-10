@@ -26,14 +26,6 @@ libdconf_common = static_library(
   sources: sources,
   include_directories: top_inc,
   dependencies: glib_dep,
-  c_args: cflags
-)
-
-libdconf_common_shared = static_library(
-  name + '-shared',
-  sources: sources,
-  include_directories: top_inc,
-  dependencies: glib_dep,
   c_args: cflags,
   pic: true
 )

@@ -1,5 +1,3 @@
-name = meson.project_name() + '-engine'
-
 sources = files(
   'dconf-engine.c',
   'dconf-engine-profile.c',
@@ -13,15 +11,7 @@ sources = files(
 cflags = '-DG_LOG_DOMAIN="@0@"'.format(meson.project_name())
 
 libdconf_engine = static_library(
-  name,
-  sources: sources,
-  include_directories: top_inc,
-  dependencies: glib_dep,
-  c_args: cflags
-)
-
-libdconf_engine_shared = static_library(
-  name + '-shared',
+  meson.project_name() + '-engine',
   sources: sources,
   include_directories: top_inc,
   dependencies: glib_dep,
