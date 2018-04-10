@@ -29,25 +29,6 @@ libversion = '@0@.@1@.@2@'.format(soversion, current, revision)
 cc = meson.get_compiler('c')
 valac = meson.get_compiler('vala')
 
-config_h = configuration_data()
-
-# package
-set_defines = [
-  ['PACKAGE', meson.project_name()],
-  ['PACKAGE_BUGREPORT', 'https://gitlab.gnome.org/GNOME/dconf/issues'],
-  ['PACKAGE_NAME', meson.project_name()],
-  ['PACKAGE_STRING', '@0@ @1@'.format(meson.project_name(), dconf_version)],
-  ['PACKAGE_TARNAME', meson.project_name()],
-  ['PACKAGE_URL', 'https://wiki.gnome.org/Projects/dconf'],
-  ['PACKAGE_VERSION', dconf_version],
-  ['VERSION', dconf_version],
-  ['GETTEXT_PACKAGE', meson.project_name()]
-]
-
-foreach define: set_defines
-  config_h.set_quoted(define[0], define[1])
-endforeach
-
 # compiler flags
 common_flags = []
 
@@ -73,7 +54,7 @@ dbus_session_service_dir = dependency('dbus-1').get_pkgconfig_variable('session_
 
 configure_file(
   output: 'config.h',
-  configuration: config_h
+  configuration: configuration_data()
 )
 
 test_env = [
