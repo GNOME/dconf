@@ -1,20 +1,16 @@
-sources = files('dconfsettingsbackend.c')
+deps = [
+  libdconf_common_hidden_dep,
+  libdconf_gdbus_thread_dep
+]
 
 cflags = '-DG_LOG_DOMAIN="@0@"'.format(meson.project_name())
 
 libdconf_settings = shared_library(
   meson.project_name() + 'settings',
-  sources: sources,
+  sources: 'dconfsettingsbackend.c',
   include_directories: top_inc,
-  dependencies: gio_unix_dep,
+  dependencies: deps,
   c_args: cflags,
-  link_with: [
-    libdconf_common_hidden,
-    libdconf_engine,
-    libdconf_gdbus_thread,
-    libdconf_shm,
-    libgvdb
-  ],
   install: true,
   install_dir: gio_module_dir
 )
