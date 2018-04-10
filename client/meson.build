@@ -10,42 +10,40 @@ install_headers(
   subdir: join_paths(meson.project_name(), 'client')
 )
 
-sources = files('dconf-client.c')
+name = meson.project_name() + '-client'
 
 cflags = '-DG_LOG_DOMAIN="@0@"'.format(meson.project_name())
 
 libdconf_client = static_library(
-  meson.project_name() + '-client',
-  sources: sources,
+  name,
+  sources: name + '.c',
   include_directories: top_inc,
-  dependencies: gio_unix_dep,
+  dependencies: libdconf_gdbus_thread_dep,
   c_args: cflags,
   pic: true
 )
 
+libdconf_client_dep = declare_dependency(
+  dependencies: gio_dep,
+  link_with: libdconf_client
+)
+
 libdconf = shared_library(
   meson.project_name(),
-  sources: sources,
+  sources: name + '.c',
   version: libversion,
   soversion: soversion,
   include_directories: top_inc,
-  dependencies: gio_unix_dep,
+  dependencies: deps,
   c_args: cflags,
-  link_with: [
-    libdconf_common,
-    libdconf_engine,
-    libdconf_gdbus_thread,
-    libdconf_shm,
-    libgvdb
-  ],
   install: true,
   install_dir: dconf_libdir
 )
 
 libdconf_dep = declare_dependency(
-  link_with: libdconf,
   include_directories: client_inc,
-  dependencies: gio_unix_dep
+  dependencies: gio_dep,
+  link_with: libdconf
 )
 
 pkg.generate(
@@ -55,7 +53,7 @@ pkg.generate(
   description: meson.project_name() + ' client library',
   filebase: meson.project_name(),
   subdirs: meson.project_name(),
-  requires: 'gio-unix-2.0 ' + gio_unix_req_version,
+  requires: 'gio-2.0 ' + gio_req_version,
   variables: 'exec_prefix=' + dconf_libexecdir,
   install_dir: join_paths(dconf_libdir, 'pkgconfig')
 )

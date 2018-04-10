@@ -6,6 +6,7 @@ sources = gvdb_builder + libdconf_vapi + files(
 )
 
 deps = [
+  libdconf_common_dep,
   libdconf_dep,
   valac.find_library('posix')
 ]
