@@ -9,7 +9,7 @@ gnome.gtkdoc(
   scan_args: '--rebuild-types',
   gobject_typesfile: meson.project_name() + '.types',
   install: true,
-  install_dir: join_paths(dconf_datadir, 'gtk-doc', 'html', meson.project_name())
+  install_dir: join_paths(dconf_prefix, gnome.gtkdoc_html_dir(meson.project_name()))
 )
 
 if get_option('man')
