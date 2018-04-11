@@ -19,7 +19,9 @@ executable(
   install: true
 )
 
-install_data(
-  'completion/dconf',
-  install_dir: join_paths(dconf_datadir, 'bash-completion', 'completions')
-)
+if enable_bash_completion
+  install_data(
+    'completion/dconf',
+    install_dir: completions_dir
+  )
+endif
