@@ -6,9 +6,9 @@ service = dconf_namespace + '.service'
 configure_file(
   input: service + '.in',
   output: service,
+  configuration: service_conf,
   install: true,
-  install_dir: dbus_session_service_dir,
-  configuration: service_conf
+  install_dir: dbus_session_service_dir
 )
 
 sources = [
@@ -32,7 +32,7 @@ deps = [
   gio_unix_dep,
   libdconf_common_dep,
   libdconf_shm_dep,
-  libgvdb_dep,
+  libgvdb_dep
 ]
 
 executable(
