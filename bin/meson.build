@@ -16,7 +16,6 @@ executable(
   sources,
   include_directories: top_inc,
   dependencies: deps,
-  c_args: '-w',
   install: true
 )
 
