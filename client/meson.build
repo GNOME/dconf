@@ -53,7 +53,7 @@ pkg.generate(
   filebase: meson.project_name(),
   subdirs: meson.project_name(),
   requires: 'gio-2.0 ' + gio_req_version,
-  variables: 'exec_prefix=' + dconf_libexecdir
+  variables: 'exec_prefix=${prefix}'
 )
 
 libdconf_vapi = files(meson.project_name() + '.vapi')
