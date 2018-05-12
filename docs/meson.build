@@ -1,16 +1,18 @@
-gnome.gtkdoc(
-  meson.project_name(),
-  main_xml: meson.project_name() + '-docs.xml',
-  src_dir: [
-    common_inc,
-    client_inc
-  ],
-  dependencies: libdconf_dep,
-  scan_args: '--rebuild-types',
-  gobject_typesfile: meson.project_name() + '.types',
-  install: true,
-  install_dir: join_paths(dconf_datadir, 'gtk-doc', 'html', meson.project_name())
-)
+if get_option('enable-gtk-doc')
+  gnome.gtkdoc(
+    meson.project_name(),
+    main_xml: meson.project_name() + '-docs.xml',
+    src_dir: [
+      common_inc,
+      client_inc
+    ],
+    dependencies: libdconf_dep,
+    scan_args: '--rebuild-types',
+    gobject_typesfile: meson.project_name() + '.types',
+    install: true,
+    install_dir: join_paths(dconf_datadir, 'gtk-doc', 'html', meson.project_name())
+  )
+endif
 
 if get_option('enable-man')
   xsltproc = find_program('xsltproc', required: false)

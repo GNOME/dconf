@@ -105,9 +105,5 @@ subdir('gdbus')
 subdir('gsettings')
 subdir('client')
 subdir('bin')
-
-if get_option('enable-gtk-doc')
-  subdir('docs')
-endif
-
+subdir('docs')
 subdir('tests')
