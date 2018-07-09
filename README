@@ -21,9 +21,7 @@ typically involve zero system calls and are comparable to a hashtable
 lookup in terms of speed.  Practically speaking, in simple non-layered
 setups, dconf is less than 10 times slower than GHashTable.
 
-Writes are assumed only to happen in response to explicit user
-interaction (like clicking on a checkbox in a preferences dialog) and
-are therefore not optimised at all.  On some file systems, dconf-service
+Writes are not optimised at all.  On some file systems, dconf-service
 will call fsync() for every write, which can introduce a latency of up
 to 100ms.  This latency is hidden by the client libraries through a
 clever "fast" mechanism that records the outstanding changes locally (so
@@ -48,9 +46,9 @@ graphical applications.
 dconf itself attempts to maintain a rather low profile with respect to
 dependencies.  For the most part, there is only a dependency on GLib.
 
-With the exception of the bin/ and editor/ directories, dconf is written
-in C using libglib.  This is a very strong dependency due to the fact
-that dconf's type system is GVariant.
+With the exception of the bin/ directory, dconf is written in C using
+libglib.  This is a very strong dependency due to the fact that dconf's
+type system is GVariant.
 
 The dconf-service has a dependency on libgio, as do the client libraries
 that make use of GDBus (and the utilities that make use of those
@@ -64,18 +62,12 @@ but still depends on libglib.  It is not recommended to use this library
 unless you have a legacy dependency on libdbus-1 (such as in Qt
 applications).
 
-bin/ and editor/ are written in Vala.  The Vala compiler is not required
-to compile tarball releases but is required for building out of git.
+bin/ is written in Vala, hence the Vala compiler is required.
 
-The editor also has a dependency on Gtk+ 3 and libxml2.  The libxml2
-dependency should disappear at some point in the near future.  In any
-case, building the editor is optional (and can be switched off using
---disable-editor).
+Installing dconf follows the typical meson dance:
 
-Installing dconf follows the typical automake dance:
-
-  ./configure            (or autogen.sh from git)
-  make
-  make install
+  meson builddir
+  ninja -C builddir
+  ninja -C builddir install
 
 If you plan to contribute to dconf, please see the HACKING file.
