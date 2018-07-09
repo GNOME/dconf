@@ -174,7 +174,7 @@ dconf_gvdb_utils_write_file (const gchar     *filename,
        * again, after mkdir().
        */
       dirname = g_path_get_dirname (filename);
-      g_mkdir_with_parents (dirname, 0777);
+      g_mkdir_with_parents (dirname, 0700);
       g_free (dirname);
 
       g_clear_error (error);

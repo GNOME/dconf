@@ -207,7 +207,7 @@ dconf_keyfile_writer_begin (DConfWriter  *writer,
        * again, after mkdir().
        */
       dirname = g_path_get_dirname (kfw->lock_filename);
-      g_mkdir_with_parents (dirname, 0777);
+      g_mkdir_with_parents (dirname, 0700);
       g_free (dirname);
 
       kfw->lock_fd = open (kfw->lock_filename, O_RDWR | O_CREAT, 0666);
