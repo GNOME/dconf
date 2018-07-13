@@ -47,6 +47,9 @@ gboolean                dconf_changeset_get                             (DConfCh
                                                                          const gchar              *key,
                                                                          GVariant                **value);
 
+void                    dconf_changeset_table_iter_init                 (DConfChangeset           *changeset,
+                                                                         GHashTableIter           *iter);
+
 gboolean                dconf_changeset_is_similar_to                   (DConfChangeset           *changeset,
                                                                          DConfChangeset           *other);
 
