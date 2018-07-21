@@ -1,3 +1,13 @@
+Changes in dconf 0.29.1
+=======================
+
+ - Engine: track in progress watch handles to avoid spurious changed
+   signals for the root path. Subscription requests are no longer sent
+   if the engine is already subscribed to the given path. In the case
+   that some value changes while a subscription request is in progress,
+   a changed signal is only sent for the path being subscribed to
+   instead of the root path. (Daniel Playfair Cal; !1)
+
 Changes in dconf 0.28.0
 =======================
 
@@ -417,12 +427,12 @@ Translations:
 
  - Arabic
  - Belarusian
- - Bengali 
+ - Bengali
  - Brazilian Portuguese
  - British English
  - Bulgarian
  - Catalan
- - Catalan (Valencian) 
+ - Catalan (Valencian)
  - Czech
  - Danish
  - Estonian
