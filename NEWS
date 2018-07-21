@@ -1,3 +1,32 @@
+Changes in dconf 0.29.1
+=======================
+
+ - Engine: track in progress watch handles to avoid spurious changed
+   signals for the root path. Subscription requests are no longer sent
+   if the engine is already subscribed to the given path. In the case
+   that some value changes while a subscription request is in progress,
+   a changed signal is only sent for the path being subscribed to
+   instead of the root path. (Daniel Playfair Cal; !1, !5, #790640)
+
+ - Engine: fix deadlock which occured when using the engine from libsoup
+   within flatpak by extending the existing workaround for Glib !541, aka
+   #674885. GSocket and various other GObject types are now also
+   initialised in the main thread. (Owen Taylor; !15)
+
+ - Add transfer annotations to the GTK-Doc strings for functions in the
+   dconf_changeset_* and dconf_client_* namespaces (Xavier Claessens,
+   Philip Withnall; !9, #758903)
+
+ - dconf-update.vala: correct error message grammar (Kenyon Ralph; !6)
+
+ - Various meson related improvements (Iñigo Martínez; !11)
+
+ - Add GitLab CI (Philip Withnall; !10)
+
+ - Service: Port from the deprecated g_type_class_add_private() to
+   G_ADD_PRIVATE() (Philip Withnall; !7)
+
+
 Changes in dconf 0.28.0
 =======================
 
@@ -417,12 +446,12 @@ Translations:
 
  - Arabic
  - Belarusian
- - Bengali 
+ - Bengali
  - Brazilian Portuguese
  - British English
  - Bulgarian
  - Catalan
- - Catalan (Valencian) 
+ - Catalan (Valencian)
  - Czech
  - Danish
  - Estonian
