@@ -170,8 +170,14 @@ struct _DConfEngine
 
   gchar              *last_handled;  /* reply tag from last item in in_flight */
 
-  GHashTable         *watched_paths; /* list of paths currently being watched for changes */
-  GHashTable         *pending_paths; /* list of paths waiting to enter watched state */
+  /**
+   * establishing and active, are hash tables storing the number
+   * of subscriptions to each path in the two possible states
+   */
+  /* active on the client side, but awaiting confirmation from the writer */
+  GHashTable         *establishing;
+  /* active on the client side, and with a D-Bus match rule established */
+  GHashTable         *active;
 };
 
 /* When taking the sources lock we check if any of the databases have
@@ -225,6 +231,78 @@ dconf_engine_unlock_queues (DConfEngine *engine)
   g_mutex_unlock (&engine->queue_lock);
 }
 
+/**
+ * Adds the count of subscriptions to @path in @from_table to the
+ * corresponding count in @to_table, creating it if it did not exist.
+ * Removes the count from @from_table.
+ */
+static void
+dconf_engine_move_subscriptions (GHashTable  *from_counts,
+                                 GHashTable  *to_counts,
+                                 const gchar *path)
+{
+  gint from_count = GPOINTER_TO_INT (g_hash_table_lookup (from_counts, path));
+  gint old_to_count = GPOINTER_TO_INT (g_hash_table_lookup (to_counts, path));
+  gint new_to_count = old_to_count + from_count;
+  if (from_count != 0)
+    {
+      g_hash_table_remove (from_counts, path);
+      // Detect overflows
+      g_assert (new_to_count > 0 && new_to_count <= G_MAXINT32);
+      g_hash_table_replace (to_counts,
+                            g_strdup (path),
+                            GINT_TO_POINTER (new_to_count));
+    }
+}
+
+/**
+ * Increments the reference count for the subscription to @path, or sets
+ * it to 1 if it didn’t previously exist.
+ * Returns the new reference count.
+ */
+static gint
+dconf_engine_inc_subscriptions (GHashTable  *counts,
+                                const gchar *path)
+{
+  gint old_count = GPOINTER_TO_INT (g_hash_table_lookup (counts, path));
+  gint new_value = old_count + 1;
+  // Detect overflows
+  g_assert (new_value > 0 && new_value <= G_MAXINT32);
+  g_hash_table_replace (counts, g_strdup (path), GINT_TO_POINTER (new_value));
+  return new_value;
+}
+
+/**
+ * Decrements the reference count for the subscription to @path, or
+ * removes it if the new value is 0. The count must exist and be greater
+ * than 0.
+ * Returns the new reference count, or 0 if it does not exist.
+ */
+static gint
+dconf_engine_dec_subscriptions (GHashTable  *counts,
+                                const gchar *path)
+{
+  gint old_count = GPOINTER_TO_INT (g_hash_table_lookup (counts, path));
+  gint new_count = old_count - 1;
+  g_assert (new_count >= 0);
+  if (new_count == 0)
+    g_hash_table_remove (counts, path);
+  else
+    g_hash_table_replace (counts, g_strdup (path), GINT_TO_POINTER (new_count));
+  return new_count;
+}
+
+/**
+ * Returns the reference count for the subscription to @path, or 0 if it
+ * does not exist.
+ */
+static gint
+dconf_engine_count_subscriptions (GHashTable  *counts,
+                                  const gchar *path)
+{
+  return GPOINTER_TO_INT (g_hash_table_lookup (counts, path));
+}
+
 DConfEngine *
 dconf_engine_new (const gchar    *profile,
                   gpointer        user_data,
@@ -247,8 +325,14 @@ dconf_engine_new (const gchar    *profile,
   dconf_engine_global_list = g_slist_prepend (dconf_engine_global_list, engine);
   g_mutex_unlock (&dconf_engine_global_lock);
 
-  engine->watched_paths = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
-  engine->pending_paths = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+  engine->establishing = g_hash_table_new_full (g_str_hash,
+                                                g_str_equal,
+                                                g_free,
+                                                NULL);
+  engine->active = g_hash_table_new_full (g_str_hash,
+                                          g_str_equal,
+                                          g_free,
+                                          NULL);
 
   return engine;
 }
@@ -300,8 +384,8 @@ dconf_engine_unref (DConfEngine *engine)
 
       g_free (engine->sources);
 
-      g_hash_table_unref(engine->pending_paths);
-      g_hash_table_unref(engine->watched_paths);
+      g_hash_table_unref (engine->establishing);
+      g_hash_table_unref (engine->active);
 
       if (engine->free_func)
         engine->free_func (engine->user_data);
@@ -847,7 +931,14 @@ dconf_engine_watch_established (DConfEngine  *engine,
       dconf_engine_change_notify (engine, ow->path, changes, NULL, FALSE, NULL, engine->user_data);
     }
 
-  dconf_engine_set_watching (engine, ow->path, TRUE, TRUE);
+  gint num_establishing = dconf_engine_count_subscriptions (engine->establishing,
+                                                            ow->path);
+  if (num_establishing > 0)
+    // Subscription(s): establishing -> active
+    dconf_engine_move_subscriptions (engine->establishing,
+                                     engine->active,
+                                     ow->path);
+
   dconf_engine_call_handle_free (handle);
 }
 
@@ -855,14 +946,17 @@ void
 dconf_engine_watch_fast (DConfEngine *engine,
                          const gchar *path)
 {
-  if (dconf_engine_is_watching (engine, path, TRUE))
-    {
-      /**
-       * Either there is already a match rule in place for this exact path,
-       * or there is already a request in progress to add a match.
-       */
-      return;
-    }
+  gint num_establishing = dconf_engine_count_subscriptions (engine->establishing, path);
+  gint num_active = dconf_engine_count_subscriptions (engine->active, path);
+  if (num_active > 0)
+    // Subscription: inactive -> active
+    dconf_engine_inc_subscriptions (engine->active, path);
+  else
+    // Subscription: inactive -> establishing
+    num_establishing = dconf_engine_inc_subscriptions (engine->establishing,
+                                                       path);
+  if (num_establishing > 1 || num_active > 0)
+    return;
 
   OutstandingWatch *ow;
   gint i;
@@ -897,23 +991,31 @@ dconf_engine_watch_fast (DConfEngine *engine,
                                          "/org/freedesktop/DBus", "org.freedesktop.DBus", "AddMatch",
                                          dconf_engine_make_match_rule (engine->sources[i], path),
                                          &ow->handle, NULL);
-
-  dconf_engine_set_watching (engine, ow->path, TRUE, FALSE);
 }
 
 void
 dconf_engine_unwatch_fast (DConfEngine *engine,
                            const gchar *path)
 {
+  gint num_active = dconf_engine_count_subscriptions (engine->active, path);
+  gint num_establishing = dconf_engine_count_subscriptions (engine->establishing, path);
   gint i;
+
+  if (num_active == 0)
+    // Subscription: establishing -> inactive
+    num_establishing = dconf_engine_dec_subscriptions (engine->establishing, path);
+  else
+    // Subscription: active -> inactive
+    num_active = dconf_engine_dec_subscriptions (engine->active, path);
+
+  if (num_active > 0 || num_establishing > 0)
+    return;
 
   for (i = 0; i < engine->n_sources; i++)
     if (engine->sources[i]->bus_type)
       dconf_engine_dbus_call_async_func (engine->sources[i]->bus_type, "org.freedesktop.DBus",
                                          "/org/freedesktop/DBus", "org.freedesktop.DBus", "RemoveMatch",
                                          dconf_engine_make_match_rule (engine->sources[i], path), NULL, NULL);
-
-  dconf_engine_set_watching (engine, path, FALSE, FALSE);
 }
 
 static void
@@ -951,16 +1053,18 @@ void
 dconf_engine_watch_sync (DConfEngine *engine,
                          const gchar *path)
 {
-  dconf_engine_handle_match_rule_sync (engine, "AddMatch", path);
-  dconf_engine_set_watching (engine, path, TRUE, TRUE);
+  gint num_active = dconf_engine_inc_subscriptions (engine->active, path);
+  if (num_active == 1)
+    dconf_engine_handle_match_rule_sync (engine, "AddMatch", path);
 }
 
 void
 dconf_engine_unwatch_sync (DConfEngine *engine,
                            const gchar *path)
 {
-  dconf_engine_handle_match_rule_sync (engine, "RemoveMatch", path);
-  dconf_engine_set_watching (engine, path, FALSE, FALSE);
+  gint num_active = dconf_engine_dec_subscriptions (engine->active, path);
+  if (num_active == 0)
+    dconf_engine_handle_match_rule_sync (engine, "RemoveMatch", path);
 }
 
 typedef struct
@@ -1417,43 +1521,4 @@ dconf_engine_sync (DConfEngine *engine)
   while (!g_queue_is_empty (&engine->in_flight))
     g_cond_wait (&engine->queue_cond, &engine->queue_lock);
   dconf_engine_unlock_queues (engine);
-}
-
-void
-dconf_engine_set_watching (DConfEngine    *engine,
-                           const gchar    *path,
-                           const gboolean  is_watching,
-                           const gboolean  is_established)
-{
-  if (is_watching)
-    {
-      if (is_established)
-        {
-          g_hash_table_add (engine->watched_paths, g_strdup (path));
-          g_hash_table_remove (engine->pending_paths, path);
-        }
-      else
-        {
-          g_hash_table_add (engine->pending_paths, g_strdup (path));
-          g_hash_table_remove (engine->watched_paths, path);
-        }
-    }
-  else
-    {
-      g_hash_table_remove (engine->watched_paths, path);
-      g_hash_table_remove (engine->pending_paths, path);
-    }
-}
-
-gboolean
-dconf_engine_is_watching (DConfEngine *engine, const gchar *path, const gboolean only_established)
-{
-  gconstpointer key = (gconstpointer) path;
-  if (g_hash_table_contains (engine->watched_paths, key))
-    return TRUE;
-
-  if (!only_established && g_hash_table_contains (engine->pending_paths, key))
-    return TRUE;
-
-  return FALSE;
 }
