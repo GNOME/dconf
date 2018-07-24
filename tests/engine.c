@@ -1210,12 +1210,15 @@ test_watch_fast (void)
   c = dconf_engine_get_state (engine);
   g_assert_cmpuint (b, ==, c);
   /* The watch result was not sent, because the path was already watched */
-  dconf_mock_dbus_assert_no_async();
+  dconf_mock_dbus_assert_no_async ();
   c = dconf_engine_get_state (engine);
   g_assert_cmpuint (b, ==, c);
   /* Since the path was already being watched,
    * do not expect a second false change notification */
   g_assert_cmpstr (change_log->str, ==, "/a/b/c:1::nil;");
+  dconf_engine_unwatch_fast (engine, "/a/b/c");
+  /* nothing was done, because there is still a subscription left */
+  dconf_mock_dbus_assert_no_async ();
   dconf_engine_unwatch_fast (engine, "/a/b/c");
   dconf_mock_dbus_async_reply (triv, NULL);
   dconf_mock_dbus_async_reply (triv, NULL);
@@ -1284,54 +1287,6 @@ test_watch_sync (void)
 
   dconf_mock_dbus_sync_call_handler = NULL;
   match_request_type = NULL;
-}
-
-static void
-test_watching (void)
-{
-  DConfEngine *engine;
-  const gchar *apple = "apple";
-  const gchar *orange = "orange";
-  const gchar *banana = "banana";
-
-  engine = dconf_engine_new (SRCDIR "/profile/dos", NULL, NULL);
-
-  g_assert (!dconf_engine_is_watching(engine, apple, TRUE));
-  g_assert (!dconf_engine_is_watching(engine, apple, FALSE));
-  g_assert (!dconf_engine_is_watching(engine, orange, TRUE));
-  g_assert (!dconf_engine_is_watching(engine, orange, FALSE));
-  g_assert (!dconf_engine_is_watching(engine, banana, TRUE));
-  g_assert (!dconf_engine_is_watching(engine, banana, FALSE));
-
-  dconf_engine_set_watching (engine, apple, FALSE, FALSE);
-  dconf_engine_set_watching (engine, orange, TRUE, FALSE);
-  dconf_engine_set_watching (engine, banana, TRUE, TRUE);
-
-  g_assert (!dconf_engine_is_watching(engine, apple, TRUE));
-  g_assert (!dconf_engine_is_watching(engine, apple, FALSE));
-  g_assert (!dconf_engine_is_watching(engine, orange, TRUE));
-  g_assert (dconf_engine_is_watching(engine, orange, FALSE));
-  g_assert (dconf_engine_is_watching(engine, banana, TRUE));
-  g_assert (dconf_engine_is_watching(engine, banana, FALSE));
-
-  dconf_engine_set_watching (engine, orange, TRUE, TRUE);
-  dconf_engine_set_watching (engine, banana, FALSE, FALSE);
-
-  g_assert (!dconf_engine_is_watching(engine, apple, TRUE));
-  g_assert (!dconf_engine_is_watching(engine, apple, FALSE));
-  g_assert (dconf_engine_is_watching(engine, orange, TRUE));
-  g_assert (dconf_engine_is_watching(engine, orange, FALSE));
-  g_assert (!dconf_engine_is_watching(engine, banana, TRUE));
-  g_assert (!dconf_engine_is_watching(engine, banana, FALSE));
-
-  dconf_engine_set_watching (engine, orange, FALSE, FALSE);
-
-  g_assert (!dconf_engine_is_watching(engine, apple, TRUE));
-  g_assert (!dconf_engine_is_watching(engine, apple, FALSE));
-  g_assert (!dconf_engine_is_watching(engine, orange, TRUE));
-  g_assert (!dconf_engine_is_watching(engine, orange, FALSE));
-  g_assert (!dconf_engine_is_watching(engine, banana, TRUE));
-  g_assert (!dconf_engine_is_watching(engine, banana, FALSE));
 }
 
 static void
@@ -1819,7 +1774,6 @@ main (int argc, char **argv)
   g_test_add_func ("/engine/read", test_read);
   g_test_add_func ("/engine/watch/fast", test_watch_fast);
   g_test_add_func ("/engine/watch/sync", test_watch_sync);
-  g_test_add_func ("/engine/watch/watching", test_watching);
   g_test_add_func ("/engine/change/fast", test_change_fast);
   g_test_add_func ("/engine/change/sync", test_change_sync);
   g_test_add_func ("/engine/signals", test_signals);
