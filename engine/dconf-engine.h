@@ -104,17 +104,6 @@ DConfEngine *           dconf_engine_new                                (const g
 G_GNUC_INTERNAL
 void                    dconf_engine_unref                              (DConfEngine             *engine);
 
-G_GNUC_INTERNAL
-void                    dconf_engine_set_watching                       (DConfEngine             *engine,
-                                                                         const gchar             *path,
-                                                                         const gboolean           is_watching,
-                                                                         const gboolean           is_established);
-
-G_GNUC_INTERNAL
-gboolean                dconf_engine_is_watching                        (DConfEngine             *engine,
-                                                                         const gchar             *path,
-                                                                         const gboolean           only_established);
-
 /* Read API: always handled immediately */
 G_GNUC_INTERNAL
 guint64                 dconf_engine_get_state                          (DConfEngine             *engine);
