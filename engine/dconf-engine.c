@@ -928,11 +928,13 @@ dconf_engine_watch_established (DConfEngine  *engine,
        * everything under the path being watched changed.  This case is
        * very rare, anyway...
        */
+      g_debug ("SHM invalidated while establishing subscription to %s - signalling change", ow->path);
       dconf_engine_change_notify (engine, ow->path, changes, NULL, FALSE, NULL, engine->user_data);
     }
 
   guint num_establishing = dconf_engine_count_subscriptions (engine->establishing,
                                                              ow->path);
+  g_debug ("watch_established: \"%s\" (establishing: %d)", ow->path, num_establishing);
   if (num_establishing > 0)
     // Subscription(s): establishing -> active
     dconf_engine_move_subscriptions (engine->establishing,
@@ -948,6 +950,7 @@ dconf_engine_watch_fast (DConfEngine *engine,
 {
   guint num_establishing = dconf_engine_count_subscriptions (engine->establishing, path);
   guint num_active = dconf_engine_count_subscriptions (engine->active, path);
+  g_debug ("watch_fast: \"%s\" (establishing: %d, active: %d)", path, num_establishing, num_active);
   if (num_active > 0)
     // Subscription: inactive -> active
     dconf_engine_inc_subscriptions (engine->active, path);
@@ -1000,6 +1003,7 @@ dconf_engine_unwatch_fast (DConfEngine *engine,
   guint num_active = dconf_engine_count_subscriptions (engine->active, path);
   guint num_establishing = dconf_engine_count_subscriptions (engine->establishing, path);
   gint i;
+  g_debug ("unwatch_fast: \"%s\" (active: %d, establishing: %d)", path, num_active, num_establishing);
 
   // Client code cannot unsubscribe if it is not subscribed
   g_assert (num_active > 0 || num_establishing > 0);
@@ -1056,6 +1060,7 @@ dconf_engine_watch_sync (DConfEngine *engine,
                          const gchar *path)
 {
   guint num_active = dconf_engine_inc_subscriptions (engine->active, path);
+  g_debug ("watch_sync: \"%s\" (active: %d)", path, num_active - 1);
   if (num_active == 1)
     dconf_engine_handle_match_rule_sync (engine, "AddMatch", path);
 }
@@ -1065,6 +1070,7 @@ dconf_engine_unwatch_sync (DConfEngine *engine,
                            const gchar *path)
 {
   guint num_active = dconf_engine_dec_subscriptions (engine->active, path);
+  g_debug ("unwatch_sync: \"%s\" (active: %d)", path, num_active + 1);
   if (num_active == 0)
     dconf_engine_handle_match_rule_sync (engine, "RemoveMatch", path);
 }
@@ -1274,7 +1280,7 @@ dconf_engine_change_fast (DConfEngine     *engine,
                           GError         **error)
 {
   GList *node;
-
+  g_debug ("change_fast");
   if (dconf_changeset_is_empty (changeset))
     return TRUE;
 
@@ -1341,6 +1347,7 @@ dconf_engine_change_sync (DConfEngine     *engine,
                           GError         **error)
 {
   GVariant *reply;
+  g_debug ("change_sync");
 
   if (dconf_changeset_is_empty (changeset))
     {
@@ -1519,6 +1526,7 @@ dconf_engine_has_outstanding (DConfEngine *engine)
 void
 dconf_engine_sync (DConfEngine *engine)
 {
+  g_debug ("sync");
   dconf_engine_lock_queues (engine);
   while (!g_queue_is_empty (&engine->in_flight))
     g_cond_wait (&engine->queue_cond, &engine->queue_lock);
