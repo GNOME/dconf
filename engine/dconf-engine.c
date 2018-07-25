@@ -174,6 +174,8 @@ struct _DConfEngine
    * establishing and active, are hash tables storing the number
    * of subscriptions to each path in the two possible states
    */
+  /* This lock ensures that transactions involving subscription counts are atomic */
+  GMutex              subscription_count_lock;
   /* active on the client side, but awaiting confirmation from the writer */
   GHashTable         *establishing;
   /* active on the client side, and with a DBus match rule established */
@@ -294,6 +296,18 @@ dconf_engine_count_subscriptions (GHashTable  *subscriptions_table,
   return *count;
 }
 
+static void
+dconf_engine_lock_subscription_counts (DConfEngine *engine)
+{
+  g_mutex_lock (&engine->subscription_count_lock);
+}
+
+static void
+dconf_engine_unlock_subscription_counts (DConfEngine *engine)
+{
+  g_mutex_unlock (&engine->subscription_count_lock);
+}
+
 DConfEngine *
 dconf_engine_new (const gchar    *profile,
                   gpointer        user_data,
@@ -316,6 +330,7 @@ dconf_engine_new (const gchar    *profile,
   dconf_engine_global_list = g_slist_prepend (dconf_engine_global_list, engine);
   g_mutex_unlock (&dconf_engine_global_lock);
 
+  g_mutex_init(&engine->subscription_count_lock);
   engine->establishing = g_hash_table_new_full (g_str_hash,
                                                 g_str_equal,
                                                 g_free,
@@ -377,6 +392,8 @@ dconf_engine_unref (DConfEngine *engine)
 
       g_hash_table_unref(engine->establishing);
       g_hash_table_unref(engine->active);
+
+      g_mutex_clear (&engine->subscription_count_lock);
 
       if (engine->free_func)
         engine->free_func (engine->user_data);
@@ -923,6 +940,7 @@ dconf_engine_watch_established (DConfEngine  *engine,
       dconf_engine_change_notify (engine, ow->path, changes, NULL, FALSE, NULL, engine->user_data);
     }
 
+  dconf_engine_lock_subscription_counts (engine);
   guint32 num_establishing = dconf_engine_count_subscriptions (engine->establishing,
                                                                ow->path);
   g_debug ("watch_established: \"%s\" (establishing: %d)", ow->path, num_establishing);
@@ -932,6 +950,7 @@ dconf_engine_watch_established (DConfEngine  *engine,
                                      engine->active,
                                      ow->path);
 
+  dconf_engine_unlock_subscription_counts (engine);
   dconf_engine_call_handle_free (handle);
 }
 
@@ -939,6 +958,7 @@ void
 dconf_engine_watch_fast (DConfEngine *engine,
                          const gchar *path)
 {
+  dconf_engine_lock_subscription_counts (engine);
   guint32 num_establishing = dconf_engine_count_subscriptions (engine->establishing, path);
   guint32 num_active = dconf_engine_count_subscriptions (engine->active, path);
   g_debug ("watch_fast: \"%s\" (establishing: %d, active: %d)", path, num_establishing, num_active);
@@ -946,12 +966,14 @@ dconf_engine_watch_fast (DConfEngine *engine,
     {
       // Subscription: inactive -> active
       dconf_engine_inc_subscriptions (engine->active, path);
+      dconf_engine_unlock_subscription_counts (engine);
       return;
     }
 
   // Subscription: inactive -> establishing
   num_establishing = dconf_engine_inc_subscriptions (engine->establishing,
                                                      path);
+  dconf_engine_unlock_subscription_counts (engine);
   if (num_establishing > 1)
     return;
 
@@ -994,6 +1016,7 @@ void
 dconf_engine_unwatch_fast (DConfEngine *engine,
                            const gchar *path)
 {
+  dconf_engine_lock_subscription_counts (engine);
   guint32 num_active = dconf_engine_count_subscriptions (engine->active, path);
   guint32 num_establishing = dconf_engine_count_subscriptions (engine->establishing, path);
   gint i;
@@ -1003,6 +1026,7 @@ dconf_engine_unwatch_fast (DConfEngine *engine,
     {
       // Subscription: establishing -> inactive
       num_establishing = dconf_engine_dec_subscriptions (engine->establishing, path);
+      dconf_engine_unlock_subscription_counts (engine);
       if (num_establishing > 0)
         return;
     }
@@ -1010,6 +1034,7 @@ dconf_engine_unwatch_fast (DConfEngine *engine,
     {
       // Subscription: active -> inactive
       num_active = dconf_engine_dec_subscriptions (engine->active, path);
+      dconf_engine_unlock_subscription_counts (engine);
       if (num_active > 0 || num_establishing > 0)
         return;
     }
@@ -1057,7 +1082,9 @@ void
 dconf_engine_watch_sync (DConfEngine *engine,
                          const gchar *path)
 {
+  dconf_engine_lock_subscription_counts (engine);
   guint32 num_active = dconf_engine_inc_subscriptions (engine->active, path);
+  dconf_engine_unlock_subscription_counts (engine);
   g_debug ("watch_sync: \"%s\" (active: %d)", path, num_active - 1);
   if (num_active == 1)
     dconf_engine_handle_match_rule_sync (engine, "AddMatch", path);
@@ -1067,7 +1094,9 @@ void
 dconf_engine_unwatch_sync (DConfEngine *engine,
                            const gchar *path)
 {
+  dconf_engine_lock_subscription_counts (engine);
   guint32 num_active = dconf_engine_dec_subscriptions (engine->active, path);
+  dconf_engine_unlock_subscription_counts (engine);
   g_debug ("unwatch_sync: \"%s\" (active: %d)", path, num_active + 1);
   if (num_active == 0)
     dconf_engine_handle_match_rule_sync (engine, "RemoveMatch", path);
