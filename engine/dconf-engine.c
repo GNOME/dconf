@@ -924,12 +924,14 @@ dconf_engine_watch_established (DConfEngine  *engine,
        * everything under the path being watched changed.  This case is
        * very rare, anyway...
        */
+      g_debug("database changed during match rule setup for %s", ow->path);
       dconf_engine_change_notify (engine, ow->path, changes, NULL, FALSE, NULL, engine->user_data);
     }
 
   guint32 num_establishing = dconf_engine_count_subscriptions (
     engine->establishing,
     ow->path);
+  g_debug("watch_established: %s (establishing: %d)", ow->path, num_establishing);
   if (num_establishing > 0)
     // Subscription(s): establishing -> watched
     dconf_engine_move_subscriptions (
@@ -946,6 +948,7 @@ dconf_engine_watch_fast (DConfEngine *engine,
 {
   guint32 num_establishing = dconf_engine_count_subscriptions (engine->establishing, path);
   guint32 num_active = dconf_engine_count_subscriptions (engine->active, path);
+  g_debug("watch_fast: \"%s\" (establishing: %d, active: %d)", path, num_establishing, num_active);
   if (num_active > 0)
     {
       // Subscription: inactive -> active
@@ -1002,6 +1005,7 @@ dconf_engine_unwatch_fast (DConfEngine *engine,
   guint32 num_active = dconf_engine_count_subscriptions (engine->active, path);
   guint32 num_establishing = dconf_engine_count_subscriptions (engine->establishing, path);
   gint i;
+  g_debug("unwatch_fast: \"%s\" (active: %d, establishing: %d)", path, num_active, num_establishing);
 
   if (num_active == 0)
     {
@@ -1280,7 +1284,6 @@ dconf_engine_change_fast (DConfEngine     *engine,
                           GError         **error)
 {
   GList *node;
-
   if (dconf_changeset_is_empty (changeset))
     return TRUE;
 
