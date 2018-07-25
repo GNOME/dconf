@@ -289,10 +289,19 @@ dconf_engine_unref (DConfEngine *engine)
 
       g_free (engine->last_handled);
 
+      while (!g_queue_is_empty (&engine->pending))
+        dconf_changeset_unref ((DConfChangeset *) g_queue_pop_head (&engine->pending));
+
+      while (!g_queue_is_empty (&engine->in_flight))
+        dconf_changeset_unref ((DConfChangeset *) g_queue_pop_head (&engine->in_flight));
+
       for (i = 0; i < engine->n_sources; i++)
         dconf_engine_source_free (engine->sources[i]);
 
       g_free (engine->sources);
+
+      g_hash_table_unref(engine->pending_paths);
+      g_hash_table_unref(engine->watched_paths);
 
       if (engine->free_func)
         engine->free_func (engine->user_data);
