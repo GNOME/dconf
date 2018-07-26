@@ -224,7 +224,7 @@ void update_all (string dirname) throws GLib.Error {
 			try {
 				maybe_update_from_directory (name);
 			} catch (Error e) {
-				printerr ("unable compile %s: %s\n", name, e.message);
+				printerr ("unable to compile %s: %s\n", name, e.message);
 			}
 		}
 	}
