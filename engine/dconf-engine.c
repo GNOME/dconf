@@ -965,7 +965,7 @@ dconf_engine_watch_established (DConfEngine  *engine,
 
   dconf_engine_lock_subscription_counts (engine);
   gint num_establishing = dconf_engine_count_subscriptions (engine->establishing,
-                                                               ow->path);
+                                                            ow->path);
   g_debug ("watch_established: \"%s\" (establishing: %d)", ow->path, num_establishing);
   if (num_establishing > 0)
     // Subscription(s): establishing -> active
@@ -992,7 +992,7 @@ dconf_engine_watch_fast (DConfEngine *engine,
   else
     // Subscription: inactive -> establishing
     num_establishing = dconf_engine_inc_subscriptions (engine->establishing,
-                                                     path);
+                                                       path);
 
   dconf_engine_unlock_subscription_counts (engine);
 
