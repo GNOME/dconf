@@ -1,0 +1,49 @@
+{
+   ignore_unversioned_libs
+   Memcheck:Leak
+   obj:*/lib*/lib*.so
+   ...
+   obj:*/lib*/lib*.so
+}
+{
+   ignore_versioned_libs
+   Memcheck:Leak
+   obj:*/lib*/lib*.so.*
+   ...
+   obj:*/lib*/lib*.so.*
+}
+{
+   ignore_test_helpers
+   Memcheck:Leak
+   ...
+   fun:g_test_add_func
+   ...
+}
+{
+   ignore_test_helpers
+   Memcheck:Leak
+   ...
+   fun:g_test_log
+   ...
+}
+{
+   ignore_test_helpers
+   Memcheck:Leak
+   ...
+   fun:g_test_log
+   ...
+}
+{
+   ignore_test_helpers
+   Memcheck:Leak
+   ...
+   fun:g_build_path
+   ...
+}
+{
+   ignore_test_helpers
+   Memcheck:Leak
+   ...
+   fun:g_test_init
+   ...
+}

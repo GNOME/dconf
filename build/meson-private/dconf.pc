@@ -1,0 +1,12 @@
+prefix=/usr/local
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+exec_prefix=/usr/local/libexec
+
+Name: dconf
+Description: dconf client library
+Version: 0.28.0
+Requires: gio-unix-2.0 >=  2.25.7
+Libs: -L${prefix}//lib  -ldconf
+Cflags: -I${includedir}/dconf

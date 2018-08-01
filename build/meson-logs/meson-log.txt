@@ -1,0 +1,125 @@
+Build started at 2018-07-25T22:15:10.424596
+Main binary: /usr/bin/python
+Python system: Linux
+The Meson build system
+Version: 0.47.1
+Source dir: /home/daniel/code/dconf
+Build dir: /home/daniel/code/dconf/build
+Build type: native build
+Project name: dconf
+Project version: 0.28.0
+Native C compiler: cc (gcc 8.1.1 "cc (GCC) 8.1.1 20180531")
+Native Vala compiler: valac (valac 0.40.7)
+Build machine cpu family: x86_64
+Build machine cpu: x86_64
+Running compile:
+Working directory:  /tmp/tmpjy4y2yw1
+Command line:  cc /tmp/tmpjy4y2yw1/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -c -o /tmp/tmpjy4y2yw1/output.obj -O0 -fno-common 
+
+Code:
+ int i;
+
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Compiler for C supports arguments -fno-common: YES
+Running compile:
+Working directory:  /tmp/tmpfmteyllo
+Command line:  cc /tmp/tmpfmteyllo/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -c -o /tmp/tmpfmteyllo/output.obj -O0 -Wmissing-prototypes 
+
+Code:
+ int i;
+
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Compiler for C supports arguments -Wmissing-prototypes: YES
+Running compile:
+Working directory:  /tmp/tmpcm7qks36
+Command line:  cc /tmp/tmpcm7qks36/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -c -o /tmp/tmpcm7qks36/output.obj -O0 -Wwrite-strings 
+
+Code:
+ int i;
+
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Compiler for C supports arguments -Wwrite-strings: YES
+Dependency glib-2.0 found: YES (cached)
+Dependency gio-unix-2.0 found: YES (cached)
+Program gio-querymodules found: YES (/usr/bin/gio-querymodules)
+Program meson_post_install.py found: YES (/usr/bin/env python3 /home/daniel/code/dconf/meson_post_install.py)
+Configuring config.h using configuration
+Running compile:
+Working directory:  /tmp/tmpdcl94dwr
+Command line:  cc /tmp/tmpdcl94dwr/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -c -o /tmp/tmpdcl94dwr/output.obj -O0 -fvisibility=hidden 
+
+Code:
+ int i;
+
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Compiler for C supports arguments -fvisibility=hidden: YES
+Configuring ca.desrt.dconf.service using configuration
+Found pkg-config: /usr/bin/pkg-config (1.5.1)
+Determining dependency 'glib-2.0' with pkg-config executable '/usr/bin/pkg-config'
+Called `/usr/bin/pkg-config --modversion glib-2.0` -> 0
+2.56.1
+Called `/usr/bin/pkg-config --cflags glib-2.0` -> 0
+-I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include
+Called `/usr/bin/pkg-config glib-2.0 --libs` -> 0
+-L/usr/lib -lglib-2.0
+Called `/usr/bin/pkg-config glib-2.0 --libs` -> 0
+-lglib-2.0
+Native dependency glib-2.0 found: YES 2.56.1
+Program abicheck.sh found: YES (/home/daniel/code/dconf/gsettings/abicheck.sh)
+Adding test "abicheck"
+Running compile:
+Working directory:  /tmp/tmppmphjh2l
+Command line:  valac /tmp/tmppmphjh2l/testfile.vala -C --pkg posix 
+
+Code:
+ class MesonFindLibrary : Object { }
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Library posix found: YES
+Running compile:
+Working directory:  /tmp/tmpez9gxkjn
+Command line:  cc /tmp/tmpez9gxkjn/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmpez9gxkjn/output.exe -O0 -Wl,--start-group -ldl -Wl,--end-group 
+
+Code:
+ int main(int argc, char **argv) { return 0; }
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Library dl found: YES
+Running compile:
+Working directory:  /tmp/tmpxp0yw0wi
+Command line:  cc /tmp/tmpxp0yw0wi/testfile.c -pipe -D_FILE_OFFSET_BITS=64 -o /tmp/tmpxp0yw0wi/output.exe -O0 -Wl,--start-group -lm -Wl,--end-group 
+
+Code:
+ int main(int argc, char **argv) { return 0; }
+Compiler stdout:
+ 
+Compiler stderr:
+ 
+Library m found: YES
+Adding test "paths"
+Adding test "changeset"
+Adding test "shm"
+Adding test "gvdb"
+Adding test "gdbus-thread"
+Adding test "gdbus-filter"
+Adding test "engine"
+Adding test "client"
+Build targets in project: 29
+Option buildtype is: debug [default: debugoptimized]
+Found ninja-1.8.2 at /home/daniel/code/depot_tools/ninja

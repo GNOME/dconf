@@ -1,0 +1,307 @@
+[
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Ishm/shm@@dconf-shm@sta -Ishm -I../shm -I. -I../ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -fPIC '-DG_LOG_DOMAIN=\"dconf\"'  -MD -MQ 'shm/shm@@dconf-shm@sta/dconf-shm.c.o' -MF 'shm/shm@@dconf-shm@sta/dconf-shm.c.o.d' -o 'shm/shm@@dconf-shm@sta/dconf-shm.c.o' -c ../shm/dconf-shm.c",
+    "file": "../shm/dconf-shm.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Ishm/shm@@dconf-shm-shared@sta -Ishm -I../shm -I. -I../ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -fPIC '-DG_LOG_DOMAIN=\"dconf\"'  -MD -MQ 'shm/shm@@dconf-shm-shared@sta/dconf-shm.c.o' -MF 'shm/shm@@dconf-shm-shared@sta/dconf-shm.c.o.d' -o 'shm/shm@@dconf-shm-shared@sta/dconf-shm.c.o' -c ../shm/dconf-shm.c",
+    "file": "../shm/dconf-shm.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Igvdb/gvdb@@gvdb@sta -Igvdb -I../gvdb -I. -I../ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -fPIC '-DG_LOG_DOMAIN=\"gvdb (via dconf)\"'  -MD -MQ 'gvdb/gvdb@@gvdb@sta/gvdb-builder.c.o' -MF 'gvdb/gvdb@@gvdb@sta/gvdb-builder.c.o.d' -o 'gvdb/gvdb@@gvdb@sta/gvdb-builder.c.o' -c ../gvdb/gvdb-builder.c",
+    "file": "../gvdb/gvdb-builder.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Igvdb/gvdb@@gvdb@sta -Igvdb -I../gvdb -I. -I../ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -fPIC '-DG_LOG_DOMAIN=\"gvdb (via dconf)\"'  -MD -MQ 'gvdb/gvdb@@gvdb@sta/gvdb-reader.c.o' -MF 'gvdb/gvdb@@gvdb@sta/gvdb-reader.c.o.d' -o 'gvdb/gvdb@@gvdb@sta/gvdb-reader.c.o' -c ../gvdb/gvdb-reader.c",
+    "file": "../gvdb/gvdb-reader.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Igvdb/gvdb@@gvdb-shared@sta -Igvdb -I../gvdb -I. -I../ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -fPIC '-DG_LOG_DOMAIN=\"gvdb (via dconf)\"'  -MD -MQ 'gvdb/gvdb@@gvdb-shared@sta/gvdb-builder.c.o' -MF 'gvdb/gvdb@@gvdb-shared@sta/gvdb-builder.c.o.d' -o 'gvdb/gvdb@@gvdb-shared@sta/gvdb-builder.c.o' -c ../gvdb/gvdb-builder.c",
+    "file": "../gvdb/gvdb-builder.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Igvdb/gvdb@@gvdb-shared@sta -Igvdb -I../gvdb -I. -I../ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -fPIC '-DG_LOG_DOMAIN=\"gvdb (via dconf)\"'  -MD -MQ 'gvdb/gvdb@@gvdb-shared@sta/gvdb-reader.c.o' -MF 'gvdb/gvdb@@gvdb-shared@sta/gvdb-reader.c.o.d' -o 'gvdb/gvdb@@gvdb-shared@sta/gvdb-reader.c.o' -c ../gvdb/gvdb-reader.c",
+    "file": "../gvdb/gvdb-reader.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Icommon/common@@dconf-common@sta -Icommon -I../common -I. -I../ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -fPIC '-DG_LOG_DOMAIN=\"dconf\"'  -MD -MQ 'common/common@@dconf-common@sta/dconf-changeset.c.o' -MF 'common/common@@dconf-common@sta/dconf-changeset.c.o.d' -o 'common/common@@dconf-common@sta/dconf-changeset.c.o' -c ../common/dconf-changeset.c",
+    "file": "../common/dconf-changeset.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Icommon/common@@dconf-common@sta -Icommon -I../common -I. -I../ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -fPIC '-DG_LOG_DOMAIN=\"dconf\"'  -MD -MQ 'common/common@@dconf-common@sta/dconf-error.c.o' -MF 'common/common@@dconf-common@sta/dconf-error.c.o.d' -o 'common/common@@dconf-common@sta/dconf-error.c.o' -c ../common/dconf-error.c",
+    "file": "../common/dconf-error.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Icommon/common@@dconf-common@sta -Icommon -I../common -I. -I../ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -fPIC '-DG_LOG_DOMAIN=\"dconf\"'  -MD -MQ 'common/common@@dconf-common@sta/dconf-paths.c.o' -MF 'common/common@@dconf-common@sta/dconf-paths.c.o.d' -o 'common/common@@dconf-common@sta/dconf-paths.c.o' -c ../common/dconf-paths.c",
+    "file": "../common/dconf-paths.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Icommon/common@@dconf-common-shared@sta -Icommon -I../common -I. -I../ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -fPIC '-DG_LOG_DOMAIN=\"dconf\"'  -MD -MQ 'common/common@@dconf-common-shared@sta/dconf-changeset.c.o' -MF 'common/common@@dconf-common-shared@sta/dconf-changeset.c.o.d' -o 'common/common@@dconf-common-shared@sta/dconf-changeset.c.o' -c ../common/dconf-changeset.c",
+    "file": "../common/dconf-changeset.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Icommon/common@@dconf-common-shared@sta -Icommon -I../common -I. -I../ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -fPIC '-DG_LOG_DOMAIN=\"dconf\"'  -MD -MQ 'common/common@@dconf-common-shared@sta/dconf-error.c.o' -MF 'common/common@@dconf-common-shared@sta/dconf-error.c.o.d' -o 'common/common@@dconf-common-shared@sta/dconf-error.c.o' -c ../common/dconf-error.c",
+    "file": "../common/dconf-error.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Icommon/common@@dconf-common-shared@sta -Icommon -I../common -I. -I../ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -fPIC '-DG_LOG_DOMAIN=\"dconf\"'  -MD -MQ 'common/common@@dconf-common-shared@sta/dconf-paths.c.o' -MF 'common/common@@dconf-common-shared@sta/dconf-paths.c.o.d' -o 'common/common@@dconf-common-shared@sta/dconf-paths.c.o' -c ../common/dconf-paths.c",
+    "file": "../common/dconf-paths.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Icommon/common@@dconf-common-hidden@sta -Icommon -I../common -I. -I../ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -fPIC '-DG_LOG_DOMAIN=\"dconf\"' -fvisibility=hidden  -MD -MQ 'common/common@@dconf-common-hidden@sta/dconf-changeset.c.o' -MF 'common/common@@dconf-common-hidden@sta/dconf-changeset.c.o.d' -o 'common/common@@dconf-common-hidden@sta/dconf-changeset.c.o' -c ../common/dconf-changeset.c",
+    "file": "../common/dconf-changeset.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Icommon/common@@dconf-common-hidden@sta -Icommon -I../common -I. -I../ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -fPIC '-DG_LOG_DOMAIN=\"dconf\"' -fvisibility=hidden  -MD -MQ 'common/common@@dconf-common-hidden@sta/dconf-error.c.o' -MF 'common/common@@dconf-common-hidden@sta/dconf-error.c.o.d' -o 'common/common@@dconf-common-hidden@sta/dconf-error.c.o' -c ../common/dconf-error.c",
+    "file": "../common/dconf-error.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Icommon/common@@dconf-common-hidden@sta -Icommon -I../common -I. -I../ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -fPIC '-DG_LOG_DOMAIN=\"dconf\"' -fvisibility=hidden  -MD -MQ 'common/common@@dconf-common-hidden@sta/dconf-paths.c.o' -MF 'common/common@@dconf-common-hidden@sta/dconf-paths.c.o.d' -o 'common/common@@dconf-common-hidden@sta/dconf-paths.c.o' -c ../common/dconf-paths.c",
+    "file": "../common/dconf-paths.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Iengine/engine@@dconf-engine@sta -Iengine -I../engine -I. -I../ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -fPIC '-DG_LOG_DOMAIN=\"dconf\"'  -MD -MQ 'engine/engine@@dconf-engine@sta/dconf-engine.c.o' -MF 'engine/engine@@dconf-engine@sta/dconf-engine.c.o.d' -o 'engine/engine@@dconf-engine@sta/dconf-engine.c.o' -c ../engine/dconf-engine.c",
+    "file": "../engine/dconf-engine.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Iengine/engine@@dconf-engine@sta -Iengine -I../engine -I. -I../ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -fPIC '-DG_LOG_DOMAIN=\"dconf\"'  -MD -MQ 'engine/engine@@dconf-engine@sta/dconf-engine-profile.c.o' -MF 'engine/engine@@dconf-engine@sta/dconf-engine-profile.c.o.d' -o 'engine/engine@@dconf-engine@sta/dconf-engine-profile.c.o' -c ../engine/dconf-engine-profile.c",
+    "file": "../engine/dconf-engine-profile.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Iengine/engine@@dconf-engine@sta -Iengine -I../engine -I. -I../ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -fPIC '-DG_LOG_DOMAIN=\"dconf\"'  -MD -MQ 'engine/engine@@dconf-engine@sta/dconf-engine-source.c.o' -MF 'engine/engine@@dconf-engine@sta/dconf-engine-source.c.o.d' -o 'engine/engine@@dconf-engine@sta/dconf-engine-source.c.o' -c ../engine/dconf-engine-source.c",
+    "file": "../engine/dconf-engine-source.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Iengine/engine@@dconf-engine@sta -Iengine -I../engine -I. -I../ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -fPIC '-DG_LOG_DOMAIN=\"dconf\"'  -MD -MQ 'engine/engine@@dconf-engine@sta/dconf-engine-source-file.c.o' -MF 'engine/engine@@dconf-engine@sta/dconf-engine-source-file.c.o.d' -o 'engine/engine@@dconf-engine@sta/dconf-engine-source-file.c.o' -c ../engine/dconf-engine-source-file.c",
+    "file": "../engine/dconf-engine-source-file.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Iengine/engine@@dconf-engine@sta -Iengine -I../engine -I. -I../ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -fPIC '-DG_LOG_DOMAIN=\"dconf\"'  -MD -MQ 'engine/engine@@dconf-engine@sta/dconf-engine-source-user.c.o' -MF 'engine/engine@@dconf-engine@sta/dconf-engine-source-user.c.o.d' -o 'engine/engine@@dconf-engine@sta/dconf-engine-source-user.c.o' -c ../engine/dconf-engine-source-user.c",
+    "file": "../engine/dconf-engine-source-user.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Iengine/engine@@dconf-engine@sta -Iengine -I../engine -I. -I../ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -fPIC '-DG_LOG_DOMAIN=\"dconf\"'  -MD -MQ 'engine/engine@@dconf-engine@sta/dconf-engine-source-service.c.o' -MF 'engine/engine@@dconf-engine@sta/dconf-engine-source-service.c.o.d' -o 'engine/engine@@dconf-engine@sta/dconf-engine-source-service.c.o' -c ../engine/dconf-engine-source-service.c",
+    "file": "../engine/dconf-engine-source-service.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Iengine/engine@@dconf-engine@sta -Iengine -I../engine -I. -I../ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -fPIC '-DG_LOG_DOMAIN=\"dconf\"'  -MD -MQ 'engine/engine@@dconf-engine@sta/dconf-engine-source-system.c.o' -MF 'engine/engine@@dconf-engine@sta/dconf-engine-source-system.c.o.d' -o 'engine/engine@@dconf-engine@sta/dconf-engine-source-system.c.o' -c ../engine/dconf-engine-source-system.c",
+    "file": "../engine/dconf-engine-source-system.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Iengine/engine@@dconf-engine-shared@sta -Iengine -I../engine -I. -I../ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -fPIC '-DG_LOG_DOMAIN=\"dconf\"'  -MD -MQ 'engine/engine@@dconf-engine-shared@sta/dconf-engine.c.o' -MF 'engine/engine@@dconf-engine-shared@sta/dconf-engine.c.o.d' -o 'engine/engine@@dconf-engine-shared@sta/dconf-engine.c.o' -c ../engine/dconf-engine.c",
+    "file": "../engine/dconf-engine.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Iengine/engine@@dconf-engine-shared@sta -Iengine -I../engine -I. -I../ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -fPIC '-DG_LOG_DOMAIN=\"dconf\"'  -MD -MQ 'engine/engine@@dconf-engine-shared@sta/dconf-engine-profile.c.o' -MF 'engine/engine@@dconf-engine-shared@sta/dconf-engine-profile.c.o.d' -o 'engine/engine@@dconf-engine-shared@sta/dconf-engine-profile.c.o' -c ../engine/dconf-engine-profile.c",
+    "file": "../engine/dconf-engine-profile.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Iengine/engine@@dconf-engine-shared@sta -Iengine -I../engine -I. -I../ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -fPIC '-DG_LOG_DOMAIN=\"dconf\"'  -MD -MQ 'engine/engine@@dconf-engine-shared@sta/dconf-engine-source.c.o' -MF 'engine/engine@@dconf-engine-shared@sta/dconf-engine-source.c.o.d' -o 'engine/engine@@dconf-engine-shared@sta/dconf-engine-source.c.o' -c ../engine/dconf-engine-source.c",
+    "file": "../engine/dconf-engine-source.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Iengine/engine@@dconf-engine-shared@sta -Iengine -I../engine -I. -I../ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -fPIC '-DG_LOG_DOMAIN=\"dconf\"'  -MD -MQ 'engine/engine@@dconf-engine-shared@sta/dconf-engine-source-file.c.o' -MF 'engine/engine@@dconf-engine-shared@sta/dconf-engine-source-file.c.o.d' -o 'engine/engine@@dconf-engine-shared@sta/dconf-engine-source-file.c.o' -c ../engine/dconf-engine-source-file.c",
+    "file": "../engine/dconf-engine-source-file.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Iengine/engine@@dconf-engine-shared@sta -Iengine -I../engine -I. -I../ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -fPIC '-DG_LOG_DOMAIN=\"dconf\"'  -MD -MQ 'engine/engine@@dconf-engine-shared@sta/dconf-engine-source-user.c.o' -MF 'engine/engine@@dconf-engine-shared@sta/dconf-engine-source-user.c.o.d' -o 'engine/engine@@dconf-engine-shared@sta/dconf-engine-source-user.c.o' -c ../engine/dconf-engine-source-user.c",
+    "file": "../engine/dconf-engine-source-user.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Iengine/engine@@dconf-engine-shared@sta -Iengine -I../engine -I. -I../ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -fPIC '-DG_LOG_DOMAIN=\"dconf\"'  -MD -MQ 'engine/engine@@dconf-engine-shared@sta/dconf-engine-source-service.c.o' -MF 'engine/engine@@dconf-engine-shared@sta/dconf-engine-source-service.c.o.d' -o 'engine/engine@@dconf-engine-shared@sta/dconf-engine-source-service.c.o' -c ../engine/dconf-engine-source-service.c",
+    "file": "../engine/dconf-engine-source-service.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Iengine/engine@@dconf-engine-shared@sta -Iengine -I../engine -I. -I../ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -fPIC '-DG_LOG_DOMAIN=\"dconf\"'  -MD -MQ 'engine/engine@@dconf-engine-shared@sta/dconf-engine-source-system.c.o' -MF 'engine/engine@@dconf-engine-shared@sta/dconf-engine-source-system.c.o.d' -o 'engine/engine@@dconf-engine-shared@sta/dconf-engine-source-system.c.o' -c ../engine/dconf-engine-source-system.c",
+    "file": "../engine/dconf-engine-source-system.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Iservice/service@@dconf-service@exe -Iservice -I../service -I. -I../ -I/usr/include/gio-unix-2.0/ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -pthread  -MD -MQ 'service/service@@dconf-service@exe/meson-generated_.._dconf-generated.c.o' -MF 'service/service@@dconf-service@exe/meson-generated_.._dconf-generated.c.o.d' -o 'service/service@@dconf-service@exe/meson-generated_.._dconf-generated.c.o' -c service/dconf-generated.c",
+    "file": "service/dconf-generated.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Iservice/service@@dconf-service@exe -Iservice -I../service -I. -I../ -I/usr/include/gio-unix-2.0/ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -pthread  -MD -MQ 'service/service@@dconf-service@exe/dconf-blame.c.o' -MF 'service/service@@dconf-service@exe/dconf-blame.c.o.d' -o 'service/service@@dconf-service@exe/dconf-blame.c.o' -c ../service/dconf-blame.c",
+    "file": "../service/dconf-blame.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Iservice/service@@dconf-service@exe -Iservice -I../service -I. -I../ -I/usr/include/gio-unix-2.0/ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -pthread  -MD -MQ 'service/service@@dconf-service@exe/dconf-gvdb-utils.c.o' -MF 'service/service@@dconf-service@exe/dconf-gvdb-utils.c.o.d' -o 'service/service@@dconf-service@exe/dconf-gvdb-utils.c.o' -c ../service/dconf-gvdb-utils.c",
+    "file": "../service/dconf-gvdb-utils.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Iservice/service@@dconf-service@exe -Iservice -I../service -I. -I../ -I/usr/include/gio-unix-2.0/ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -pthread  -MD -MQ 'service/service@@dconf-service@exe/dconf-keyfile-writer.c.o' -MF 'service/service@@dconf-service@exe/dconf-keyfile-writer.c.o.d' -o 'service/service@@dconf-service@exe/dconf-keyfile-writer.c.o' -c ../service/dconf-keyfile-writer.c",
+    "file": "../service/dconf-keyfile-writer.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Iservice/service@@dconf-service@exe -Iservice -I../service -I. -I../ -I/usr/include/gio-unix-2.0/ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -pthread  -MD -MQ 'service/service@@dconf-service@exe/dconf-service.c.o' -MF 'service/service@@dconf-service@exe/dconf-service.c.o.d' -o 'service/service@@dconf-service@exe/dconf-service.c.o' -c ../service/dconf-service.c",
+    "file": "../service/dconf-service.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Iservice/service@@dconf-service@exe -Iservice -I../service -I. -I../ -I/usr/include/gio-unix-2.0/ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -pthread  -MD -MQ 'service/service@@dconf-service@exe/dconf-shm-writer.c.o' -MF 'service/service@@dconf-service@exe/dconf-shm-writer.c.o.d' -o 'service/service@@dconf-service@exe/dconf-shm-writer.c.o' -c ../service/dconf-shm-writer.c",
+    "file": "../service/dconf-shm-writer.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Iservice/service@@dconf-service@exe -Iservice -I../service -I. -I../ -I/usr/include/gio-unix-2.0/ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -pthread  -MD -MQ 'service/service@@dconf-service@exe/dconf-writer.c.o' -MF 'service/service@@dconf-service@exe/dconf-writer.c.o.d' -o 'service/service@@dconf-service@exe/dconf-writer.c.o' -c ../service/dconf-writer.c",
+    "file": "../service/dconf-writer.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Iservice/service@@dconf-service@exe -Iservice -I../service -I. -I../ -I/usr/include/gio-unix-2.0/ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -pthread  -MD -MQ 'service/service@@dconf-service@exe/main.c.o' -MF 'service/service@@dconf-service@exe/main.c.o.d' -o 'service/service@@dconf-service@exe/main.c.o' -c ../service/main.c",
+    "file": "../service/main.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Igdbus/gdbus@@dconf-gdbus-thread@sta -Igdbus -I../gdbus -I. -I../ -I/usr/include/gio-unix-2.0/ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -fPIC -pthread '-DG_LOG_DOMAIN=\"dconf\"'  -MD -MQ 'gdbus/gdbus@@dconf-gdbus-thread@sta/dconf-gdbus-thread.c.o' -MF 'gdbus/gdbus@@dconf-gdbus-thread@sta/dconf-gdbus-thread.c.o.d' -o 'gdbus/gdbus@@dconf-gdbus-thread@sta/dconf-gdbus-thread.c.o' -c ../gdbus/dconf-gdbus-thread.c",
+    "file": "../gdbus/dconf-gdbus-thread.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Igdbus/gdbus@@dconf-gdbus-thread-shared@sta -Igdbus -I../gdbus -I. -I../ -I/usr/include/gio-unix-2.0/ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -fPIC -pthread '-DG_LOG_DOMAIN=\"dconf\"'  -MD -MQ 'gdbus/gdbus@@dconf-gdbus-thread-shared@sta/dconf-gdbus-thread.c.o' -MF 'gdbus/gdbus@@dconf-gdbus-thread-shared@sta/dconf-gdbus-thread.c.o.d' -o 'gdbus/gdbus@@dconf-gdbus-thread-shared@sta/dconf-gdbus-thread.c.o' -c ../gdbus/dconf-gdbus-thread.c",
+    "file": "../gdbus/dconf-gdbus-thread.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Igdbus/gdbus@@dconf-gdbus-filter@sta -Igdbus -I../gdbus -I. -I../ -I/usr/include/gio-unix-2.0/ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -fPIC -pthread '-DG_LOG_DOMAIN=\"dconf\"'  -MD -MQ 'gdbus/gdbus@@dconf-gdbus-filter@sta/dconf-gdbus-filter.c.o' -MF 'gdbus/gdbus@@dconf-gdbus-filter@sta/dconf-gdbus-filter.c.o.d' -o 'gdbus/gdbus@@dconf-gdbus-filter@sta/dconf-gdbus-filter.c.o' -c ../gdbus/dconf-gdbus-filter.c",
+    "file": "../gdbus/dconf-gdbus-filter.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Igdbus/gdbus@@dconf-gdbus-filter-shared@sta -Igdbus -I../gdbus -I. -I../ -I/usr/include/gio-unix-2.0/ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -fPIC -pthread '-DG_LOG_DOMAIN=\"dconf\"'  -MD -MQ 'gdbus/gdbus@@dconf-gdbus-filter-shared@sta/dconf-gdbus-filter.c.o' -MF 'gdbus/gdbus@@dconf-gdbus-filter-shared@sta/dconf-gdbus-filter.c.o.d' -o 'gdbus/gdbus@@dconf-gdbus-filter-shared@sta/dconf-gdbus-filter.c.o' -c ../gdbus/dconf-gdbus-filter.c",
+    "file": "../gdbus/dconf-gdbus-filter.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Igsettings/gsettings@@dconfsettings@sha -Igsettings -I../gsettings -I. -I../ -I/usr/include/gio-unix-2.0/ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -fPIC -pthread '-DG_LOG_DOMAIN=\"dconf\"'  -MD -MQ 'gsettings/gsettings@@dconfsettings@sha/dconfsettingsbackend.c.o' -MF 'gsettings/gsettings@@dconfsettings@sha/dconfsettingsbackend.c.o.d' -o 'gsettings/gsettings@@dconfsettings@sha/dconfsettingsbackend.c.o' -c ../gsettings/dconfsettingsbackend.c",
+    "file": "../gsettings/dconfsettingsbackend.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Iclient/client@@dconf-client@sta -Iclient -I../client -I. -I../ -I/usr/include/gio-unix-2.0/ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -fPIC -pthread '-DG_LOG_DOMAIN=\"dconf\"'  -MD -MQ 'client/client@@dconf-client@sta/dconf-client.c.o' -MF 'client/client@@dconf-client@sta/dconf-client.c.o.d' -o 'client/client@@dconf-client@sta/dconf-client.c.o' -c ../client/dconf-client.c",
+    "file": "../client/dconf-client.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Iclient/client@@dconf@sha -Iclient -I../client -I. -I../ -I/usr/include/gio-unix-2.0/ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -fPIC -pthread '-DG_LOG_DOMAIN=\"dconf\"'  -MD -MQ 'client/client@@dconf@sha/dconf-client.c.o' -MF 'client/client@@dconf@sha/dconf-client.c.o.d' -o 'client/client@@dconf@sha/dconf-client.c.o' -c ../client/dconf-client.c",
+    "file": "../client/dconf-client.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "valac -C --debug --pkg posix --pkg gio-unix-2.0 --color=always --directory bin/bin@@dconf@exe --basedir ../bin ../client/dconf.vapi ../bin/gvdb.vapi ../bin/dconf-dump.vala ../bin/dconf-update.vala ../bin/dconf.vala",
+    "file": "../client/dconf.vapi"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Ibin/bin@@dconf@exe -Ibin -I../bin -I. -I../ -Iclient -I../client -I/usr/include/gio-unix-2.0/ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -w -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -pthread -w  -MD -MQ 'bin/bin@@dconf@exe/meson-generated_dconf-dump.c.o' -MF 'bin/bin@@dconf@exe/meson-generated_dconf-dump.c.o.d' -o 'bin/bin@@dconf@exe/meson-generated_dconf-dump.c.o' -c 'bin/bin@@dconf@exe/dconf-dump.c'",
+    "file": "bin/bin@@dconf@exe/dconf-dump.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Ibin/bin@@dconf@exe -Ibin -I../bin -I. -I../ -Iclient -I../client -I/usr/include/gio-unix-2.0/ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -w -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -pthread -w  -MD -MQ 'bin/bin@@dconf@exe/meson-generated_dconf-update.c.o' -MF 'bin/bin@@dconf@exe/meson-generated_dconf-update.c.o.d' -o 'bin/bin@@dconf@exe/meson-generated_dconf-update.c.o' -c 'bin/bin@@dconf@exe/dconf-update.c'",
+    "file": "bin/bin@@dconf@exe/dconf-update.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Ibin/bin@@dconf@exe -Ibin -I../bin -I. -I../ -Iclient -I../client -I/usr/include/gio-unix-2.0/ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -w -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -pthread -w  -MD -MQ 'bin/bin@@dconf@exe/meson-generated_dconf.c.o' -MF 'bin/bin@@dconf@exe/meson-generated_dconf.c.o.d' -o 'bin/bin@@dconf@exe/meson-generated_dconf.c.o' -c 'bin/bin@@dconf@exe/dconf.c'",
+    "file": "bin/bin@@dconf@exe/dconf.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Ibin/bin@@dconf@exe -Ibin -I../bin -I. -I../ -Iclient -I../client -I/usr/include/gio-unix-2.0/ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -pthread -w  -MD -MQ 'bin/bin@@dconf@exe/.._gvdb_gvdb-builder.c.o' -MF 'bin/bin@@dconf@exe/.._gvdb_gvdb-builder.c.o.d' -o 'bin/bin@@dconf@exe/.._gvdb_gvdb-builder.c.o' -c ../gvdb/gvdb-builder.c",
+    "file": "../gvdb/gvdb-builder.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Itests/tests@@dconf-mock@sta -Itests -I../tests -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -fPIC  -MD -MQ 'tests/tests@@dconf-mock@sta/dconf-mock-dbus.c.o' -MF 'tests/tests@@dconf-mock@sta/dconf-mock-dbus.c.o.d' -o 'tests/tests@@dconf-mock@sta/dconf-mock-dbus.c.o' -c ../tests/dconf-mock-dbus.c",
+    "file": "../tests/dconf-mock-dbus.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Itests/tests@@dconf-mock@sta -Itests -I../tests -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -fPIC  -MD -MQ 'tests/tests@@dconf-mock@sta/dconf-mock-gvdb.c.o' -MF 'tests/tests@@dconf-mock@sta/dconf-mock-gvdb.c.o.d' -o 'tests/tests@@dconf-mock@sta/dconf-mock-gvdb.c.o' -c ../tests/dconf-mock-gvdb.c",
+    "file": "../tests/dconf-mock-gvdb.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Itests/tests@@dconf-mock@sta -Itests -I../tests -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -fPIC  -MD -MQ 'tests/tests@@dconf-mock@sta/dconf-mock-shm.c.o' -MF 'tests/tests@@dconf-mock@sta/dconf-mock-shm.c.o.d' -o 'tests/tests@@dconf-mock@sta/dconf-mock-shm.c.o' -c ../tests/dconf-mock-shm.c",
+    "file": "../tests/dconf-mock-shm.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Itests/tests@@paths@exe -Itests -I../tests -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings  -MD -MQ 'tests/tests@@paths@exe/paths.c.o' -MF 'tests/tests@@paths@exe/paths.c.o.d' -o 'tests/tests@@paths@exe/paths.c.o' -c ../tests/paths.c",
+    "file": "../tests/paths.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Itests/tests@@changeset@exe -Itests -I../tests -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings  -MD -MQ 'tests/tests@@changeset@exe/changeset.c.o' -MF 'tests/tests@@changeset@exe/changeset.c.o.d' -o 'tests/tests@@changeset@exe/changeset.c.o' -c ../tests/changeset.c",
+    "file": "../tests/changeset.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Itests/tests@@shm@exe -Itests -I../tests -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings  -MD -MQ 'tests/tests@@shm@exe/shm.c.o' -MF 'tests/tests@@shm@exe/shm.c.o.d' -o 'tests/tests@@shm@exe/shm.c.o' -c ../tests/shm.c",
+    "file": "../tests/shm.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Itests/tests@@shm@exe -Itests -I../tests -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings  -MD -MQ 'tests/tests@@shm@exe/tmpdir.c.o' -MF 'tests/tests@@shm@exe/tmpdir.c.o.d' -o 'tests/tests@@shm@exe/tmpdir.c.o' -c ../tests/tmpdir.c",
+    "file": "../tests/tmpdir.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Itests/tests@@gvdb@exe -Itests -I../tests -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings '-DSRCDIR=\"/home/daniel/code/dconf/tests\"'  -MD -MQ 'tests/tests@@gvdb@exe/gvdb.c.o' -MF 'tests/tests@@gvdb@exe/gvdb.c.o.d' -o 'tests/tests@@gvdb@exe/gvdb.c.o' -c ../tests/gvdb.c",
+    "file": "../tests/gvdb.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Itests/tests@@gdbus-thread@exe -Itests -I../tests -I/usr/include/gio-unix-2.0/ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -pthread '-DDBUS_BACKEND=\"/gdbus/thread\"'  -MD -MQ 'tests/tests@@gdbus-thread@exe/dbus.c.o' -MF 'tests/tests@@gdbus-thread@exe/dbus.c.o.d' -o 'tests/tests@@gdbus-thread@exe/dbus.c.o' -c ../tests/dbus.c",
+    "file": "../tests/dbus.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Itests/tests@@gdbus-filter@exe -Itests -I../tests -I/usr/include/gio-unix-2.0/ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -pthread '-DDBUS_BACKEND=\"/gdbus/filter\"'  -MD -MQ 'tests/tests@@gdbus-filter@exe/dbus.c.o' -MF 'tests/tests@@gdbus-filter@exe/dbus.c.o.d' -o 'tests/tests@@gdbus-filter@exe/dbus.c.o' -c ../tests/dbus.c",
+    "file": "../tests/dbus.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Itests/tests@@engine@exe -Itests -I../tests -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings '-DSRCDIR=\"/home/daniel/code/dconf/tests\"'  -MD -MQ 'tests/tests@@engine@exe/engine.c.o' -MF 'tests/tests@@engine@exe/engine.c.o.d' -o 'tests/tests@@engine@exe/engine.c.o' -c ../tests/engine.c",
+    "file": "../tests/engine.c"
+  },
+  {
+    "directory": "/home/daniel/code/dconf/build",
+    "command": "cc -Itests/tests@@client@exe -Itests -I../tests -I/usr/include/gio-unix-2.0/ -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -fdiagnostics-color=always -pipe -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -DHAVE_CONFIG_H -fno-common -Wmissing-prototypes -Wwrite-strings -pthread '-DSRCDIR=\"/home/daniel/code/dconf/tests\"'  -MD -MQ 'tests/tests@@client@exe/client.c.o' -MF 'tests/tests@@client@exe/client.c.o.d' -o 'tests/tests@@client@exe/client.c.o' -c ../tests/client.c",
+    "file": "../tests/client.c"
+  }
+]
