@@ -24,7 +24,8 @@ unit_tests = [
   ['gdbus-thread', 'dbus.c', '-DDBUS_BACKEND="/gdbus/thread"', gio_unix_dep, libdconf_gdbus_thread],
   ['gdbus-filter', 'dbus.c', '-DDBUS_BACKEND="/gdbus/filter"', gio_unix_dep, libdconf_gdbus_filter],
   ['engine', 'engine.c', '-DSRCDIR="@0@"'.format(test_dir), [glib_dep, dl_dep, m_dep], [libdconf_engine, libdconf_common, libdconf_mock]],
-  ['client', 'client.c', '-DSRCDIR="@0@"'.format(test_dir), gio_unix_dep, [libdconf_client, libdconf_engine, libdconf_common, libdconf_mock]]
+  ['client', 'client.c', '-DSRCDIR="@0@"'.format(test_dir), gio_unix_dep, [libdconf_client, libdconf_engine, libdconf_common, libdconf_mock]],
+  ['writer', 'writer.c', '-DSRCDIR="@0@"'.format(test_dir), [glib_dep, dl_dep, m_dep], [libdconf_engine, libdconf_common, libdconf_mock]],
 ]
 
 foreach unit_test: unit_tests
@@ -33,7 +34,8 @@ foreach unit_test: unit_tests
     unit_test[1],
     c_args: unit_test[2],
     dependencies: unit_test[3],
-    link_with: unit_test[4]
+    link_with: unit_test[4],
+    include_directories: [top_inc, include_directories('../service')],
   )
 
   test(unit_test[0], exe, is_parallel: false)
