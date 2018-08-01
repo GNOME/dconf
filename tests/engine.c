@@ -1459,24 +1459,24 @@ test_watch_sync (void)
 
   /* The match rule is now already in place, so more are not needed */
   dconf_engine_watch_sync (engine, "/a/b/c");
-  g_assert (got_match_request[G_BUS_TYPE_SESSION] == FALSE);
-  g_assert (got_match_request[G_BUS_TYPE_SYSTEM] == FALSE);
+  g_assert_false (got_match_request[G_BUS_TYPE_SESSION]);
+  g_assert_false (got_match_request[G_BUS_TYPE_SYSTEM]);
 
   dconf_engine_watch_sync (engine, "/a/b/c");
-  g_assert (got_match_request[G_BUS_TYPE_SESSION] == FALSE);
-  g_assert (got_match_request[G_BUS_TYPE_SYSTEM] == FALSE);
+  g_assert_false (got_match_request[G_BUS_TYPE_SESSION]);
+  g_assert_false (got_match_request[G_BUS_TYPE_SYSTEM]);
 
   match_request_type = "RemoveMatch";
 
   /* There are 3 subscriptions, so removing 2 should not remove
    * the match rule */
   dconf_engine_unwatch_sync (engine, "/a/b/c");
-  g_assert (got_match_request[G_BUS_TYPE_SESSION] == FALSE);
-  g_assert (got_match_request[G_BUS_TYPE_SYSTEM] == FALSE);
+  g_assert_false (got_match_request[G_BUS_TYPE_SESSION]);
+  g_assert_false (got_match_request[G_BUS_TYPE_SYSTEM]);
 
   dconf_engine_unwatch_sync (engine, "/a/b/c");
-  g_assert (got_match_request[G_BUS_TYPE_SESSION] == FALSE);
-  g_assert (got_match_request[G_BUS_TYPE_SYSTEM] == FALSE);
+  g_assert_false (got_match_request[G_BUS_TYPE_SESSION]);
+  g_assert_false (got_match_request[G_BUS_TYPE_SYSTEM]);
 
   /* The match rule should be removed when the last subscription is
    * removed */
