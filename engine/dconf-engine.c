@@ -241,25 +241,27 @@ dconf_engine_unlock_queues (DConfEngine *engine)
 }
 
 /**
- * Adds the count of subscriptions to @path in @from_table to the
- * corresponding count in @to_table, creating it if it did not exist.
- * Removes the count from @from_table.
+ * Adds the count of subscriptions to @path in @from_counts to the
+ * corresponding count in @to_counts, creating it if it did not exist.
+ * Removes the count from @from_counts.
  */
 static void
-dconf_engine_move_subscriptions (GHashTable  *from_table,
-                                 GHashTable  *to_table,
+dconf_engine_move_subscriptions (GHashTable  *from_counts,
+                                 GHashTable  *to_counts,
                                  const gchar *path)
 {
-  guint32 *from_count = (guint32 *) g_hash_table_lookup (from_table, path);
-  guint32 *to_count = (guint32 *) g_hash_table_lookup (to_table, path);
-  if (to_count == NULL)
+  gint from_count = GPOINTER_TO_INT (g_hash_table_lookup (from_counts, path));
+  gint old_to_count = GPOINTER_TO_INT (g_hash_table_lookup (to_counts, path));
+  gint new_to_count = old_to_count + from_count;
+  if (from_count != 0)
     {
-      to_count = g_malloc (sizeof (guint32));
-      *to_count = 0;
-      g_hash_table_insert (to_table, g_strdup (path), to_count);
+      g_hash_table_remove (from_counts, path);
+      // Detect overflows
+      g_assert (new_to_count > 0 && new_to_count <= G_MAXINT32);
+      g_hash_table_replace (to_counts,
+                            g_strdup (path),
+                            GINT_TO_POINTER (new_to_count));
     }
-  *to_count += *from_count;
-  *from_count = 0;
 }
 
 /**
@@ -267,23 +269,16 @@ dconf_engine_move_subscriptions (GHashTable  *from_table,
  * it to 1 if it didn’t previously exist.
  * Returns the new reference count.
  */
-static guint32
-dconf_engine_inc_subscriptions (GHashTable  *subscriptions_table,
+static gint
+dconf_engine_inc_subscriptions (GHashTable  *counts,
                                 const gchar *path)
 {
-  guint32 *count;
-  if (g_hash_table_contains (subscriptions_table, path))
-    {
-      count = (guint32 *) g_hash_table_lookup (subscriptions_table, path);
-      (*count)++;
-    }
-  else
-    {
-      count = g_malloc (sizeof (guint32));
-      *count = 1;
-      g_hash_table_insert (subscriptions_table, g_strdup (path), count);
-    }
-  return *count;
+  gint old_count = GPOINTER_TO_INT (g_hash_table_lookup (counts, path));
+  gint new_value = old_count + 1;
+  // Detect overflows
+  g_assert (new_value > 0 && new_value <= G_MAXINT32);
+  g_hash_table_replace (counts, g_strdup (path), GINT_TO_POINTER (new_value));
+  return new_value;
 }
 
 /**
@@ -292,35 +287,29 @@ dconf_engine_inc_subscriptions (GHashTable  *subscriptions_table,
  * than 0.
  * Returns the new reference count, or 0 if it does not exist.
  */
-static guint32
-dconf_engine_dec_subscriptions (GHashTable  *subscriptions_table,
+static gint
+dconf_engine_dec_subscriptions (GHashTable  *counts,
                                 const gchar *path)
 {
-  guint32 *count;
-  count = (guint32 *) g_hash_table_lookup (subscriptions_table, path);
-  g_assert (count != NULL && *count > 0);
-  if (--(*count) == 0)
-    {
-      g_hash_table_remove (subscriptions_table, path);
-      return 0;
-    }
-  return *count;
+  gint old_count = GPOINTER_TO_INT (g_hash_table_lookup (counts, path));
+  gint new_count = old_count - 1;
+  g_assert (new_count >= 0);
+  if (new_count == 0)
+    g_hash_table_remove (counts, path);
+  else
+    g_hash_table_replace (counts, g_strdup (path), GINT_TO_POINTER (new_count));
+  return new_count;
 }
 
 /**
  * Returns the reference count for the subscription to @path, or 0 if it
  * does not exist.
  */
-static guint32
-dconf_engine_count_subscriptions (GHashTable  *subscriptions_table,
+static gint
+dconf_engine_count_subscriptions (GHashTable  *counts,
                                   const gchar *path)
 {
-  guint32 *count;
-  count = (guint32 *) g_hash_table_lookup (subscriptions_table, path);
-  if (count == NULL)
-    return 0;
-
-  return *count;
+  return GPOINTER_TO_INT (g_hash_table_lookup (counts, path));
 }
 
 /**
@@ -368,11 +357,11 @@ dconf_engine_new (const gchar    *profile,
   engine->establishing = g_hash_table_new_full (g_str_hash,
                                                 g_str_equal,
                                                 g_free,
-                                                g_free);
+                                                NULL);
   engine->active = g_hash_table_new_full (g_str_hash,
                                           g_str_equal,
                                           g_free,
-                                          g_free);
+                                          NULL);
 
   return engine;
 }
@@ -975,7 +964,7 @@ dconf_engine_watch_established (DConfEngine  *engine,
     }
 
   dconf_engine_lock_subscription_counts (engine);
-  guint32 num_establishing = dconf_engine_count_subscriptions (engine->establishing,
+  gint num_establishing = dconf_engine_count_subscriptions (engine->establishing,
                                                                ow->path);
   g_debug ("watch_established: \"%s\" (establishing: %d)", ow->path, num_establishing);
   if (num_establishing > 0)
@@ -993,8 +982,8 @@ dconf_engine_watch_fast (DConfEngine *engine,
                          const gchar *path)
 {
   dconf_engine_lock_subscription_counts (engine);
-  guint32 num_establishing = dconf_engine_count_subscriptions (engine->establishing, path);
-  guint32 num_active = dconf_engine_count_subscriptions (engine->active, path);
+  gint num_establishing = dconf_engine_count_subscriptions (engine->establishing, path);
+  gint num_active = dconf_engine_count_subscriptions (engine->active, path);
   g_debug ("watch_fast: \"%s\" (establishing: %d, active: %d)", path, num_establishing, num_active);
   if (num_active > 0)
     {
@@ -1051,8 +1040,8 @@ dconf_engine_unwatch_fast (DConfEngine *engine,
                            const gchar *path)
 {
   dconf_engine_lock_subscription_counts (engine);
-  guint32 num_active = dconf_engine_count_subscriptions (engine->active, path);
-  guint32 num_establishing = dconf_engine_count_subscriptions (engine->establishing, path);
+  gint num_active = dconf_engine_count_subscriptions (engine->active, path);
+  gint num_establishing = dconf_engine_count_subscriptions (engine->establishing, path);
   gint i;
   g_debug ("unwatch_fast: \"%s\" (active: %d, establishing: %d)", path, num_active, num_establishing);
 
@@ -1117,7 +1106,7 @@ dconf_engine_watch_sync (DConfEngine *engine,
                          const gchar *path)
 {
   dconf_engine_lock_subscription_counts (engine);
-  guint32 num_active = dconf_engine_inc_subscriptions (engine->active, path);
+  gint num_active = dconf_engine_inc_subscriptions (engine->active, path);
   dconf_engine_unlock_subscription_counts (engine);
   g_debug ("watch_sync: \"%s\" (active: %d)", path, num_active - 1);
   if (num_active == 1)
@@ -1129,7 +1118,7 @@ dconf_engine_unwatch_sync (DConfEngine *engine,
                            const gchar *path)
 {
   dconf_engine_lock_subscription_counts (engine);
-  guint32 num_active = dconf_engine_dec_subscriptions (engine->active, path);
+  gint num_active = dconf_engine_dec_subscriptions (engine->active, path);
   dconf_engine_unlock_subscription_counts (engine);
   g_debug ("unwatch_sync: \"%s\" (active: %d)", path, num_active + 1);
   if (num_active == 0)
