@@ -240,6 +240,11 @@ dconf_engine_unlock_queues (DConfEngine *engine)
   g_mutex_unlock (&engine->queue_lock);
 }
 
+/**
+ * Adds the count of subscriptions to @path in @from_table to the
+ * corresponding count in @to_table, creating it if it did not exist.
+ * Removes the count from @from_table.
+ */
 static void
 dconf_engine_move_subscriptions (GHashTable  *from_table,
                                  GHashTable  *to_table,
@@ -257,6 +262,11 @@ dconf_engine_move_subscriptions (GHashTable  *from_table,
   *from_count = 0;
 }
 
+/**
+ * Increments the reference count for the subscription to @path, or sets
+ * it to 1 if it didn’t previously exist.
+ * Returns the new reference count.
+ */
 static guint32
 dconf_engine_inc_subscriptions (GHashTable  *subscriptions_table,
                                 const gchar *path)
@@ -276,6 +286,12 @@ dconf_engine_inc_subscriptions (GHashTable  *subscriptions_table,
   return *count;
 }
 
+/**
+ * Decrements the reference count for the subscription to @path, or
+ * removes it if the new value is 0. The count must exist and be greater
+ * than 0.
+ * Returns the new reference count, or 0 if it does not exist.
+ */
 static guint32
 dconf_engine_dec_subscriptions (GHashTable  *subscriptions_table,
                                 const gchar *path)
@@ -291,6 +307,10 @@ dconf_engine_dec_subscriptions (GHashTable  *subscriptions_table,
   return *count;
 }
 
+/**
+ * Returns the reference count for the subscription to @path, or 0 if it
+ * does not exist.
+ */
 static guint32
 dconf_engine_count_subscriptions (GHashTable  *subscriptions_table,
                                   const gchar *path)
@@ -303,12 +323,19 @@ dconf_engine_count_subscriptions (GHashTable  *subscriptions_table,
   return *count;
 }
 
+/**
+ * Acquires the subscription counts lock, which must be held when
+ * reading or writing to the subscription counts.
+ */
 static void
 dconf_engine_lock_subscription_counts (DConfEngine *engine)
 {
   g_mutex_lock (&engine->subscription_count_lock);
 }
 
+/**
+ * Releases the subscription counts lock
+ */
 static void
 dconf_engine_unlock_subscription_counts (DConfEngine *engine)
 {
