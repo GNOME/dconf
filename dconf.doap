@@ -23,4 +23,21 @@
     </foaf:Person>
   </maintainer>
 
+  <maintainer>
+    <foaf:Person>
+      <foaf:name>Daniel Playfair Cal</foaf:name>
+      <foaf:mbox rdf:resource="mailto:daniel.playfair.cal@gmail.com"/>
+      <gnome:userid>danielplayfaircal</gnome:userid>
+    </foaf:Person>
+  </maintainer>
+
+  <maintainer>
+    <foaf:Person>
+      <foaf:name>Philip Withnall</foaf:name>
+      <foaf:mbox rdf:resource="mailto:philip@tecnocode.co.uk"/>
+      <foaf:mbox rdf:resource="mailto:withnall@endlessm.com"/>
+      <gnome:userid>pwithnall</gnome:userid>
+    </foaf:Person>
+  </maintainer>
+
 </Project>
