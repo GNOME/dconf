@@ -1210,7 +1210,7 @@ test_watch_fast (void)
   c = dconf_engine_get_state (engine);
   g_assert_cmpuint (b, ==, c);
   /* The watch result was not sent, because the path was already watched */
-  dconf_mock_dbus_assert_no_async();
+  dconf_mock_dbus_assert_no_async ();
   c = dconf_engine_get_state (engine);
   g_assert_cmpuint (b, ==, c);
   /* Since the path was already being watched,
@@ -1218,7 +1218,7 @@ test_watch_fast (void)
   g_assert_cmpstr (change_log->str, ==, "/a/b/c:1::nil;");
   dconf_engine_unwatch_fast (engine, "/a/b/c");
   /* nothing was done, because there is still a subscription left */
-  dconf_mock_dbus_assert_no_async();
+  dconf_mock_dbus_assert_no_async ();
   dconf_engine_unwatch_fast (engine, "/a/b/c");
   dconf_mock_dbus_async_reply (triv, NULL);
   dconf_mock_dbus_async_reply (triv, NULL);
@@ -1237,8 +1237,8 @@ test_watch_fast_simultaneous_subscriptions (void)
 {
   /**
    * Test that creating multiple subscriptions to the same path
-   * simultaneously (before receiving replies from DBus) only results in
-   * a single DBus match rule, and that it is removed at the right time.
+   * simultaneously (before receiving replies from D-Bus) only results in
+   * a single D-Bus match rule, and that it is removed at the right time.
    */
   DConfEngine *engine;
   GvdbTable *table;
@@ -1276,7 +1276,7 @@ test_watch_fast_simultaneous_subscriptions (void)
   dconf_mock_dbus_assert_no_async ();
 
   /* Unsubscribe once more. The number of active subscriptions falls to 0
-   * and the DBus match rule is removed */
+   * and the D-Bus match rule is removed */
   dconf_engine_unwatch_fast (engine, "/a/b/c");
 
   dconf_mock_dbus_async_reply (triv, NULL);
@@ -1286,7 +1286,6 @@ test_watch_fast_simultaneous_subscriptions (void)
   /* The shm was not flagged at any point - so no change notifications
    * should not have been sent */
   g_assert_cmpstr (change_log->str, ==, "");
-
 
   /* Clean up */
   dconf_engine_unref (engine);
@@ -1300,8 +1299,8 @@ test_watch_fast_successive_subscriptions (void)
 {
   /**
    * Test that subscribing to the same path multiple times successively
-   * (after waiting for any expected replies from DBus) results in only
-   * a single DBus match rule being created, and that it is created and
+   * (after waiting for any expected replies from D-Bus) results in only
+   * a single D-Bus match rule being created, and that it is created and
    * destroyed at the right times.
    */
   DConfEngine *engine;
@@ -1338,7 +1337,7 @@ test_watch_fast_successive_subscriptions (void)
   dconf_engine_watch_fast (engine, "/a/b/c");
   dconf_mock_shm_flag ("user");
 
-  /* There was already a match rule in place, so there should be no DBus
+  /* There was already a match rule in place, so there should be no D-Bus
    * requests and no change notifications */
   dconf_mock_dbus_assert_no_async ();
   g_assert_cmpstr (change_log->str, ==, "/a/b/c:1::nil;");
@@ -1365,9 +1364,9 @@ test_watch_fast_short_lived_subscriptions (void)
 {
   /**
    * Test that subscribing and then immediately unsubscribing (without
-   * waiting for replies from DBus) multiple times to the same path
-   * correctly triggers DBus requests and change notifications in cases
-   * where the DBus match rule was not in place when the database was
+   * waiting for replies from D-Bus) multiple times to the same path
+   * correctly triggers D-Bus requests and change notifications in cases
+   * where the D-Bus match rule was not in place when the database was
    * changed.
    */
   DConfEngine *engine;
