@@ -985,19 +985,18 @@ dconf_engine_watch_fast (DConfEngine *engine,
   gint num_establishing = dconf_engine_count_subscriptions (engine->establishing, path);
   gint num_active = dconf_engine_count_subscriptions (engine->active, path);
   g_debug ("watch_fast: \"%s\" (establishing: %d, active: %d)", path, num_establishing, num_active);
-  if (num_active > 0)
-    {
-      // Subscription: inactive -> active
-      dconf_engine_inc_subscriptions (engine->active, path);
-      dconf_engine_unlock_subscription_counts (engine);
-      return;
-    }
 
-  // Subscription: inactive -> establishing
-  num_establishing = dconf_engine_inc_subscriptions (engine->establishing,
+  if (num_active > 0)
+    // Subscription: inactive -> active
+    dconf_engine_inc_subscriptions (engine->active, path);
+  else
+    // Subscription: inactive -> establishing
+    num_establishing = dconf_engine_inc_subscriptions (engine->establishing,
                                                      path);
+
   dconf_engine_unlock_subscription_counts (engine);
-  if (num_establishing > 1)
+
+  if (num_active > 0 || num_establishing > 1)
     return;
 
   OutstandingWatch *ow;
@@ -1039,29 +1038,24 @@ void
 dconf_engine_unwatch_fast (DConfEngine *engine,
                            const gchar *path)
 {
+  gint i;
+
   dconf_engine_lock_subscription_counts (engine);
   gint num_active = dconf_engine_count_subscriptions (engine->active, path);
   gint num_establishing = dconf_engine_count_subscriptions (engine->establishing, path);
-  gint i;
   g_debug ("unwatch_fast: \"%s\" (active: %d, establishing: %d)", path, num_active, num_establishing);
 
   if (num_active == 0)
-    {
-      // Subscription: establishing -> inactive
-      num_establishing = dconf_engine_dec_subscriptions (engine->establishing, path);
-      dconf_engine_unlock_subscription_counts (engine);
-      if (num_establishing > 0)
-        return;
-    }
+    // Subscription: establishing -> inactive
+    num_establishing = dconf_engine_dec_subscriptions (engine->establishing, path);
   else
-    {
-      // Subscription: active -> inactive
-      num_active = dconf_engine_dec_subscriptions (engine->active, path);
-      dconf_engine_unlock_subscription_counts (engine);
-      if (num_active > 0 || num_establishing > 0)
-        return;
-    }
+    // Subscription: active -> inactive
+    num_active = dconf_engine_dec_subscriptions (engine->active, path);
 
+  dconf_engine_unlock_subscription_counts (engine);
+
+  if (num_active > 0 || num_establishing > 0)
+    return;
 
   for (i = 0; i < engine->n_sources; i++)
     if (engine->sources[i]->bus_type)
