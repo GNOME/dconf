@@ -59,6 +59,7 @@ typedef struct
 static void dconf_writer_iface_init (DConfDBusWriterIface *iface);
 
 G_DEFINE_TYPE_WITH_CODE (DConfWriter, dconf_writer, DCONF_DBUS_TYPE_WRITER_SKELETON,
+                         G_ADD_PRIVATE (DConfWriter)
                          G_IMPLEMENT_INTERFACE (DCONF_DBUS_TYPE_WRITER, dconf_writer_iface_init))
 
 static void
@@ -343,7 +344,7 @@ dconf_writer_iface_init (DConfDBusWriterIface *iface)
 static void
 dconf_writer_init (DConfWriter *writer)
 {
-  writer->priv = G_TYPE_INSTANCE_GET_PRIVATE (writer, DCONF_TYPE_WRITER, DConfWriterPrivate);
+  writer->priv = dconf_writer_get_instance_private (writer);
   writer->priv->basepath = g_build_filename (g_get_user_config_dir (), "dconf", NULL);
   writer->priv->native = TRUE;
 }
@@ -379,8 +380,6 @@ dconf_writer_class_init (DConfWriterClass *class)
                                    g_param_spec_string ("name", "name", "name", NULL,
                                                         G_PARAM_STATIC_STRINGS | G_PARAM_CONSTRUCT_ONLY |
                                                         G_PARAM_WRITABLE));
-
-  g_type_class_add_private (class, sizeof (DConfWriterPrivate));
 }
 
 void
