@@ -275,7 +275,7 @@ dconf_engine_dec_subscriptions (GHashTable  *subscriptions_table,
 {
   guint32 *count;
   count = (guint32 *) g_hash_table_lookup (subscriptions_table, path);
-  g_assert (count != NULL && *count > 0);
+  g_assert_false (count != NULL && *count > 0);
   if (--(*count) == 0)
     {
       g_hash_table_remove (subscriptions_table, path);
