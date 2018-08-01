@@ -4,7 +4,7 @@
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
- * version 2 of the licence, or (at your option) any later version.
+ * version 2.1 of the License, or (at your option) any later version.
  *
  * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -125,14 +125,16 @@ gvdb_table_setup_root (GvdbTable                 *file,
  * @bytes: the #GBytes with the data
  * @trusted: if the contents of @bytes are trusted
  * @error: %NULL, or a pointer to a %NULL #GError
- * @returns: a new #GvdbTable
  *
  * Creates a new #GvdbTable from the contents of @bytes.
  *
- * This call can fail if the header contained in @bytes is invalid.
+ * This call can fail if the header contained in @bytes is invalid or if @bytes
+ * is empty; if so, %G_FILE_ERROR_INVAL will be returned.
  *
  * You should call gvdb_table_free() on the return result when you no
  * longer require it.
+ *
+ * Returns: a new #GvdbTable
  **/
 GvdbTable *
 gvdb_table_new_from_bytes (GBytes    *bytes,
@@ -184,10 +186,17 @@ invalid:
  * @filename: a filename
  * @trusted: if the contents of @bytes are trusted
  * @error: %NULL, or a pointer to a %NULL #GError
- * @returns: a new #GvdbTable
  *
  * Creates a new #GvdbTable using the #GMappedFile for @filename as the
  * #GBytes.
+ *
+ * This function will fail if the file cannot be opened.
+ * In that case, the #GError that is returned will be an error from
+ * g_mapped_file_new().
+ *
+ * An empty or corrupt file will result in %G_FILE_ERROR_INVAL.
+ *
+ * Returns: a new #GvdbTable
  **/
 GvdbTable *
 gvdb_table_new (const gchar  *filename,
@@ -474,7 +483,6 @@ gvdb_table_get_names (GvdbTable *table,
  * gvdb_table_list:
  * @file: a #GvdbTable
  * @key: a string
- * @returns: a %NULL-terminated string array
  *
  * List all of the keys that appear below @key.  The nesting of keys
  * within the hash file is defined by the program that created the hash
@@ -487,6 +495,8 @@ gvdb_table_get_names (GvdbTable *table,
  *
  * You should call g_strfreev() on the return result when you no longer
  * require it.
+ *
+ * Returns: a %NULL-terminated string array
  **/
 gchar **
 gvdb_table_list (GvdbTable   *file,
@@ -537,12 +547,13 @@ gvdb_table_list (GvdbTable   *file,
  * gvdb_table_has_value:
  * @file: a #GvdbTable
  * @key: a string
- * @returns: %TRUE if @key is in the table
  *
  * Checks for a value named @key in @file.
  *
  * Note: this function does not consider non-value nodes (other hash
  * tables, for example).
+ *
+ * Returns: %TRUE if @key is in the table
  **/
 gboolean
 gvdb_table_has_value (GvdbTable    *file,
@@ -586,7 +597,6 @@ gvdb_table_value_from_item (GvdbTable                   *table,
  * gvdb_table_get_value:
  * @file: a #GvdbTable
  * @key: a string
- * @returns: a #GVariant, or %NULL
  *
  * Looks up a value named @key in @file.
  *
@@ -596,6 +606,8 @@ gvdb_table_value_from_item (GvdbTable                   *table,
  *
  * You should call g_variant_unref() on the return result when you no
  * longer require it.
+ *
+ * Returns: a #GVariant, or %NULL
  **/
 GVariant *
 gvdb_table_get_value (GvdbTable    *file,
@@ -625,12 +637,13 @@ gvdb_table_get_value (GvdbTable    *file,
  * gvdb_table_get_raw_value:
  * @table: a #GvdbTable
  * @key: a string
- * @returns: a #GVariant, or %NULL
  *
  * Looks up a value named @key in @file.
  *
  * This call is equivalent to gvdb_table_get_value() except that it
  * never byteswaps the value.
+ *
+ * Returns: a #GVariant, or %NULL
  **/
 GVariant *
 gvdb_table_get_raw_value (GvdbTable   *table,
@@ -648,7 +661,6 @@ gvdb_table_get_raw_value (GvdbTable   *table,
  * gvdb_table_get_table:
  * @file: a #GvdbTable
  * @key: a string
- * @returns: a new #GvdbTable, or %NULL
  *
  * Looks up the hash table named @key in @file.
  *
@@ -662,6 +674,8 @@ gvdb_table_get_raw_value (GvdbTable   *table,
  *
  * You should call gvdb_table_free() on the return result when you no
  * longer require it.
+ *
+ * Returns: a new #GvdbTable, or %NULL
  **/
 GvdbTable *
 gvdb_table_get_table (GvdbTable   *file,
@@ -703,13 +717,14 @@ gvdb_table_free (GvdbTable *file)
 /**
  * gvdb_table_is_valid:
  * @table: a #GvdbTable
- * @returns: %TRUE if @table is still valid
  *
  * Checks if the table is still valid.
  *
  * An on-disk GVDB can be marked as invalid.  This happens when the file
  * has been replaced.  The appropriate action is typically to reopen the
  * file.
+ *
+ * Returns: %TRUE if @table is still valid
  **/
 gboolean
 gvdb_table_is_valid (GvdbTable *table)
