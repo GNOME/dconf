@@ -178,7 +178,7 @@ struct _DConfEngine
   GMutex              subscription_count_lock;
   /* active on the client side, but awaiting confirmation from the writer */
   GHashTable         *establishing;
-  /* active on the client side, and with a DBus match rule established */
+  /* active on the client side, and with a D-Bus match rule established */
   GHashTable         *active;
 };
 
@@ -330,7 +330,7 @@ dconf_engine_new (const gchar    *profile,
   dconf_engine_global_list = g_slist_prepend (dconf_engine_global_list, engine);
   g_mutex_unlock (&dconf_engine_global_lock);
 
-  g_mutex_init(&engine->subscription_count_lock);
+  g_mutex_init (&engine->subscription_count_lock);
   engine->establishing = g_hash_table_new_full (g_str_hash,
                                                 g_str_equal,
                                                 g_free,
@@ -390,8 +390,8 @@ dconf_engine_unref (DConfEngine *engine)
 
       g_free (engine->sources);
 
-      g_hash_table_unref(engine->establishing);
-      g_hash_table_unref(engine->active);
+      g_hash_table_unref (engine->establishing);
+      g_hash_table_unref (engine->active);
 
       g_mutex_clear (&engine->subscription_count_lock);
 

@@ -1210,7 +1210,7 @@ test_watch_fast (void)
   c = dconf_engine_get_state (engine);
   g_assert_cmpuint (b, ==, c);
   /* The watch result was not sent, because the path was already watched */
-  dconf_mock_dbus_assert_no_async();
+  dconf_mock_dbus_assert_no_async ();
   c = dconf_engine_get_state (engine);
   g_assert_cmpuint (b, ==, c);
   /* Since the path was already being watched,
@@ -1218,7 +1218,7 @@ test_watch_fast (void)
   g_assert_cmpstr (change_log->str, ==, "/a/b/c:1::nil;");
   dconf_engine_unwatch_fast (engine, "/a/b/c");
   /* nothing was done, because there is still a subscription left */
-  dconf_mock_dbus_assert_no_async();
+  dconf_mock_dbus_assert_no_async ();
   dconf_engine_unwatch_fast (engine, "/a/b/c");
   dconf_mock_dbus_async_reply (triv, NULL);
   dconf_mock_dbus_async_reply (triv, NULL);
@@ -1286,7 +1286,6 @@ test_watch_fast_simultaneous_subscriptions (void)
   /* The shm was not flagged at any point - so no change notifications
    * should not have been sent */
   g_assert_cmpstr (change_log->str, ==, "");
-
 
   /* Clean up */
   dconf_engine_unref (engine);
