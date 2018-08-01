@@ -69,11 +69,12 @@ dconf_gvdb_utils_read_file (const gchar  *filename,
        * The code to find an unused backup filename is racy, but this is an
        * error handling path. Who cares. */
       gchar *backup_filename = g_strdup_printf ("%s~", filename);
-      guint i = 0;
-      while (g_file_test (backup_filename, G_FILE_TEST_EXISTS))
+      guint i;
+
+      for (i = 0; i < G_MAXUINT && g_file_test (backup_filename, G_FILE_TEST_EXISTS); i++)
         {
           g_free (backup_filename);
-          backup_filename = g_strdup_printf ("%s~%u", filename, i++);
+          backup_filename = g_strdup_printf ("%s~%u", filename, i);
         }
 
       if (g_rename (filename, backup_filename) != 0)

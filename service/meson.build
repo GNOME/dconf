@@ -21,26 +21,28 @@ configure_file(
   configuration: service_conf
 )
 
-sources = [
+lib_sources = [
   'dconf-blame.c',
   'dconf-gvdb-utils.c',
   'dconf-keyfile-writer.c',
   'dconf-service.c',
   'dconf-shm-writer.c',
   'dconf-writer.c',
-  'main.c'
+]
+sources = [
+  'main.c',
 ]
 
-sources += gnome.gdbus_codegen(
+lib_sources += gnome.gdbus_codegen(
   'dconf-generated',
   dconf_namespace + '.xml',
   interface_prefix: dconf_namespace + '.',
   namespace: 'DConfDBus'
 )
 
-executable(
-  'dconf-service',
-  sources,
+libdconf_service = static_library(
+  name,
+  sources: lib_sources,
   include_directories: top_inc,
   dependencies: gio_unix_dep,
   link_with: [
@@ -48,6 +50,14 @@ executable(
     libdconf_shm,
     libgvdb
   ],
+)
+
+executable(
+  'dconf-service',
+  sources,
+  include_directories: top_inc,
+  dependencies: gio_unix_dep,
+  link_with: libdconf_service,
   install: true,
   install_dir: dconf_libexecdir
 )
