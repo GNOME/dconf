@@ -1050,8 +1050,8 @@ dconf_engine_unwatch_fast (DConfEngine *engine,
   for (i = 0; i < engine->n_sources; i++)
     if (engine->sources[i]->bus_type)
       dconf_engine_dbus_call_async_func (engine->sources[i]->bus_type, "org.freedesktop.DBus",
-                                        "/org/freedesktop/DBus", "org.freedesktop.DBus", "RemoveMatch",
-                                        dconf_engine_make_match_rule (engine->sources[i], path), NULL, NULL);
+                                         "/org/freedesktop/DBus", "org.freedesktop.DBus", "RemoveMatch",
+                                         dconf_engine_make_match_rule (engine->sources[i], path), NULL, NULL);
 }
 
 static void
