@@ -1,7 +1,8 @@
 DO NOT MODIFY ANY FILE IN THIS DIRECTORY
 
-(except maybe the Makefile.am)
+(except maybe the meson.build)
 
-This directory is the result of a git subtree merge with the 'gvdb'
-module on git.gnome.org.  Please apply fixes to the 'gvdb' module and
-perform a git merge.
+This directory is the result of copying the 'gio/gvdb' files from GLib.
+Please apply fixes to GLib and merge the results here.
+
+https://gitlab.gnome.org/GNOME/glib/tree/master/gio/gvdb
