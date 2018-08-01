@@ -128,7 +128,7 @@
  * it is willing to deal with receiving the change notifies in those
  * threads.
  *
- * Thread-safety is implemented using two locks.
+ * Thread-safety is implemented using three locks.
  *
  * The first lock (sources_lock) protects the sources.  Although the
  * sources are only ever read from, it is necessary to lock them because
@@ -143,8 +143,15 @@
  * The second lock (queue_lock) protects the various queues that are
  * used to implement the "fast" writes described above.
  *
- * If both locks are held at the same time then the sources lock must
- * have been acquired first.
+ * The third lock (subscription_count_lock) protects the two hash tables
+ * that are used to keep track of the number of subscriptions held by
+ * the client library to each path.
+ *
+ * If sources_lock and queue_lock are held at the same time then then
+ * sources_lock must have been acquired first.
+ *
+ * subscription_count_lock is never held at the same time as
+ * sources_lock or queue_lock
  */
 
 #define MAX_IN_FLIGHT 2
