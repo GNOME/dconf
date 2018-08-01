@@ -26,6 +26,9 @@
 #include "../gvdb/gvdb-builder.h"
 #include "../gvdb/gvdb-reader.h"
 
+#include <errno.h>
+#include <glib.h>
+#include <glib/gstdio.h>
 #include <string.h>
 
 DConfChangeset *
@@ -57,7 +60,34 @@ dconf_gvdb_utils_read_file (const gchar  *filename,
   /* Otherwise, we should report errors to prevent ourselves from
    * overwriting the database in other situations...
    */
-  if (my_error)
+  if (g_error_matches (my_error, G_FILE_ERROR, G_FILE_ERROR_INVAL))
+    {
+      /* Move the database to a backup file, warn and continue with a new
+       * database. The alternative is erroring out and exiting the daemon,
+       * which leaves the user’s session essentially unusable.
+       *
+       * The code to find an unused backup filename is racy, but this is an
+       * error handling path. Who cares. */
+      gchar *backup_filename = g_strdup_printf ("%s~", filename);
+      guint i = 0;
+      while (g_file_test (backup_filename, G_FILE_TEST_EXISTS))
+        {
+          g_free (backup_filename);
+          backup_filename = g_strdup_printf ("%s~%u", filename, i++);
+        }
+
+      if (g_rename (filename, backup_filename) != 0)
+        g_warning ("Error renaming corrupt database from ‘%s’ to ‘%s’: %s",
+                   filename, backup_filename, g_strerror (errno));
+      else
+        g_warning ("Database ‘%s’ was corrupt: moved it to ‘%s’ and created an empty replacement",
+                   filename, backup_filename);
+
+      g_free (backup_filename);
+
+      g_clear_error (&my_error);
+    }
+  else if (my_error)
     {
       g_propagate_prefixed_error (error, my_error, "Cannot open dconf database: ");
       return NULL;
