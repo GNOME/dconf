@@ -404,7 +404,7 @@ dconf_client_list_locks (DConfClient *client,
  * or an inability to connect to the bus and start the service) may
  * cause the write to fail.
  *
- * Returns: %TRUE is @key is writable
+ * Returns: %TRUE if @key is writable
  **/
 gboolean
 dconf_client_is_writable (DConfClient *client,
