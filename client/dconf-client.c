@@ -232,7 +232,7 @@ dconf_client_free_weak_ref (gpointer data)
  *
  * Creates a new #DConfClient.
  *
- * Returns: a new #DConfClient
+ * Returns: (transfer full): a new #DConfClient
  **/
 DConfClient *
 dconf_client_new (void)
@@ -261,7 +261,7 @@ dconf_client_new (void)
  * If there are outstanding "fast" changes in progress they may affect
  * the result of this call.
  *
- * Returns: a #GVariant, or %NULL
+ * Returns: (transfer full) (nullable): a #GVariant, or %NULL
  **/
 GVariant *
 dconf_client_read (DConfClient *client,
@@ -321,7 +321,7 @@ dconf_client_read (DConfClient *client,
  * If @flags is %DCONF_READ_FLAGS_NONE and @read_through is %NULL then
  * this call is exactly equivalent to dconf_client_read().
  *
- * Returns: a #GVariant, or %NULL
+ * Returns: (transfer full) (nullable): a #GVariant, or %NULL
  *
  * Since: 0.26
  */
@@ -351,7 +351,7 @@ dconf_client_read_full (DConfClient    *client,
  * may return inaccurate results with respect to those outstanding
  * changes.
  *
- * Returns: an array of strings, never %NULL.
+ * Returns: (transfer full) (not nullable): an array of strings, never %NULL.
  **/
 gchar **
 dconf_client_list (DConfClient *client,
@@ -376,7 +376,7 @@ dconf_client_list (DConfClient *client,
  *
  * The returned list will be %NULL-terminated.
  *
- * Returns: an array of strings, never %NULL.
+ * Returns: (transfer full) (not nullable): an array of strings, never %NULL.
  *
  * Since: 0.26
  */
@@ -404,7 +404,7 @@ dconf_client_list_locks (DConfClient *client,
  * or an inability to connect to the bus and start the service) may
  * cause the write to fail.
  *
- * Returns: %TRUE is @key is writable
+ * Returns: %TRUE if @key is writable
  **/
 gboolean
 dconf_client_is_writable (DConfClient *client,
@@ -419,7 +419,8 @@ dconf_client_is_writable (DConfClient *client,
  * dconf_client_write_fast:
  * @client: a #DConfClient
  * @key: the key to write to
- * @value: a #GVariant, the value to write
+ * @value: a #GVariant, the value to write. If it has a floating reference it's
+ *  consumed.
  * @error: a pointer to a %NULL #GError, or %NULL
  *
  * Writes @value to the given @key, or reset @key to its default value.
@@ -466,8 +467,9 @@ dconf_client_write_fast (DConfClient  *client,
  * dconf_client_write_sync:
  * @client: a #DConfClient
  * @key: the key to write to
- * @value: a #GVariant, the value to write
- * @tag: (out) (allow-none): the tag from this write
+ * @value: a #GVariant, the value to write. If it has a floating reference it's
+ *  consumed.
+ * @tag: (out) (optional) (not nullable) (transfer full): the tag from this write
  * @cancellable: a #GCancellable, or %NULL
  * @error: a pointer to a %NULL #GError, or %NULL
  *
@@ -548,7 +550,7 @@ dconf_client_change_fast (DConfClient     *client,
  * dconf_client_change_sync:
  * @client: a #DConfClient
  * @changeset: the changeset describing the requested change
- * @tag: (out) (allow-none): the tag from this write
+ * @tag: (out) (optional) (not nullable) (transfer full): the tag from this write
  * @cancellable: a #GCancellable, or %NULL
  * @error: a pointer to a %NULL #GError, or %NULL
  *
