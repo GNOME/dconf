@@ -17,6 +17,27 @@ static GQueue   async_call_error_queue;
 static GMutex   async_call_queue_lock;
 static gboolean signal_was_received;
 
+typedef struct
+{
+  GTestDBus *test_bus;  /* (owned) */
+} Fixture;
+
+static void
+set_up (Fixture       *fixture,
+        gconstpointer  test_data)
+{
+  fixture->test_bus = g_test_dbus_new (G_TEST_DBUS_NONE);
+  g_test_dbus_up (fixture->test_bus);
+}
+
+static void
+tear_down (Fixture       *fixture,
+           gconstpointer  test_data)
+{
+  g_test_dbus_down (fixture->test_bus);
+  g_clear_object (&fixture->test_bus);
+}
+
 static void
 wait_for_queue_to_empty (GQueue *queue)
 {
@@ -147,7 +168,8 @@ dconf_engine_handle_dbus_signal (GBusType     bus_type,
 }
 
 static void
-test_creation_error (void)
+test_creation_error (Fixture       *fixture,
+                     gconstpointer  test_data)
 {
   /* Sync with 'error' */
   if (g_test_trap_fork (0, 0))
@@ -223,7 +245,8 @@ test_creation_error (void)
 }
 
 static void
-test_sync_call_success (void)
+test_sync_call_success (Fixture       *fixture,
+                        gconstpointer  test_data)
 {
   GError *error = NULL;
   gchar *session_id;
@@ -266,7 +289,8 @@ test_sync_call_success (void)
 }
 
 static void
-test_sync_call_error (void)
+test_sync_call_error (Fixture       *fixture,
+                      gconstpointer  test_data)
 {
   GError *error = NULL;
   GVariant *reply;
@@ -343,7 +367,8 @@ test_sync_call_error (void)
 }
 
 static void
-test_async_call_success (void)
+test_async_call_success (Fixture       *fixture,
+                         gconstpointer  test_data)
 {
   gint i;
 
@@ -369,7 +394,8 @@ test_async_call_success (void)
 }
 
 static void
-test_async_call_error (void)
+test_async_call_error (Fixture       *fixture,
+                       gconstpointer  test_data)
 {
   DConfEngineCallHandle *handle;
   GError *error = NULL;
@@ -391,7 +417,8 @@ test_async_call_error (void)
 }
 
 static void
-test_sync_during_async (void)
+test_sync_during_async (Fixture       *fixture,
+                        gconstpointer  test_data)
 {
   DConfEngineCallHandle *handle;
   GError *error = NULL;
@@ -426,7 +453,8 @@ did_not_receive_signal (gpointer user_data)
 }
 
 static void
-test_signal_receipt (void)
+test_signal_receipt (Fixture       *fixture,
+                     gconstpointer  test_data)
 {
   GError *error = NULL;
   GVariant *reply;
@@ -464,14 +492,21 @@ main (int argc, char **argv)
 
   /* test_creation_error absolutely must come first */
   if (!g_str_equal (DBUS_BACKEND, "/libdbus-1"))
-    g_test_add_func (DBUS_BACKEND "/creation/error", test_creation_error);
+    g_test_add (DBUS_BACKEND "/creation/error", Fixture, NULL, set_up,
+                test_creation_error, tear_down);
 
-  g_test_add_func (DBUS_BACKEND "/sync-call/success", test_sync_call_success);
-  g_test_add_func (DBUS_BACKEND "/sync-call/error", test_sync_call_error);
-  g_test_add_func (DBUS_BACKEND "/async-call/success", test_async_call_success);
-  g_test_add_func (DBUS_BACKEND "/async-call/error", test_async_call_error);
-  g_test_add_func (DBUS_BACKEND "/sync-call/during-async", test_sync_during_async);
-  g_test_add_func (DBUS_BACKEND "/signal/receipt", test_signal_receipt);
+  g_test_add (DBUS_BACKEND "/sync-call/success", Fixture, NULL, set_up,
+              test_sync_call_success, tear_down);
+  g_test_add (DBUS_BACKEND "/sync-call/error", Fixture, NULL, set_up,
+              test_sync_call_error, tear_down);
+  g_test_add (DBUS_BACKEND "/async-call/success", Fixture, NULL, set_up,
+              test_async_call_success, tear_down);
+  g_test_add (DBUS_BACKEND "/async-call/error", Fixture, NULL, set_up,
+              test_async_call_error, tear_down);
+  g_test_add (DBUS_BACKEND "/sync-call/during-async", Fixture, NULL, set_up,
+              test_sync_during_async, tear_down);
+  g_test_add (DBUS_BACKEND "/signal/receipt", Fixture, NULL, set_up,
+              test_signal_receipt, tear_down);
 
   return g_test_run ();
 }
