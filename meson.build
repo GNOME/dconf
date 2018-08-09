@@ -91,6 +91,12 @@ configure_file(
   configuration: config_h
 )
 
+test_env = [
+  'G_DEBUG=gc-friendly,fatal-warnings',
+  'MALLOC_CHECK_=2',
+  'LC_ALL=C.UTF-8',
+]
+
 gnome = import('gnome')
 pkg = import('pkgconfig')
 
