@@ -10,6 +10,11 @@ libdconf_mock = static_library(
   dependencies: glib_dep
 )
 
+envs = test_env + [
+  'G_TEST_SRCDIR=' + meson.current_source_dir(),
+  'G_TEST_BUILDDIR=' + meson.current_build_dir(),
+]
+
 test_dir = meson.current_source_dir()
 
 dl_dep = cc.find_library('dl', required: false)
@@ -36,5 +41,5 @@ foreach unit_test: unit_tests
     link_with: unit_test[4]
   )
 
-  test(unit_test[0], exe, is_parallel: false)
+  test(unit_test[0], exe, is_parallel: false, env: envs)
 endforeach
