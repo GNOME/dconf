@@ -302,7 +302,7 @@ void dconf_complete (string[] args) throws Error {
 delegate void Command (string[] args) throws Error;
 
 struct CommandMapping {
-	Command func;
+	unowned Command func;
 	string name;
 
 	public CommandMapping (string name, Command func) {
