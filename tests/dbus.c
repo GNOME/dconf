@@ -458,6 +458,11 @@ main (int argc, char **argv)
 {
   g_test_init (&argc, &argv, NULL);
 
+  /* libdbus won't even try X11 autolaunch if DISPLAY is unset; GDBus
+   * does the same in Debian derivatives (proposed upstream in
+   * GNOME#723506) */
+  g_setenv ("DISPLAY", "an unrealistic mock X11 display", TRUE);
+
   main_thread = g_thread_self ();
 
   dconf_engine_dbus_init_for_testing ();
