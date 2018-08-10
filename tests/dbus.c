@@ -149,6 +149,12 @@ dconf_engine_handle_dbus_signal (GBusType     bus_type,
 static void
 test_creation_error (void)
 {
+  if (g_getenv ("DISPLAY") == NULL || g_strcmp0 (g_getenv ("DISPLAY"), "") == 0)
+    {
+      g_test_skip ("FIXME: D-Bus tests do not work on CI at the moment");
+      return;
+    }
+
   /* Sync with 'error' */
   if (g_test_trap_fork (0, 0))
     {
@@ -230,6 +236,12 @@ test_sync_call_success (void)
   gchar *system_id;
   GVariant *reply;
 
+  if (g_getenv ("DISPLAY") == NULL || g_strcmp0 (g_getenv ("DISPLAY"), "") == 0)
+    {
+      g_test_skip ("FIXME: D-Bus tests do not work on CI at the moment");
+      return;
+    }
+
   reply = dconf_engine_dbus_call_sync_func (G_BUS_TYPE_SESSION,
                                             "org.freedesktop.DBus", "/", "org.freedesktop.DBus", "ListNames",
                                             g_variant_new ("()"), G_VARIANT_TYPE ("(as)"), &error);
@@ -270,6 +282,12 @@ test_sync_call_error (void)
 {
   GError *error = NULL;
   GVariant *reply;
+
+  if (g_getenv ("DISPLAY") == NULL || g_strcmp0 (g_getenv ("DISPLAY"), "") == 0)
+    {
+      g_test_skip ("FIXME: D-Bus tests do not work on CI at the moment");
+      return;
+    }
 
   /* Test receiving errors from the other side */
   reply = dconf_engine_dbus_call_sync_func (G_BUS_TYPE_SESSION,
@@ -347,6 +365,12 @@ test_async_call_success (void)
 {
   gint i;
 
+  if (g_getenv ("DISPLAY") == NULL || g_strcmp0 (g_getenv ("DISPLAY"), "") == 0)
+    {
+      g_test_skip ("FIXME: D-Bus tests do not work on CI at the moment");
+      return;
+    }
+
   for (i = 0; i < 1000; i++)
     {
       DConfEngineCallHandle *handle;
@@ -375,6 +399,12 @@ test_async_call_error (void)
   GError *error = NULL;
   gboolean success;
 
+  if (g_getenv ("DISPLAY") == NULL || g_strcmp0 (g_getenv ("DISPLAY"), "") == 0)
+    {
+      g_test_skip ("FIXME: D-Bus tests do not work on CI at the moment");
+      return;
+    }
+
   handle = (gpointer) g_variant_type_new ("(s)");
 
   g_mutex_lock (&async_call_queue_lock);
@@ -397,6 +427,12 @@ test_sync_during_async (void)
   GError *error = NULL;
   gboolean success;
   GVariant *reply;
+
+  if (g_getenv ("DISPLAY") == NULL || g_strcmp0 (g_getenv ("DISPLAY"), "") == 0)
+    {
+      g_test_skip ("FIXME: D-Bus tests do not work on CI at the moment");
+      return;
+    }
 
   handle = (gpointer) g_variant_type_new ("(s)");
   g_mutex_lock (&async_call_queue_lock);
@@ -432,6 +468,12 @@ test_signal_receipt (void)
   GVariant *reply;
   gint status;
   guint id;
+
+  if (g_getenv ("DISPLAY") == NULL || g_strcmp0 (g_getenv ("DISPLAY"), "") == 0)
+    {
+      g_test_skip ("FIXME: D-Bus tests do not work on CI at the moment");
+      return;
+    }
 
   reply = dconf_engine_dbus_call_sync_func (G_BUS_TYPE_SESSION,
                                             "org.freedesktop.DBus", "/", "org.freedesktop.DBus", "AddMatch",
