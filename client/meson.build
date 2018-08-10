@@ -62,5 +62,5 @@ vapi_data = libdconf_vapi + files(meson.project_name() + '.deps')
 
 install_data(
   vapi_data,
-  install_dir: join_paths(dconf_datadir, 'vala', 'vapi')
+  install_dir: vapi_dir
 )
