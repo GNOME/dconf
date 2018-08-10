@@ -25,13 +25,11 @@ valac = meson.get_compiler('vala')
 common_flags = []
 
 if get_option('buildtype').contains('debug')
-  test_cflags = [
+  common_flags += cc.get_supported_arguments([
     '-fno-common',
     '-Wmissing-prototypes',
     '-Wwrite-strings'
-  ]
-
-  common_flags += cc.get_supported_arguments(test_cflags)
+  ])
 endif
 
 add_project_arguments(common_flags, language: 'c')
