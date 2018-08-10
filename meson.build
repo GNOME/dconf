@@ -44,6 +44,7 @@ glib_dep = dependency('glib-2.0', version: '>= 2.44.0')
 
 gio_module_dir = gio_dep.get_pkgconfig_variable('giomoduledir', define_variable: ['libdir', dconf_libdir])
 dbus_session_service_dir = dependency('dbus-1').get_pkgconfig_variable('session_bus_services_dir', define_variable: ['datadir', dconf_datadir])
+vapi_dir = dependency('vapigen').get_pkgconfig_variable('vapidir', define_variable: ['datadir', dconf_datadir])
 
 enable_bash_completion = get_option('bash_completion')
 if enable_bash_completion
