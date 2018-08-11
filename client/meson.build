@@ -46,11 +46,8 @@ libdconf_dep = declare_dependency(
 )
 
 pkg.generate(
-  libraries: libdconf,
-  version: meson.project_version(),
-  name: 'dconf',
+  libdconf,
   description: 'dconf client library',
-  filebase: 'dconf',
   subdirs: 'dconf',
   requires: 'gio-2.0 ' + gio_req_version,
   variables: 'exec_prefix=${prefix}',
