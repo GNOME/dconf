@@ -2,7 +2,7 @@ project(
   'dconf', ['c', 'vala'],
   version: '0.28.0',
   license: 'LGPL2.1+',
-  meson_version: '>= 0.43.0'
+  meson_version: '>= 0.43.0',
 )
 
 dconf_prefix = get_option('prefix')
@@ -28,7 +28,7 @@ if get_option('buildtype').contains('debug')
   common_flags += cc.get_supported_arguments([
     '-fno-common',
     '-Wmissing-prototypes',
-    '-Wwrite-strings'
+    '-Wwrite-strings',
   ])
 endif
 
@@ -52,7 +52,7 @@ endif
 
 configure_file(
   output: 'config.h',
-  configuration: configuration_data()
+  configuration: configuration_data(),
 )
 
 gnome = import('gnome')

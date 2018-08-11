@@ -10,7 +10,7 @@ if get_option('gtk_doc')
     scan_args: '--rebuild-types',
     gobject_typesfile: 'dconf.types',
     install: true,
-    install_dir: join_paths(dconf_prefix, gnome.gtkdoc_html_dir('dconf'))
+    install_dir: join_paths(dconf_prefix, gnome.gtkdoc_html_dir('dconf')),
   )
 endif
 
@@ -28,13 +28,13 @@ if get_option('man')
     '--stringparam', 'man.authors.section.enabled', '0',
     '--stringparam', 'man.copyright.section.enabled', '0',
     'http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl',
-    '@INPUT@'
+    '@INPUT@',
   ]
 
   mans = [
     ['dconf-service.xml', 'dconf-service', '1'],
     ['dconf-tool.xml', 'dconf', '1'],
-    ['dconf-overview.xml', 'dconf', '7']
+    ['dconf-overview.xml', 'dconf', '7'],
   ]
 
   foreach man: mans
@@ -47,7 +47,7 @@ if get_option('man')
       output: output,
       command: xsltproc_cmd,
       install: true,
-      install_dir: join_paths(dconf_mandir, man_dir)
+      install_dir: join_paths(dconf_mandir, man_dir),
     )
   endforeach
 endif

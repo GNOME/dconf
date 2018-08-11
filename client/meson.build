@@ -2,12 +2,12 @@ client_inc = include_directories('.')
 
 install_headers(
   'dconf.h',
-  subdir: 'dconf'
+  subdir: 'dconf',
 )
 
 install_headers(
   'dconf-client.h',
-  subdir: join_paths('dconf', 'client')
+  subdir: join_paths('dconf', 'client'),
 )
 
 sources = files('dconf-client.c')
@@ -20,12 +20,12 @@ libdconf_client = static_library(
   include_directories: top_inc,
   dependencies: libdconf_gdbus_thread_dep,
   c_args: cflags,
-  pic: true
+  pic: true,
 )
 
 libdconf_client_dep = declare_dependency(
   dependencies: gio_dep,
-  link_with: libdconf_client
+  link_with: libdconf_client,
 )
 
 libdconf = shared_library(
@@ -36,13 +36,13 @@ libdconf = shared_library(
   include_directories: top_inc,
   dependencies: deps,
   c_args: cflags,
-  install: true
+  install: true,
 )
 
 libdconf_dep = declare_dependency(
   include_directories: client_inc,
   dependencies: gio_dep,
-  link_with: libdconf
+  link_with: libdconf,
 )
 
 pkg.generate(
@@ -53,7 +53,7 @@ pkg.generate(
   filebase: 'dconf',
   subdirs: 'dconf',
   requires: 'gio-2.0 ' + gio_req_version,
-  variables: 'exec_prefix=${prefix}'
+  variables: 'exec_prefix=${prefix}',
 )
 
 libdconf_vapi = files('dconf.vapi')
@@ -62,5 +62,5 @@ vapi_data = libdconf_vapi + files('dconf.deps')
 
 install_data(
   vapi_data,
-  install_dir: vapi_dir
+  install_dir: vapi_dir,
 )

@@ -6,12 +6,12 @@ libdconf_gdbus_thread = static_library(
   include_directories: top_inc,
   dependencies: libdconf_engine_dep,
   c_args: cflags,
-  pic: true
+  pic: true,
 )
 
 libdconf_gdbus_thread_dep = declare_dependency(
   dependencies: libdconf_engine_dep,
-  link_with: libdconf_gdbus_thread
+  link_with: libdconf_gdbus_thread,
 )
 
 libdconf_gdbus_filter = static_library(
@@ -20,10 +20,10 @@ libdconf_gdbus_filter = static_library(
   include_directories: top_inc,
   dependencies: libdconf_engine_dep,
   c_args: cflags,
-  pic: true
+  pic: true,
 )
 
 libdconf_gdbus_filter_dep = declare_dependency(
   dependencies: libdconf_engine_dep,
-  link_with: libdconf_gdbus_filter
+  link_with: libdconf_gdbus_filter,
 )

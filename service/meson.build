@@ -8,7 +8,7 @@ configure_file(
   output: service,
   configuration: service_conf,
   install: true,
-  install_dir: dbus_session_service_dir
+  install_dir: dbus_session_service_dir,
 )
 
 sources = [
@@ -18,14 +18,14 @@ sources = [
   'dconf-service.c',
   'dconf-shm-writer.c',
   'dconf-writer.c',
-  'main.c'
+  'main.c',
 ]
 
 sources += gnome.gdbus_codegen(
   'dconf-generated',
   dconf_namespace + '.xml',
   interface_prefix: dconf_namespace + '.',
-  namespace: 'DConfDBus'
+  namespace: 'DConfDBus',
 )
 
 deps = [
@@ -41,5 +41,5 @@ executable(
   include_directories: top_inc,
   dependencies: deps,
   install: true,
-  install_dir: dconf_libexecdir
+  install_dir: dconf_libexecdir,
 )

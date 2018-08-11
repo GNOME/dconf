@@ -3,18 +3,18 @@ common_inc = include_directories('.')
 headers = files(
   'dconf-changeset.h',
   'dconf-enums.h',
-  'dconf-paths.h'
+  'dconf-paths.h',
 )
 
 install_headers(
   headers,
-  subdir: join_paths('dconf', 'common')
+  subdir: join_paths('dconf', 'common'),
 )
 
 sources = files(
   'dconf-changeset.c',
   'dconf-error.c',
-  'dconf-paths.c'
+  'dconf-paths.c',
 )
 
 cflags = ['-DG_LOG_DOMAIN="dconf"']
@@ -25,12 +25,12 @@ libdconf_common = static_library(
   include_directories: top_inc,
   dependencies: glib_dep,
   c_args: cflags,
-  pic: true
+  pic: true,
 )
 
 libdconf_common_dep = declare_dependency(
   dependencies: glib_dep,
-  link_with: libdconf_common
+  link_with: libdconf_common,
 )
 
 cflags += cc.get_supported_arguments('-fvisibility=hidden')
@@ -41,10 +41,10 @@ libdconf_common_hidden = static_library(
   include_directories: top_inc,
   dependencies: glib_dep,
   c_args: cflags,
-  pic: true
+  pic: true,
 )
 
 libdconf_common_hidden_dep = declare_dependency(
   dependencies: glib_dep,
-  link_with: libdconf_common_hidden
+  link_with: libdconf_common_hidden,
 )
