@@ -2,21 +2,21 @@ client_inc = include_directories('.')
 
 install_headers(
   'dconf.h',
-  subdir: meson.project_name()
+  subdir: 'dconf'
 )
 
 install_headers(
   'dconf-client.h',
-  subdir: join_paths(meson.project_name(), 'client')
+  subdir: join_paths('dconf', 'client')
 )
 
-name = meson.project_name() + '-client'
+sources = files('dconf-client.c')
 
-cflags = '-DG_LOG_DOMAIN="@0@"'.format(meson.project_name())
+cflags = '-DG_LOG_DOMAIN="dconf"'
 
 libdconf_client = static_library(
-  name,
-  sources: name + '.c',
+  'dconf-client',
+  sources: sources,
   include_directories: top_inc,
   dependencies: libdconf_gdbus_thread_dep,
   c_args: cflags,
@@ -29,8 +29,8 @@ libdconf_client_dep = declare_dependency(
 )
 
 libdconf = shared_library(
-  meson.project_name(),
-  sources: name + '.c',
+  'dconf',
+  sources: sources,
   version: libversion,
   soversion: soversion,
   include_directories: top_inc,
@@ -48,17 +48,17 @@ libdconf_dep = declare_dependency(
 pkg.generate(
   libraries: libdconf,
   version: meson.project_version(),
-  name: meson.project_name(),
-  description: meson.project_name() + ' client library',
-  filebase: meson.project_name(),
-  subdirs: meson.project_name(),
+  name: 'dconf',
+  description: 'dconf client library',
+  filebase: 'dconf',
+  subdirs: 'dconf',
   requires: 'gio-2.0 ' + gio_req_version,
   variables: 'exec_prefix=${prefix}'
 )
 
-libdconf_vapi = files(meson.project_name() + '.vapi')
+libdconf_vapi = files('dconf.vapi')
 
-vapi_data = libdconf_vapi + files(meson.project_name() + '.deps')
+vapi_data = libdconf_vapi + files('dconf.deps')
 
 install_data(
   vapi_data,

@@ -7,14 +7,12 @@ deps = [
   glib_dep
 ]
 
-cflags = '-DG_LOG_DOMAIN="gvdb (via @0@)"'.format(meson.project_name())
-
 libgvdb = static_library(
   'gvdb',
   sources: sources,
   include_directories: top_inc,
   dependencies: deps,
-  c_args: cflags,
+  c_args: '-DG_LOG_DOMAIN="gvdb (via dconf)"',
   pic: true
 )
 

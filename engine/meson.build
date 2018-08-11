@@ -13,14 +13,12 @@ deps = [
   libgvdb_dep
 ]
 
-cflags = '-DG_LOG_DOMAIN="@0@"'.format(meson.project_name())
-
 libdconf_engine = static_library(
-  meson.project_name() + '-engine',
+  'dconf-engine',
   sources: sources,
   include_directories: top_inc,
   dependencies: deps + [libdconf_shm_dep],
-  c_args: cflags,
+  c_args: '-DG_LOG_DOMAIN="dconf"',
   pic: true
 )
 

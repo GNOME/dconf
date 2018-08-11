@@ -12,7 +12,7 @@ deps = [
 ]
 
 executable(
-  meson.project_name(),
+  'dconf',
   sources,
   include_directories: top_inc,
   dependencies: deps,
