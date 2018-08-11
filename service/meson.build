@@ -43,3 +43,17 @@ executable(
   install: true,
   install_dir: dconf_libexecdir,
 )
+
+libdconf_service = static_library(
+  'dconf-service',
+  sources,
+  include_directories: top_inc,
+  dependencies: service_deps,
+  c_args: '-DG_LOG_DOMAIN="dconf"',
+  pic: true,
+)
+
+libdconf_service_dep = declare_dependency(
+  dependencies: service_deps,
+  link_with: libdconf_service,
+)
