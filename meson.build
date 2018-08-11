@@ -2,23 +2,11 @@ project(
   'dconf', ['c', 'vala'],
   version: '0.28.0',
   license: 'LGPL2.1+',
-  default_options: [
-    'buildtype=debugoptimized',
-    'warning_level=1'
-  ],
-  meson_version: '>= 0.41.0'
+  meson_version: '>= 0.46.0',
 )
 
-dconf_version = meson.project_version()
-version_array = dconf_version.split('.')
-dconf_major_version = version_array[0].to_int()
-dconf_minor_version = version_array[1].to_int()
-dconf_micro_version = version_array[2].to_int()
-
 dconf_prefix = get_option('prefix')
-dconf_bindir = join_paths(dconf_prefix, get_option('bindir'))
 dconf_datadir = join_paths(dconf_prefix, get_option('datadir'))
-dconf_includedir = join_paths(dconf_prefix, get_option('includedir'))
 dconf_libdir = join_paths(dconf_prefix, get_option('libdir'))
 dconf_libexecdir = join_paths(dconf_prefix, get_option('libexecdir'))
 dconf_mandir = join_paths(dconf_prefix, get_option('mandir'))
@@ -33,62 +21,38 @@ libversion = '@0@.@1@.@2@'.format(soversion, current, revision)
 cc = meson.get_compiler('c')
 valac = meson.get_compiler('vala')
 
-config_h = configuration_data()
-
-# package
-set_defines = [
-  ['PACKAGE', meson.project_name()],
-  ['PACKAGE_BUGREPORT', 'https://gitlab.gnome.org/GNOME/dconf/issues'],
-  ['PACKAGE_NAME', meson.project_name()],
-  ['PACKAGE_STRING', '@0@ @1@'.format(meson.project_name(), dconf_version)],
-  ['PACKAGE_TARNAME', meson.project_name()],
-  ['PACKAGE_URL', 'https://wiki.gnome.org/Projects/dconf'],
-  ['PACKAGE_VERSION', dconf_version],
-  ['VERSION', dconf_version],
-  ['GETTEXT_PACKAGE', meson.project_name()]
-]
-
-foreach define: set_defines
-  config_h.set_quoted(define[0], define[1])
-endforeach
-
 # compiler flags
-common_flags = ['-DHAVE_CONFIG_H']
+common_flags = []
 
 if get_option('buildtype').contains('debug')
-  test_cflags = [
+  common_flags += cc.get_supported_arguments([
     '-fno-common',
     '-Wmissing-prototypes',
-    '-Wwrite-strings'
-  ]
-
-  foreach cflag: test_cflags
-    if cc.has_argument(cflag)
-      common_flags += [cflag]
-    endif
-  endforeach
+    '-Wwrite-strings',
+  ])
 endif
 
 add_project_arguments(common_flags, language: 'c')
 
-gio_unix_req_version = '>= 2.25.7'
+gio_req_version = '>= 2.25.7'
 
+gio_dep = dependency('gio-2.0', version: gio_req_version)
+gio_unix_dep = dependency('gio-unix-2.0', version: gio_req_version)
 glib_dep = dependency('glib-2.0', version: '>= 2.44.0')
-gio_unix_dep = dependency('gio-unix-2.0', version: gio_unix_req_version)
 
-gio_querymodules = find_program('gio-querymodules', required: false)
-if gio_querymodules.found()
-  gio_modules_dir = get_option('with-gio-modules-dir').strip()
-  if gio_modules_dir == ''
-    gio_modules_dir = join_paths(dconf_libdir, 'gio', 'modules')
-  endif
+gio_module_dir = gio_dep.get_pkgconfig_variable('giomoduledir', define_variable: ['libdir', dconf_libdir])
+dbus_session_service_dir = dependency('dbus-1').get_pkgconfig_variable('session_bus_services_dir', define_variable: ['datadir', dconf_datadir])
+vapi_dir = dependency('vapigen').get_pkgconfig_variable('vapidir', define_variable: ['datadir', dconf_datadir])
 
-  meson.add_install_script('meson_post_install.py', gio_querymodules.path(), gio_modules_dir)
+enable_bash_completion = get_option('bash_completion')
+if enable_bash_completion
+  # FIXME: the `.pc` file is wrong because `completionsdir` should be relative to `datadir`, not `prefix`
+  completions_dir = dependency('bash-completion').get_pkgconfig_variable('completionsdir', define_variable: ['prefix', dconf_prefix])
 endif
 
 configure_file(
   output: 'config.h',
-  configuration: config_h
+  configuration: configuration_data(),
 )
 
 test_env = [
@@ -113,3 +77,5 @@ subdir('client')
 subdir('bin')
 subdir('docs')
 subdir('tests')
+
+meson.add_install_script('meson_post_install.py', gio_module_dir)

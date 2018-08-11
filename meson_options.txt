@@ -1,5 +1,3 @@
-option('enable-man', type: 'boolean', value: true, description: 'generate man pages')
-option('with-gio-modules-dir', type: 'string', value: '', description: 'choose directory for the GIO module [default=LIBDIR/gio/modules]')
-option('with-dbus-service-dir', type: 'string', value: '', description: 'choose directory for dbus service files [default=PREFIX/share/dbus-1/services]')
-option('with-dbus-system-service-dir', type: 'string', value: '', description: 'choose directory for dbus system service files [default=PREFIX/share/dbus-1/system-services]')
-option('enable-gtk-doc', type: 'boolean', value: false, description: 'use gtk-doc to build documentation')
+option('bash_completion', type: 'boolean', value: true, description: 'install bash completion files')
+option('man', type: 'boolean', value: true, description: 'generate man pages')
+option('gtk_doc', type: 'boolean', value: false, description: 'use gtk-doc to build documentation')

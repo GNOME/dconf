@@ -1,24 +1,22 @@
-name = 'gvdb'
-
 gvdb_builder = files('gvdb-builder.c')
 
 sources = gvdb_builder + files('gvdb-reader.c')
 
-cflags = '-DG_LOG_DOMAIN="gvdb (via @0@)"'.format(meson.project_name())
+deps = [
+  gio_dep,
+  glib_dep,
+]
 
 libgvdb = static_library(
-  name,
+  'gvdb',
   sources: sources,
   include_directories: top_inc,
-  dependencies: glib_dep,
-  c_args: cflags
+  dependencies: deps,
+  c_args: '-DG_LOG_DOMAIN="gvdb (via dconf)"',
+  pic: true,
 )
 
-libgvdb_shared = static_library(
-  name + '-shared',
-  sources: sources,
-  include_directories: top_inc,
-  dependencies: glib_dep,
-  c_args: cflags,
-  pic: true
+libgvdb_dep = declare_dependency(
+  dependencies: deps,
+  link_with: libgvdb,
 )

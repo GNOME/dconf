@@ -1,22 +1,13 @@
-name = meson.project_name() + '-shm'
-
-sources = files('dconf-shm.c')
-
-cflags = '-DG_LOG_DOMAIN="@0@"'.format(meson.project_name())
-
 libdconf_shm = static_library(
-  name,
-  sources: sources,
+  'dconf-shm',
+  sources: 'dconf-shm.c',
   include_directories: top_inc,
   dependencies: glib_dep,
-  c_args: cflags
+  c_args: '-DG_LOG_DOMAIN="dconf"',
+  pic: true,
 )
 
-libdconf_shm_shared = static_library(
-  name + '-shared',
-  sources: sources,
-  include_directories: top_inc,
+libdconf_shm_dep = declare_dependency(
   dependencies: glib_dep,
-  c_args: cflags,
-  pic: true
+  link_with: libdconf_shm,
 )
