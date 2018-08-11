@@ -1,16 +1,16 @@
 if get_option('gtk_doc')
   gnome.gtkdoc(
-    meson.project_name(),
-    main_xml: meson.project_name() + '-docs.xml',
+    'dconf',
+    main_xml: 'dconf-docs.xml',
     src_dir: [
       common_inc,
       client_inc
     ],
     dependencies: libdconf_dep,
     scan_args: '--rebuild-types',
-    gobject_typesfile: meson.project_name() + '.types',
+    gobject_typesfile: 'dconf.types',
     install: true,
-    install_dir: join_paths(dconf_prefix, gnome.gtkdoc_html_dir(meson.project_name()))
+    install_dir: join_paths(dconf_prefix, gnome.gtkdoc_html_dir('dconf'))
   )
 endif
 

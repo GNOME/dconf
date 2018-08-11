@@ -3,14 +3,12 @@ deps = [
   libdconf_gdbus_thread_dep
 ]
 
-cflags = '-DG_LOG_DOMAIN="@0@"'.format(meson.project_name())
-
 libdconf_settings = shared_library(
-  meson.project_name() + 'settings',
+  'dconfsettings',
   sources: 'dconfsettingsbackend.c',
   include_directories: top_inc,
   dependencies: deps,
-  c_args: cflags,
+  c_args: '-DG_LOG_DOMAIN="dconf"',
   install: true,
   install_dir: gio_module_dir
 )

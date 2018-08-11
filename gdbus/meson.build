@@ -1,10 +1,8 @@
-name = meson.project_name() + '-gdbus-thread'
-
-cflags = '-DG_LOG_DOMAIN="@0@"'.format(meson.project_name())
+cflags = '-DG_LOG_DOMAIN="dconf"'
 
 libdconf_gdbus_thread = static_library(
-  name,
-  sources: name + '.c',
+  'dconf-gdbus-thread',
+  sources: 'dconf-gdbus-thread.c',
   include_directories: top_inc,
   dependencies: libdconf_engine_dep,
   c_args: cflags,
@@ -16,11 +14,9 @@ libdconf_gdbus_thread_dep = declare_dependency(
   link_with: libdconf_gdbus_thread
 )
 
-name = meson.project_name() + '-gdbus-filter'
-
 libdconf_gdbus_filter = static_library(
-  name,
-  sources: name + '.c',
+  'dconf-gdbus-filter',
+  sources: 'dconf-gdbus-filter.c',
   include_directories: top_inc,
   dependencies: libdconf_engine_dep,
   c_args: cflags,

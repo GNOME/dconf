@@ -1,13 +1,9 @@
-name = meson.project_name() + '-shm'
-
-cflags = '-DG_LOG_DOMAIN="@0@"'.format(meson.project_name())
-
 libdconf_shm = static_library(
-  name,
-  sources: name + '.c',
+  'dconf-shm',
+  sources: 'dconf-shm.c',
   include_directories: top_inc,
   dependencies: glib_dep,
-  c_args: cflags,
+  c_args: '-DG_LOG_DOMAIN="dconf"',
   pic: true
 )
 

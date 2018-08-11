@@ -5,7 +5,7 @@ sources = files(
 )
 
 libdconf_mock = static_library(
-  meson.project_name() + '-mock',
+  'dconf-mock',
   sources: sources,
   dependencies: glib_dep
 )
