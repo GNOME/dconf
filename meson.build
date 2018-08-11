@@ -38,7 +38,7 @@ config_h = configuration_data()
 # package
 set_defines = [
   ['PACKAGE', meson.project_name()],
-  ['PACKAGE_BUGREPORT', 'http://bugzilla.gnome.org/enter_bug.cgi?product=dconf'],
+  ['PACKAGE_BUGREPORT', 'https://gitlab.gnome.org/GNOME/dconf/issues'],
   ['PACKAGE_NAME', meson.project_name()],
   ['PACKAGE_STRING', '@0@ @1@'.format(meson.project_name(), dconf_version)],
   ['PACKAGE_TARNAME', meson.project_name()],
@@ -90,6 +90,12 @@ configure_file(
   output: 'config.h',
   configuration: config_h
 )
+
+test_env = [
+  'G_DEBUG=gc-friendly,fatal-warnings',
+  'MALLOC_CHECK_=2',
+  'LC_ALL=C.UTF-8',
+]
 
 gnome = import('gnome')
 pkg = import('pkgconfig')

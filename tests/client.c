@@ -1,4 +1,4 @@
-#define _BSD_SOURCE
+#define _DEFAULT_SOURCE
 #include "../client/dconf-client.h"
 #include "../engine/dconf-engine.h"
 #include "dconf-mock.h"
