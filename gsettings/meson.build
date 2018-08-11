@@ -1,6 +1,6 @@
 deps = [
   libdconf_common_hidden_dep,
-  libdconf_gdbus_thread_dep
+  libdconf_gdbus_thread_dep,
 ]
 
 libdconf_settings = shared_library(
@@ -10,7 +10,7 @@ libdconf_settings = shared_library(
   dependencies: deps,
   c_args: '-DG_LOG_DOMAIN="dconf"',
   install: true,
-  install_dir: gio_module_dir
+  install_dir: gio_module_dir,
 )
 
 envs = test_env + [
