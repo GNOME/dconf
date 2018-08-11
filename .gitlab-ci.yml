@@ -67,10 +67,10 @@ pages:
   only:
     - master
   script:
-    - meson -Ddocumentation=true _build .
+    - meson -Denable-gtk-doc=true _build .
     - ninja -C _build dconf-doc
     - mkdir -p public/
-    - mv _build/dconf/docs/html/ public/docs/
+    - mv _build/docs/html/ public/docs/
     - mv _coverage/ public/coverage/
   artifacts:
     paths:
