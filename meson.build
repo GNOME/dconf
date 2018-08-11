@@ -2,7 +2,7 @@ project(
   'dconf', ['c', 'vala'],
   version: '0.28.0',
   license: 'LGPL2.1+',
-  meson_version: '>= 0.43.0',
+  meson_version: '>= 0.46.0',
 )
 
 dconf_prefix = get_option('prefix')
