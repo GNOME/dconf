@@ -25,7 +25,7 @@ libdconf_client = static_library(
 
 libdconf_client_dep = declare_dependency(
   dependencies: gio_dep,
-  link_with: libdconf_client,
+  link_whole: libdconf_client,
 )
 
 libdconf = shared_library(
