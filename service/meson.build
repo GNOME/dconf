@@ -28,7 +28,7 @@ sources += gnome.gdbus_codegen(
   namespace: 'DConfDBus',
 )
 
-deps = [
+service_deps = [
   gio_unix_dep,
   libdconf_common_dep,
   libdconf_shm_dep,
@@ -39,7 +39,7 @@ executable(
   'dconf-service',
   sources,
   include_directories: top_inc,
-  dependencies: deps,
+  dependencies: service_deps,
   install: true,
   install_dir: dconf_libexecdir,
 )

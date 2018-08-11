@@ -14,6 +14,11 @@ sources = files('dconf-client.c')
 
 cflags = '-DG_LOG_DOMAIN="dconf"'
 
+deps = [
+  libdconf_common_hidden_dep,
+  libdconf_gdbus_thread_dep,
+]
+
 libdconf_client = static_library(
   'dconf-client',
   sources: sources,

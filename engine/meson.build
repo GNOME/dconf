@@ -8,7 +8,7 @@ sources = files(
   'dconf-engine-source-system.c',
 )
 
-deps = [
+engine_deps = [
   libdconf_common_dep,
   libgvdb_dep,
 ]
@@ -17,12 +17,12 @@ libdconf_engine = static_library(
   'dconf-engine',
   sources: sources,
   include_directories: top_inc,
-  dependencies: deps + [libdconf_shm_dep],
+  dependencies: engine_deps + [libdconf_shm_dep],
   c_args: '-DG_LOG_DOMAIN="dconf"',
   pic: true,
 )
 
 libdconf_engine_dep = declare_dependency(
-  dependencies: deps,
+  dependencies: engine_deps,
   link_with: libdconf_engine,
 )

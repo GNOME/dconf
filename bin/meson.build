@@ -5,7 +5,7 @@ sources = gvdb_builder + libdconf_vapi + files(
   'gvdb.vapi',
 )
 
-deps = [
+bin_deps = [
   libdconf_common_dep,
   libdconf_dep,
   valac.find_library('posix'),
@@ -15,7 +15,7 @@ executable(
   'dconf',
   sources,
   include_directories: top_inc,
-  dependencies: deps,
+  dependencies: bin_deps,
   install: true,
 )
 
