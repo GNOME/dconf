@@ -30,7 +30,7 @@ libdconf_common = static_library(
 
 libdconf_common_dep = declare_dependency(
   dependencies: glib_dep,
-  link_whole: libdconf_common,
+  link_with: libdconf_common,
 )
 
 cflags += cc.get_supported_arguments('-fvisibility=hidden')
