@@ -94,9 +94,28 @@ dconf_gdbus_get_worker_context (void)
     {
       GMainContext *context;
 
-      /* Work around https://bugzilla.gnome.org/show_bug.cgi?id=674885 */
+      /* Work around https://bugzilla.gnome.org/show_bug.cgi?id=674885
+       *
+       * This set of types is the same as the set in
+       * glib/gio/gdbusprivate.c:ensure_required_types(). That workaround
+       * is ineffective for us since we're already in the worker thread when
+       * we call g_bus_get_sync() and ensure_require_types() runs. So we do
+       * something similar here before launching the worker thread. Calling
+       * g_bus_get_sync() here would also be possible, but potentiall would
+       * cause significan startup latency for every dconf user.
+       */
+      g_type_ensure (G_TYPE_TASK);
+      g_type_ensure (G_TYPE_MEMORY_INPUT_STREAM);
+      g_type_ensure (G_TYPE_DBUS_CONNECTION_FLAGS);
+      g_type_ensure (G_TYPE_DBUS_CAPABILITY_FLAGS);
+      g_type_ensure (G_TYPE_DBUS_AUTH_OBSERVER);
       g_type_ensure (G_TYPE_DBUS_CONNECTION);
       g_type_ensure (G_TYPE_DBUS_PROXY);
+      g_type_ensure (G_TYPE_SOCKET_FAMILY);
+      g_type_ensure (G_TYPE_SOCKET_TYPE);
+      g_type_ensure (G_TYPE_SOCKET_PROTOCOL);
+      g_type_ensure (G_TYPE_SOCKET_ADDRESS);
+      g_type_ensure (G_TYPE_SOCKET);
 
       context = g_main_context_new ();
       g_thread_new ("dconf worker", dconf_gdbus_worker_thread, context);
