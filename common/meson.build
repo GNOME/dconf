@@ -28,7 +28,7 @@ libdconf_common = static_library(
 
 libdconf_common_dep = declare_dependency(
   dependencies: glib_dep,
-  link_whole: libdconf_common,
+  link_with: libdconf_common,
 )
 
 libdconf_common_hidden = static_library(
