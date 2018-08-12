@@ -14,11 +14,6 @@ sources = files('dconf-client.c')
 
 cflags = '-DG_LOG_DOMAIN="dconf"'
 
-deps = [
-  libdconf_common_hidden_dep,
-  libdconf_gdbus_thread_dep,
-]
-
 libdconf_client = static_library(
   'dconf-client',
   sources: sources,
@@ -30,8 +25,16 @@ libdconf_client = static_library(
 
 libdconf_client_dep = declare_dependency(
   dependencies: gio_dep,
-  link_whole: libdconf_client,
+  link_with: libdconf_client,
 )
+
+deps = [
+  libdconf_common_dep,
+  libdconf_engine_dep,
+  libdconf_gdbus_thread_dep,
+  libdconf_shm_dep,
+  libgvdb_dep,
+]
 
 libdconf = shared_library(
   'dconf',
