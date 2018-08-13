@@ -793,7 +793,7 @@ dconf_changeset_filter_changes (DConfChangeset *base,
                                 DConfChangeset *changes)
 {
   DConfChangeset *result = NULL;
-  GHashTableIter iter;
+  GHashTableIter iter_changes;
   gpointer key, val;
 
   g_return_val_if_fail (base->is_database, NULL);
@@ -805,13 +805,43 @@ dconf_changeset_filter_changes (DConfChangeset *base,
    * Note: because 'base' is a database changeset we don't have to
    * worry about it containing NULL values (dir resets).
    */
-  g_hash_table_iter_init (&iter, changes->table);
-  while (g_hash_table_iter_next (&iter, &key, &val))
+  g_hash_table_iter_init (&iter_changes, changes->table);
+  while (g_hash_table_iter_next (&iter_changes, &key, &val))
     {
       GVariant *base_val = g_hash_table_lookup (base->table, key);
 
-      if (base_val == NULL || !g_variant_equal (val, base_val))
+      if (g_str_has_suffix (key, "/"))
         {
+          // Path reset
+          gboolean reset_is_effective = FALSE;
+          GHashTableIter iter_base;
+          gpointer base_key = NULL;
+
+          g_return_val_if_fail (val == NULL, NULL);
+
+          // First we check whether there are any keys in base that would be reset
+          g_hash_table_iter_init (&iter_base, base->table);
+          while (g_hash_table_iter_next (&iter_base, &base_key, NULL))
+            if (g_str_has_prefix (base_key, key) && !g_str_equal (base_key, key))
+              {
+                reset_is_effective = TRUE;
+                break;
+              }
+
+          if (reset_is_effective)
+            {
+              if (!result)
+                result = dconf_changeset_new ();
+
+              dconf_changeset_set (result, key, val);
+            }
+        }
+      else if (base_val == NULL && val == NULL)
+        continue; // Resetting a key that wasn't set
+      else if (val == NULL || base_val == NULL || !g_variant_equal (val, base_val))
+        {
+          // Resetting an existing key, inserting a value under a key that was not
+          // set, or replacing an existing value with a different one.
           if (!result)
             result = dconf_changeset_new ();
 
