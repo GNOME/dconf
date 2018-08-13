@@ -30,17 +30,3 @@ libdconf_common_dep = declare_dependency(
   dependencies: glib_dep,
   link_with: libdconf_common,
 )
-
-libdconf_common_hidden = static_library(
-  'dconf-common-hidden',
-  sources: sources,
-  include_directories: top_inc,
-  dependencies: glib_dep,
-  c_args: dconf_c_args + cc.get_supported_arguments('-fvisibility=hidden'),
-  pic: true,
-)
-
-libdconf_common_hidden_dep = declare_dependency(
-  dependencies: glib_dep,
-  link_with: libdconf_common_hidden,
-)
