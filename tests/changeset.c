@@ -639,12 +639,14 @@ test_filter_changes (void)
   // Define test changesets as serialised g_variant strings
   const gchar *empty = NULL;
   const gchar *a1 = "{'/a': @mv <'value1'>}";
-  const gchar *a_null = "{'/a': @mv nothing}";
   const gchar *a2 = "{'/a': @mv <'value2'>}";
   const gchar *b2 = "{'/b': @mv <'value2'>}";
   const gchar *a1b1 = "{'/a': @mv <'value1'>, '/b': @mv <'value1'>}";
   const gchar *a1b2 = "{'/a': @mv <'value1'>, '/b': @mv <'value2'>}";
-  const gchar *reset = "{'/': @mv nothing}";
+  const gchar *a1r1 = "{'/a': @mv <'value1'>, '/r/c': @mv <'value3'>}";
+  const gchar *key_reset = "{'/a': @mv nothing}";
+  const gchar *root_reset = "{'/': @mv nothing}";
+  const gchar *partial_reset = "{'/r/': @mv nothing}";
   gchar *filtered;
 
   /* an empty changeset would not change an empty database */
@@ -662,7 +664,8 @@ test_filter_changes (void)
   g_assert_cmpstr (filtered, ==, a1);
   g_free (filtered);
 
-  /* a changeset would change a database with the same keys but different values */
+  /* a changeset would change a database with the same keys but
+   * different values */
   filtered = call_filter_changes (a1, a2);
   g_assert_cmpstr (filtered, ==, a2);
   g_free (filtered);
@@ -675,25 +678,65 @@ test_filter_changes (void)
   g_assert_cmpstr (filtered, ==, b2);
   g_free (filtered);
 
-  /* A changeset would change a database with some equal and some new values */
+  /* A changeset would change a database with some equal and some new
+   * values */
   filtered = call_filter_changes (a1, a1b2);
   g_assert_cmpstr (filtered, ==, b2);
   g_free (filtered);
 
-  /* A changeset would not change a database with some equal and some new values */
+  /* A changeset would not change a database with some equal and some
+   * new values */
   g_assert_null (call_filter_changes (a1b2, a1));
 
-  /* Resets should count when there are values to be reset */
-  filtered = call_filter_changes (a_null, reset);
-  g_assert_cmpstr (filtered, ==, reset);
-  g_free (filtered);
-  filtered = call_filter_changes (a1b2, reset);
-  g_assert_cmpstr (filtered, ==, reset);
+  /* A root reset has an effect on a database with values */
+  filtered = call_filter_changes (a1, root_reset);
+  g_assert_cmpstr (filtered, ==, root_reset);
   g_free (filtered);
 
-  /* FIXME: ideally, a reset would have no effect on an empty database */
-  filtered = call_filter_changes (empty, reset);
-  g_assert_cmpstr (filtered, ==, reset);
+  filtered = call_filter_changes (a1b2, root_reset);
+  g_assert_cmpstr (filtered, ==, root_reset);
+  g_free (filtered);
+
+  /* A root reset would have no effect on an empty database */
+  filtered = call_filter_changes (empty, root_reset);
+  g_assert_cmpstr (filtered, ==, NULL);
+  g_free (filtered);
+
+  /* A key reset would have no effect on an empty database */
+  filtered = call_filter_changes (empty, key_reset);
+  g_assert_cmpstr (filtered, ==, NULL);
+  g_free (filtered);
+
+  /* A key reset would have no effect on a database with other keys */
+  filtered = call_filter_changes (b2, key_reset);
+  g_assert_cmpstr (filtered, ==, NULL);
+  g_free (filtered);
+
+  /* A key reset would have an effect on a database containing that
+   * key */
+  filtered = call_filter_changes (a1, key_reset);
+  g_assert_cmpstr (filtered, ==, key_reset);
+  g_free (filtered);
+
+  filtered = call_filter_changes (a1b1, key_reset);
+  g_assert_cmpstr (filtered, ==, key_reset);
+  g_free (filtered);
+
+  /* A partial reset would have no effect on an empty database */
+  filtered = call_filter_changes (empty, partial_reset);
+  g_assert_cmpstr (filtered, ==, NULL);
+  g_free (filtered);
+
+  /* A partial reset would have no effect on a database with other
+   * values */
+  filtered = call_filter_changes (a1, partial_reset);
+  g_assert_cmpstr (filtered, ==, NULL);
+  g_free (filtered);
+
+  /* A partial reset would have an effect on a database with some values
+   * under that path */
+  filtered = call_filter_changes (a1r1, partial_reset);
+  g_assert_cmpstr (filtered, ==, partial_reset);
   g_free (filtered);
 }
 
