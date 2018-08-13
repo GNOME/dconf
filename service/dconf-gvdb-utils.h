@@ -29,5 +29,13 @@ DConfChangeset *                dconf_gvdb_utils_read_file              (const g
 gboolean                        dconf_gvdb_utils_write_file             (const gchar     *filename,
                                                                          DConfChangeset  *database,
                                                                          GError         **error);
+int                             dconf_gvdb_utils_open                   (const char      *name,
+                                                                         int              flags);
+
+int                             dconf_gvdb_utils_close                  (int              fd);
+
+ssize_t                         dconf_gvdb_utils_write                  (int              fd,
+                                                                         const void      *buf,
+                                                                         size_t           n);
 
 #endif /* __dconf_gvdb_utils_h__ */

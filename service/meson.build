@@ -21,12 +21,23 @@ sources = [
   'main.c',
 ]
 
-sources += gnome.gdbus_codegen(
+test_sources = [
+  'dconf-blame.c',
+  'dconf-keyfile-writer.c',
+  'dconf-service.c',
+  'dconf-shm-writer.c',
+  'dconf-writer.c',
+]
+
+generated = gnome.gdbus_codegen(
   'dconf-generated',
   dconf_namespace + '.xml',
   interface_prefix: dconf_namespace + '.',
   namespace: 'DConfDBus',
 )
+
+sources += generated
+test_sources += generated
 
 service_deps = [
   gio_unix_dep,
@@ -53,7 +64,21 @@ libdconf_service = static_library(
   pic: true,
 )
 
+libdconf_test_service = static_library(
+  'dconf-test-service',
+  test_sources,
+  include_directories: top_inc,
+  dependencies: service_deps,
+  c_args: '-DG_LOG_DOMAIN="dconf"',
+  pic: true,
+)
+
 libdconf_service_dep = declare_dependency(
   dependencies: service_deps,
   link_with: libdconf_service,
+)
+
+libdconf_test_service_dep = declare_dependency(
+  dependencies: service_deps,
+  link_with: libdconf_test_service,
 )

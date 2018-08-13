@@ -23,7 +23,7 @@
 #include "service/dconf-writer.h"
 
 static void
-test_writer_basic (void)
+test_writer_basic_new (void)
 {
   g_autoptr(DConfWriter) writer = NULL;
 
@@ -33,12 +33,35 @@ test_writer_basic (void)
   g_assert_cmpstr (dconf_writer_get_name (writer), ==, "some-name");
 }
 
+static void
+test_writer_basic_begin_end (void)
+{
+  g_autoptr(DConfWriter) writer = NULL;
+
+  writer = (DConfWriter *) dconf_writer_new (DCONF_TYPE_WRITER, "some-name");
+  g_assert_true (DCONF_WRITER_GET_CLASS (writer)->begin (writer, NULL));
+  DCONF_WRITER_GET_CLASS (writer)->end (writer);
+}
+
+static void
+test_writer_basic_commit (void)
+{
+  g_autoptr(DConfWriter) writer = NULL;
+
+  writer = (DConfWriter *) dconf_writer_new (DCONF_TYPE_WRITER, "some-name");
+  g_assert_true (DCONF_WRITER_GET_CLASS (writer)->begin (writer, NULL));
+  g_assert_true (DCONF_WRITER_GET_CLASS (writer)->commit (writer, NULL));
+  DCONF_WRITER_GET_CLASS (writer)->end (writer);
+}
+
 int
 main (int argc, char **argv)
 {
   g_test_init (&argc, &argv, NULL);
 
-  g_test_add_func ("/writer/basic", test_writer_basic);
+  g_test_add_func ("/writer/basic_new", test_writer_basic_new);
+  g_test_add_func ("/writer/basic_begin_end", test_writer_basic_begin_end);
+  g_test_add_func ("/writer/basic_commit", test_writer_basic_commit);
 
   return g_test_run ();
 }

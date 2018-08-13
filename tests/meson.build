@@ -2,6 +2,7 @@ sources = files(
   'dconf-mock-dbus.c',
   'dconf-mock-gvdb.c',
   'dconf-mock-shm.c',
+  'dconf-mock-gvdb-utils.c',
 )
 
 libdconf_mock = static_library(
@@ -30,7 +31,7 @@ unit_tests = [
   ['gdbus-filter', 'dbus.c', '-DDBUS_BACKEND="/gdbus/filter"', libdconf_gdbus_filter_dep, []],
   ['engine', 'engine.c', '-DSRCDIR="@0@"'.format(test_dir), [dl_dep, libdconf_engine_dep, m_dep], libdconf_mock],
   ['client', 'client.c', '-DSRCDIR="@0@"'.format(test_dir), [libdconf_client_dep, libdconf_engine_dep], libdconf_mock],
-  ['writer', 'writer.c', '-DSRCDIR="@0@"'.format(test_dir), [libdconf_service_dep, dl_dep, m_dep], libdconf_mock],
+  ['writer', 'writer.c', '-DSRCDIR="@0@"'.format(test_dir), [libdconf_test_service_dep, dl_dep, m_dep], libdconf_mock],
 ]
 
 foreach unit_test: unit_tests

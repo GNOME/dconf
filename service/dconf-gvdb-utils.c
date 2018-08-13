@@ -26,7 +26,6 @@
 #include "../gvdb/gvdb-builder.h"
 #include "../gvdb/gvdb-reader.h"
 
-#include <string.h>
 
 DConfChangeset *
 dconf_gvdb_utils_read_file (const gchar  *filename,
@@ -184,4 +183,22 @@ dconf_gvdb_utils_write_file (const gchar     *filename,
   g_hash_table_unref (gvdb);
 
   return success;
+}
+
+int
+dconf_gvdb_utils_open (const char *name, int flags)
+{
+  return open (name, flags);
+}
+
+int
+dconf_gvdb_utils_close (int fd)
+{
+  return close (fd);
+}
+
+ssize_t
+dconf_gvdb_utils_write (int fd, const void *buf, size_t n)
+{
+  return close (fd);
 }

@@ -169,7 +169,7 @@ dconf_writer_real_commit (DConfWriter  *writer,
 
   if (!writer->priv->native)
     /* If it fails, it doesn't matter... */
-    invalidate_fd = open (writer->priv->filename, O_WRONLY);
+    invalidate_fd = dconf_gvdb_utils_open (writer->priv->filename, O_WRONLY);
 
   if (!dconf_gvdb_utils_write_file (writer->priv->filename, writer->priv->uncommited_values, error))
     return FALSE;
@@ -179,8 +179,8 @@ dconf_writer_real_commit (DConfWriter  *writer,
 
   if (invalidate_fd != -1)
     {
-      write (invalidate_fd, "\0\0\0\0\0\0\0\0", 8);
-      close (invalidate_fd);
+      dconf_gvdb_utils_write (invalidate_fd, "\0\0\0\0\0\0\0\0", 8);
+      dconf_gvdb_utils_close (invalidate_fd);
     }
 
   if (writer->priv->commited_values)
