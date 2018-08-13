@@ -1210,12 +1210,15 @@ test_watch_fast (void)
   c = dconf_engine_get_state (engine);
   g_assert_cmpuint (b, ==, c);
   /* The watch result was not sent, because the path was already watched */
-  dconf_mock_dbus_assert_no_async();
+  dconf_mock_dbus_assert_no_async ();
   c = dconf_engine_get_state (engine);
   g_assert_cmpuint (b, ==, c);
   /* Since the path was already being watched,
    * do not expect a second false change notification */
   g_assert_cmpstr (change_log->str, ==, "/a/b/c:1::nil;");
+  dconf_engine_unwatch_fast (engine, "/a/b/c");
+  /* nothing was done, because there is still a subscription left */
+  dconf_mock_dbus_assert_no_async ();
   dconf_engine_unwatch_fast (engine, "/a/b/c");
   dconf_mock_dbus_async_reply (triv, NULL);
   dconf_mock_dbus_async_reply (triv, NULL);
@@ -1223,6 +1226,185 @@ test_watch_fast (void)
 
   dconf_mock_gvdb_install ("/HOME/.config/dconf/user", NULL);
   dconf_mock_gvdb_install ("/etc/dconf/db/site", NULL);
+  dconf_engine_unref (engine);
+  g_string_free (change_log, TRUE);
+  change_log = NULL;
+  g_variant_unref (triv);
+}
+
+static void
+test_watch_fast_simultaneous_subscriptions (void)
+{
+  /**
+   * Test that creating multiple subscriptions to the same path
+   * simultaneously (before receiving replies from D-Bus) only results in
+   * a single D-Bus match rule, and that it is removed at the right time.
+   */
+  DConfEngine *engine;
+  GvdbTable *table;
+  GVariant *triv;
+
+  /* Set up */
+  table = dconf_mock_gvdb_table_new ();
+  dconf_mock_gvdb_install ("/HOME/.config/dconf/user", table);
+  table = dconf_mock_gvdb_table_new ();
+  dconf_mock_gvdb_install ("/etc/dconf/db/site", table);
+
+  triv = g_variant_ref_sink (g_variant_new ("()"));
+
+  change_log = g_string_new (NULL);
+
+  engine = dconf_engine_new (SRCDIR "/profile/dos", NULL, NULL);
+
+
+  /* Subscribe to the same path 3 times. Both AddMatch results succeed
+   * (one for each source). There is only one for each source*path.
+   */
+  dconf_engine_watch_fast (engine, "/a/b/c");
+  dconf_engine_watch_fast (engine, "/a/b/c");
+  dconf_engine_watch_fast (engine, "/a/b/c");
+
+  dconf_mock_dbus_async_reply (triv, NULL);
+  dconf_mock_dbus_async_reply (triv, NULL);
+  dconf_mock_dbus_assert_no_async ();
+
+  /* Unsubscribe twice, after the AddMatch succeeds. There is still one
+   * active subscription, so no RemoveMatch request is sent. */
+  dconf_engine_unwatch_fast (engine, "/a/b/c");
+  dconf_engine_unwatch_fast (engine, "/a/b/c");
+
+  dconf_mock_dbus_assert_no_async ();
+
+  /* Unsubscribe once more. The number of active subscriptions falls to 0
+   * and the D-Bus match rule is removed */
+  dconf_engine_unwatch_fast (engine, "/a/b/c");
+
+  dconf_mock_dbus_async_reply (triv, NULL);
+  dconf_mock_dbus_async_reply (triv, NULL);
+  dconf_mock_dbus_assert_no_async ();
+
+  /* The shm was not flagged at any point - so no change notifications
+   * should not have been sent */
+  g_assert_cmpstr (change_log->str, ==, "");
+
+  /* Clean up */
+  dconf_engine_unref (engine);
+  g_string_free (change_log, TRUE);
+  change_log = NULL;
+  g_variant_unref (triv);
+}
+
+static void
+test_watch_fast_successive_subscriptions (void)
+{
+  /**
+   * Test that subscribing to the same path multiple times successively
+   * (after waiting for any expected replies from D-Bus) results in only
+   * a single D-Bus match rule being created, and that it is created and
+   * destroyed at the right times.
+   */
+  DConfEngine *engine;
+  GvdbTable *table;
+  GVariant *triv;
+
+  /* Set up */
+  table = dconf_mock_gvdb_table_new ();
+  dconf_mock_gvdb_install ("/HOME/.config/dconf/user", table);
+  table = dconf_mock_gvdb_table_new ();
+  dconf_mock_gvdb_install ("/etc/dconf/db/site", table);
+
+  triv = g_variant_ref_sink (g_variant_new ("()"));
+
+  change_log = g_string_new (NULL);
+
+  engine = dconf_engine_new (SRCDIR "/profile/dos", NULL, NULL);
+
+  /* Subscribe to a path, and simulate a change to the database while the
+   * AddMatch request is in progress */
+  dconf_engine_watch_fast (engine, "/a/b/c");
+  dconf_mock_shm_flag ("user");
+  dconf_mock_dbus_async_reply (triv, NULL);
+  dconf_mock_dbus_async_reply (triv, NULL);
+
+  /* When the AddMatch requests succeeds, expect a change notification
+   * for the path */
+  dconf_mock_dbus_assert_no_async ();
+  g_assert_cmpstr (change_log->str, ==, "/a/b/c:1::nil;");
+
+  /* Subscribe to a path twice again, and simulate a change to the
+   * database */
+  dconf_engine_watch_fast (engine, "/a/b/c");
+  dconf_engine_watch_fast (engine, "/a/b/c");
+  dconf_mock_shm_flag ("user");
+
+  /* There was already a match rule in place, so there should be no D-Bus
+   * requests and no change notifications */
+  dconf_mock_dbus_assert_no_async ();
+  g_assert_cmpstr (change_log->str, ==, "/a/b/c:1::nil;");
+
+  /* Unsubscribe */
+  dconf_engine_unwatch_fast (engine, "/a/b/c");
+  dconf_engine_unwatch_fast (engine, "/a/b/c");
+  dconf_mock_dbus_assert_no_async ();
+  dconf_engine_unwatch_fast (engine, "/a/b/c");
+  dconf_mock_dbus_async_reply (triv, NULL);
+  dconf_mock_dbus_async_reply (triv, NULL);
+  dconf_mock_dbus_assert_no_async ();
+
+
+  /* Clean up */
+  dconf_engine_unref (engine);
+  g_string_free (change_log, TRUE);
+  change_log = NULL;
+  g_variant_unref (triv);
+}
+
+static void
+test_watch_fast_short_lived_subscriptions (void)
+{
+  /**
+   * Test that subscribing and then immediately unsubscribing (without
+   * waiting for replies from D-Bus) multiple times to the same path
+   * correctly triggers D-Bus requests and change notifications in cases
+   * where the D-Bus match rule was not in place when the database was
+   * changed.
+   */
+  DConfEngine *engine;
+  GvdbTable *table;
+  GVariant *triv;
+
+  /* Set up */
+  table = dconf_mock_gvdb_table_new ();
+  dconf_mock_gvdb_install ("/HOME/.config/dconf/user", table);
+  table = dconf_mock_gvdb_table_new ();
+  dconf_mock_gvdb_install ("/etc/dconf/db/site", table);
+
+  triv = g_variant_ref_sink (g_variant_new ("()"));
+
+  change_log = g_string_new (NULL);
+
+  engine = dconf_engine_new (SRCDIR "/profile/dos", NULL, NULL);
+
+  /* Subscribe to a path twice, and simulate a change to the database
+   * while the AddMatch request is in progress */
+  dconf_engine_watch_fast (engine, "/a/b/c");
+  dconf_engine_watch_fast (engine, "/a/b/c");
+  dconf_mock_shm_flag ("user");
+  dconf_engine_unwatch_fast (engine, "/a/b/c");
+  dconf_engine_unwatch_fast (engine, "/a/b/c");
+  dconf_mock_dbus_async_reply (triv, NULL);
+  dconf_mock_dbus_async_reply (triv, NULL);
+  dconf_mock_dbus_async_reply (triv, NULL);
+  dconf_mock_dbus_async_reply (triv, NULL);
+  dconf_mock_dbus_assert_no_async ();
+
+  /* When the AddMatch requests succeed, expect a change notification
+   * to have been sent for the path, even though the client has since
+   * unsubscribed. */
+  g_assert_cmpstr (change_log->str, ==, "/a/b/c:1::nil;");
+
+
+  /* Clean up */
   dconf_engine_unref (engine);
   g_string_free (change_log, TRUE);
   change_log = NULL;
@@ -1267,13 +1449,37 @@ test_watch_sync (void)
   engine = dconf_engine_new (SRCDIR "/profile/dos", NULL, NULL);
 
   match_request_type = "AddMatch";
+
+  /* A match rule should be added when the first subscription is established */
   dconf_engine_watch_sync (engine, "/a/b/c");
   g_assert (got_match_request[G_BUS_TYPE_SESSION]);
   g_assert (got_match_request[G_BUS_TYPE_SYSTEM]);
   got_match_request[G_BUS_TYPE_SESSION] = FALSE;
   got_match_request[G_BUS_TYPE_SYSTEM] = FALSE;
 
+  /* The match rule is now already in place, so more are not needed */
+  dconf_engine_watch_sync (engine, "/a/b/c");
+  g_assert_false (got_match_request[G_BUS_TYPE_SESSION]);
+  g_assert_false (got_match_request[G_BUS_TYPE_SYSTEM]);
+
+  dconf_engine_watch_sync (engine, "/a/b/c");
+  g_assert_false (got_match_request[G_BUS_TYPE_SESSION]);
+  g_assert_false (got_match_request[G_BUS_TYPE_SYSTEM]);
+
   match_request_type = "RemoveMatch";
+
+  /* There are 3 subscriptions, so removing 2 should not remove
+   * the match rule */
+  dconf_engine_unwatch_sync (engine, "/a/b/c");
+  g_assert_false (got_match_request[G_BUS_TYPE_SESSION]);
+  g_assert_false (got_match_request[G_BUS_TYPE_SYSTEM]);
+
+  dconf_engine_unwatch_sync (engine, "/a/b/c");
+  g_assert_false (got_match_request[G_BUS_TYPE_SESSION]);
+  g_assert_false (got_match_request[G_BUS_TYPE_SYSTEM]);
+
+  /* The match rule should be removed when the last subscription is
+   * removed */
   dconf_engine_unwatch_sync (engine, "/a/b/c");
   g_assert (got_match_request[G_BUS_TYPE_SESSION]);
   g_assert (got_match_request[G_BUS_TYPE_SYSTEM]);
@@ -1284,54 +1490,6 @@ test_watch_sync (void)
 
   dconf_mock_dbus_sync_call_handler = NULL;
   match_request_type = NULL;
-}
-
-static void
-test_watching (void)
-{
-  DConfEngine *engine;
-  const gchar *apple = "apple";
-  const gchar *orange = "orange";
-  const gchar *banana = "banana";
-
-  engine = dconf_engine_new (SRCDIR "/profile/dos", NULL, NULL);
-
-  g_assert (!dconf_engine_is_watching(engine, apple, TRUE));
-  g_assert (!dconf_engine_is_watching(engine, apple, FALSE));
-  g_assert (!dconf_engine_is_watching(engine, orange, TRUE));
-  g_assert (!dconf_engine_is_watching(engine, orange, FALSE));
-  g_assert (!dconf_engine_is_watching(engine, banana, TRUE));
-  g_assert (!dconf_engine_is_watching(engine, banana, FALSE));
-
-  dconf_engine_set_watching (engine, apple, FALSE, FALSE);
-  dconf_engine_set_watching (engine, orange, TRUE, FALSE);
-  dconf_engine_set_watching (engine, banana, TRUE, TRUE);
-
-  g_assert (!dconf_engine_is_watching(engine, apple, TRUE));
-  g_assert (!dconf_engine_is_watching(engine, apple, FALSE));
-  g_assert (!dconf_engine_is_watching(engine, orange, TRUE));
-  g_assert (dconf_engine_is_watching(engine, orange, FALSE));
-  g_assert (dconf_engine_is_watching(engine, banana, TRUE));
-  g_assert (dconf_engine_is_watching(engine, banana, FALSE));
-
-  dconf_engine_set_watching (engine, orange, TRUE, TRUE);
-  dconf_engine_set_watching (engine, banana, FALSE, FALSE);
-
-  g_assert (!dconf_engine_is_watching(engine, apple, TRUE));
-  g_assert (!dconf_engine_is_watching(engine, apple, FALSE));
-  g_assert (dconf_engine_is_watching(engine, orange, TRUE));
-  g_assert (dconf_engine_is_watching(engine, orange, FALSE));
-  g_assert (!dconf_engine_is_watching(engine, banana, TRUE));
-  g_assert (!dconf_engine_is_watching(engine, banana, FALSE));
-
-  dconf_engine_set_watching (engine, orange, FALSE, FALSE);
-
-  g_assert (!dconf_engine_is_watching(engine, apple, TRUE));
-  g_assert (!dconf_engine_is_watching(engine, apple, FALSE));
-  g_assert (!dconf_engine_is_watching(engine, orange, TRUE));
-  g_assert (!dconf_engine_is_watching(engine, orange, FALSE));
-  g_assert (!dconf_engine_is_watching(engine, banana, TRUE));
-  g_assert (!dconf_engine_is_watching(engine, banana, FALSE));
 }
 
 static void
@@ -1818,8 +1976,10 @@ main (int argc, char **argv)
   g_test_add_func ("/engine/sources/service", test_service_source);
   g_test_add_func ("/engine/read", test_read);
   g_test_add_func ("/engine/watch/fast", test_watch_fast);
+  g_test_add_func ("/engine/watch/fast/simultaneous", test_watch_fast_simultaneous_subscriptions);
+  g_test_add_func ("/engine/watch/fast/successive", test_watch_fast_successive_subscriptions);
+  g_test_add_func ("/engine/watch/fast/short_lived", test_watch_fast_short_lived_subscriptions);
   g_test_add_func ("/engine/watch/sync", test_watch_sync);
-  g_test_add_func ("/engine/watch/watching", test_watching);
   g_test_add_func ("/engine/change/fast", test_change_fast);
   g_test_add_func ("/engine/change/sync", test_change_sync);
   g_test_add_func ("/engine/signals", test_signals);

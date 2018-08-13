@@ -232,6 +232,7 @@ dconf_engine_change_notify (DConfEngine         *engine,
 {
   GWeakRef *weak_ref = user_data;
   DConfSettingsBackend *dcsb;
+  g_debug ("change_notify: %s", prefix);
 
   dcsb = g_weak_ref_get (weak_ref);
 
