@@ -20,7 +20,9 @@
 #ifndef __dconf_writer_h__
 #define __dconf_writer_h__
 
+#include <glib.h>
 #include <gio/gio.h>
+#include <gobject/gobject.h>
 
 #include "../common/dconf-changeset.h"
 #include "dconf-generated.h"
@@ -65,6 +67,7 @@ struct _DConfWriter
   DConfWriterPrivate *priv;
 };
 
+G_DEFINE_AUTOPTR_CLEANUP_FUNC (DConfWriter, g_object_unref)
 
 GType                   dconf_writer_get_type                           (void);
 
