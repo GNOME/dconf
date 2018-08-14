@@ -18,7 +18,7 @@ libdconf_engine = static_library(
   sources: sources,
   include_directories: top_inc,
   dependencies: engine_deps + [libdconf_shm_dep],
-  c_args: '-DG_LOG_DOMAIN="dconf"',
+  c_args: dconf_c_args,
   pic: true,
 )
 

@@ -34,6 +34,7 @@ libdconf_service = static_library(
   'dconf-service',
   sources: lib_sources,
   include_directories: top_inc,
+  c_args: dconf_c_args,
   dependencies: gio_unix_dep,
   link_with: [
     libdconf_common,
@@ -46,6 +47,7 @@ executable(
   'dconf-service',
   sources,
   include_directories: top_inc,
+  c_args: dconf_c_args,
   dependencies: gio_unix_dep,
   link_with: libdconf_service,
   install: true,

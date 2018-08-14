@@ -17,14 +17,12 @@ sources = files(
   'dconf-paths.c',
 )
 
-cflags = ['-DG_LOG_DOMAIN="dconf"']
-
 libdconf_common = static_library(
   'dconf-common',
   sources: sources,
   include_directories: top_inc,
   dependencies: glib_dep,
-  c_args: cflags,
+  c_args: dconf_c_args,
   pic: true,
 )
 
@@ -33,14 +31,12 @@ libdconf_common_dep = declare_dependency(
   link_whole: libdconf_common,
 )
 
-cflags += cc.get_supported_arguments('-fvisibility=hidden')
-
 libdconf_common_hidden = static_library(
   'dconf-common-hidden',
   sources: sources,
   include_directories: top_inc,
   dependencies: glib_dep,
-  c_args: cflags,
+  c_args: dconf_c_args + cc.get_supported_arguments('-fvisibility=hidden'),
   pic: true,
 )
 

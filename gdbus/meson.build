@@ -1,11 +1,9 @@
-cflags = '-DG_LOG_DOMAIN="dconf"'
-
 libdconf_gdbus_thread = static_library(
   'dconf-gdbus-thread',
   sources: 'dconf-gdbus-thread.c',
   include_directories: top_inc,
   dependencies: libdconf_engine_dep,
-  c_args: cflags,
+  c_args: dconf_c_args,
   pic: true,
 )
 
@@ -19,7 +17,7 @@ libdconf_gdbus_filter = static_library(
   sources: 'dconf-gdbus-filter.c',
   include_directories: top_inc,
   dependencies: libdconf_engine_dep,
-  c_args: cflags,
+  c_args: dconf_c_args,
   pic: true,
 )
 

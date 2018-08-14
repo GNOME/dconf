@@ -12,7 +12,7 @@ libdconf_settings = shared_library(
   include_directories: top_inc,
   link_with: backend_deps,
   dependencies: gio_dep,
-  c_args: '-DG_LOG_DOMAIN="dconf"',
+  c_args: dconf_c_args,
   install: true,
   install_dir: gio_module_dir,
 )
