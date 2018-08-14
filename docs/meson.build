@@ -1,4 +1,4 @@
-if get_option('enable-gtk-doc')
+if get_option('gtk_doc')
   gnome.gtkdoc(
     'dconf',
     main_xml: 'dconf-docs.xml',
