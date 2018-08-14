@@ -1,7 +1,5 @@
 #define _GNU_SOURCE
 
-#define GLIB_VERSION_MIN_REQUIRED GLIB_VERSION_2_36 /* Suppress deprecation warnings */
-
 #include "../engine/dconf-engine.h"
 #include "../engine/dconf-engine-profile.h"
 #include "../common/dconf-enums.h"
@@ -144,47 +142,39 @@ test_five_times (const gchar *filename,
   g_free (expected_names);
 }
 
+typedef struct
+{
+  const gchar *profile_path;
+  const gchar *expected_stderr_pattern;
+} ProfileParserOpenData;
+
+static void
+test_profile_parser_errors (gconstpointer test_data)
+{
+  const ProfileParserOpenData *data = test_data;
+  DConfEngineSource **sources;
+  gint n_sources;
+
+  if (g_test_subprocess ())
+    {
+      g_log_set_always_fatal (G_LOG_LEVEL_ERROR);
+
+      sources = dconf_engine_profile_open (data->profile_path, &n_sources);
+      g_assert_cmpint (n_sources, ==, 0);
+      g_assert (sources == NULL);
+      return;
+    }
+
+  g_test_trap_subprocess (NULL, 0, 0);
+  g_test_trap_assert_passed ();
+  g_test_trap_assert_stderr (data->expected_stderr_pattern);
+}
+
 static void
 test_profile_parser (void)
 {
   DConfEngineSource **sources;
   gint n_sources;
-
-  if (g_test_trap_fork (0, G_TEST_TRAP_SILENCE_STDERR))
-    {
-      g_log_set_always_fatal (G_LOG_LEVEL_ERROR);
-
-      sources = dconf_engine_profile_open (SRCDIR "/profile/this-file-does-not-exist", &n_sources);
-      g_assert_cmpint (n_sources, ==, 0);
-      g_assert (sources == NULL);
-      exit (0);
-    }
-  g_test_trap_assert_passed ();
-  g_test_trap_assert_stderr ("*WARNING*: unable to open named profile*");
-
-  if (g_test_trap_fork (0, G_TEST_TRAP_SILENCE_STDERR))
-    {
-      g_log_set_always_fatal (G_LOG_LEVEL_ERROR);
-
-      sources = dconf_engine_profile_open (SRCDIR "/profile/broken-profile", &n_sources);
-      g_assert_cmpint (n_sources, ==, 0);
-      g_assert (sources == NULL);
-      exit (0);
-    }
-  g_test_trap_assert_passed ();
-  g_test_trap_assert_stderr ("*WARNING*: unknown dconf database*unknown dconf database*");
-
-  if (g_test_trap_fork (0, G_TEST_TRAP_SILENCE_STDERR))
-    {
-      g_log_set_always_fatal (G_LOG_LEVEL_ERROR);
-
-      sources = dconf_engine_profile_open (SRCDIR "/profile/gdm", &n_sources);
-      g_assert_cmpint (n_sources, ==, 0);
-      g_assert (sources == NULL);
-      exit (0);
-    }
-  g_test_trap_assert_passed ();
-  g_test_trap_assert_stderr ("*WARNING*: unknown dconf database*unknown dconf database*");
 
   test_five_times (SRCDIR "/profile/empty-profile", 0);
   test_five_times (SRCDIR "/profile/test-profile", 1, "test");
@@ -459,7 +449,7 @@ test_service_source (void)
   gboolean reopened;
 
   /* Make sure we deal with errors from the service sensibly */
-  if (g_test_trap_fork (0, G_TEST_TRAP_SILENCE_STDERR))
+  if (g_test_subprocess ())
     {
       g_log_set_always_fatal (G_LOG_LEVEL_ERROR);
 
@@ -470,8 +460,10 @@ test_service_source (void)
       g_assert (source->locks == NULL);
       reopened = dconf_engine_source_refresh (source);
 
-      exit (0);
+      return;
     }
+
+  g_test_trap_subprocess (NULL, 0, 0);
   g_test_trap_assert_passed ();
   g_test_trap_assert_stderr ("*WARNING*: unable to open file*unknown/nil*expect degraded performance*");
 
@@ -546,7 +538,7 @@ test_system_source (void)
   g_assert (source != NULL);
 
   /* Check to see that we get the warning about the missing file. */
-  if (g_test_trap_fork (0, G_TEST_TRAP_SILENCE_STDERR))
+  if (g_test_subprocess ())
     {
       g_log_set_always_fatal (G_LOG_LEVEL_ERROR);
 
@@ -571,8 +563,10 @@ test_system_source (void)
 
       dconf_engine_source_free (source);
 
-      exit (0);
+      return;
     }
+
+  g_test_trap_subprocess (NULL, 0, 0);
   g_test_trap_assert_passed ();
   /* Check that we only saw the warning, but only one time. */
   g_test_trap_assert_stderr ("*this gvdb does not exist; expect degraded performance*");
@@ -1960,6 +1954,14 @@ test_sync (void)
 int
 main (int argc, char **argv)
 {
+  const ProfileParserOpenData profile_parser0 =
+    { SRCDIR "/profile/this-file-does-not-exist", "*WARNING*: unable to open named profile*" };
+  const ProfileParserOpenData profile_parser1 =
+    { SRCDIR "/profile/broken-profile", "*WARNING*: unknown dconf database*unknown dconf database*" };
+  const ProfileParserOpenData profile_parser2 =
+    { SRCDIR "/profile/gdm", "*WARNING*: unknown dconf database*unknown dconf database*" };
+  int retval;
+
   g_setenv ("XDG_RUNTIME_DIR", "/RUNTIME/", TRUE);
   g_setenv ("XDG_CONFIG_HOME", "/HOME/.config", TRUE);
   g_unsetenv ("DCONF_PROFILE");
@@ -1968,6 +1970,9 @@ main (int argc, char **argv)
 
   g_test_init (&argc, &argv, NULL);
 
+  g_test_add_data_func ("/engine/profile-parser/errors/0", &profile_parser0, test_profile_parser_errors);
+  g_test_add_data_func ("/engine/profile-parser/errors/1", &profile_parser1, test_profile_parser_errors);
+  g_test_add_data_func ("/engine/profile-parser/errors/2", &profile_parser2, test_profile_parser_errors);
   g_test_add_func ("/engine/profile-parser", test_profile_parser);
   g_test_add_func ("/engine/signal-threadsafety", test_signal_threadsafety);
   g_test_add_func ("/engine/sources/user", test_user_source);

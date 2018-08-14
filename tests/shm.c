@@ -1,7 +1,5 @@
 #define _GNU_SOURCE
 
-#define GLIB_VERSION_MIN_REQUIRED GLIB_VERSION_2_36 /* Suppress deprecation warnings */
-
 #include "../common/dconf-paths.h"
 #include <glib/gstdio.h>
 #include <sys/stat.h>
@@ -19,7 +17,7 @@ test_mkdir_fail (void)
 {
   guint8 *shm;
 
-  if (g_test_trap_fork (0, G_TEST_TRAP_SILENCE_STDERR))
+  if (g_test_subprocess ())
     {
       gchar *evil;
       gint fd;
@@ -36,8 +34,10 @@ test_mkdir_fail (void)
       g_unlink (evil);
       g_free (evil);
 
-      exit (0);
+      return;
     }
+
+  g_test_trap_subprocess (NULL, 0, 0);
   g_test_trap_assert_passed ();
   g_test_trap_assert_stderr ("*unable to create directory*");
 }
@@ -64,7 +64,7 @@ test_open_and_flag (void)
 static void
 test_invalid_name (void)
 {
-  if (g_test_trap_fork (0, G_TEST_TRAP_SILENCE_STDERR))
+  if (g_test_subprocess ())
     {
       guint8 *shm;
 
@@ -73,8 +73,10 @@ test_invalid_name (void)
       shm = dconf_shm_open ("foo/bar");
       g_assert (shm == NULL);
       g_assert (dconf_shm_is_flagged (shm));
-      exit (0);
+      return;
     }
+
+  g_test_trap_subprocess (NULL, 0, 0);
   g_test_trap_assert_passed ();
   g_test_trap_assert_stderr ("*unable to create*foo/bar*");
 }
@@ -107,7 +109,7 @@ pwrite (int fd, const void *buf, size_t count, off_t offset)
 static void
 test_out_of_space_open (void)
 {
-  if (g_test_trap_fork (0, G_TEST_TRAP_SILENCE_STDERR))
+  if (g_test_subprocess ())
     {
       guint8 *shm;
 
@@ -117,8 +119,10 @@ test_out_of_space_open (void)
       shm = dconf_shm_open ("foo");
       g_assert (shm == NULL);
       g_assert (dconf_shm_is_flagged (shm));
-      exit (0);
+      return;
     }
+
+  g_test_trap_subprocess (NULL, 0, 0);
   g_test_trap_assert_passed ();
   g_test_trap_assert_stderr ("*failed to allocate*foo*");
 }
@@ -126,14 +130,16 @@ test_out_of_space_open (void)
 static void
 test_out_of_space_flag (void)
 {
-  if (g_test_trap_fork (0, G_TEST_TRAP_SILENCE_STDERR))
+  if (g_test_subprocess ())
     {
       g_log_set_always_fatal (G_LOG_LEVEL_ERROR);
       should_fail_pwrite = TRUE;
 
       dconf_shm_flag ("foo");
-      exit (0);
+      return;
     }
+
+  g_test_trap_subprocess (NULL, 0, 0);
   g_test_trap_assert_passed ();
 }
 
