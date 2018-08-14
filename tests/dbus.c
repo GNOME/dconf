@@ -1,5 +1,3 @@
-#define GLIB_VERSION_MIN_REQUIRED GLIB_VERSION_2_36 /* Suppress deprecation warnings */
-
 #include <string.h>
 #include <glib.h>
 #include <stdlib.h>
@@ -147,7 +145,7 @@ dconf_engine_handle_dbus_signal (GBusType     bus_type,
 }
 
 static void
-test_creation_error (void)
+test_creation_error_sync_with_error (void)
 {
   if (g_getenv ("DISPLAY") == NULL || g_strcmp0 (g_getenv ("DISPLAY"), "") == 0)
     {
@@ -156,7 +154,7 @@ test_creation_error (void)
     }
 
   /* Sync with 'error' */
-  if (g_test_trap_fork (0, 0))
+  if (g_test_subprocess ())
     {
       GError *error = NULL;
       GVariant *reply;
@@ -170,13 +168,24 @@ test_creation_error (void)
       g_assert (reply == NULL);
       g_assert (error != NULL);
       g_assert (strstr (error->message, "some nonsense"));
-      exit (0);
+      return;
     }
 
+  g_test_trap_subprocess (NULL, 0, 0);
   g_test_trap_assert_passed ();
+}
+
+static void
+test_creation_error_sync_without_error (void)
+{
+  if (g_getenv ("DISPLAY") == NULL || g_strcmp0 (g_getenv ("DISPLAY"), "") == 0)
+    {
+      g_test_skip ("FIXME: D-Bus tests do not work on CI at the moment");
+      return;
+    }
 
   /* Sync without 'error' */
-  if (g_test_trap_fork (0, 0))
+  if (g_test_subprocess ())
     {
       GVariant *reply;
 
@@ -187,13 +196,24 @@ test_creation_error (void)
                                                 g_variant_new ("()"), G_VARIANT_TYPE ("(as)"), NULL);
 
       g_assert (reply == NULL);
-      exit (0);
+      return;
     }
 
+  g_test_trap_subprocess (NULL, 0, 0);
   g_test_trap_assert_passed ();
+}
+
+static void
+test_creation_error_async (void)
+{
+  if (g_getenv ("DISPLAY") == NULL || g_strcmp0 (g_getenv ("DISPLAY"), "") == 0)
+    {
+      g_test_skip ("FIXME: D-Bus tests do not work on CI at the moment");
+      return;
+    }
 
   /* Async */
-  if (g_test_trap_fork (0, 0))
+  if (g_test_subprocess ())
     {
       DConfEngineCallHandle *handle;
       GError *error = NULL;
@@ -222,9 +242,10 @@ test_creation_error (void)
       else
         g_assert (error != NULL);
 
-      exit (0);
+      return;
     }
 
+  g_test_trap_subprocess (NULL, 0, 0);
   g_test_trap_assert_passed ();
 }
 
@@ -506,7 +527,11 @@ main (int argc, char **argv)
 
   /* test_creation_error absolutely must come first */
   if (!g_str_equal (DBUS_BACKEND, "/libdbus-1"))
-    g_test_add_func (DBUS_BACKEND "/creation/error", test_creation_error);
+    {
+      g_test_add_func (DBUS_BACKEND "/creation/error/sync-with-error", test_creation_error_sync_with_error);
+      g_test_add_func (DBUS_BACKEND "/creation/error/sync-without-error", test_creation_error_sync_without_error);
+      g_test_add_func (DBUS_BACKEND "/creation/error/async", test_creation_error_async);
+    }
 
   g_test_add_func (DBUS_BACKEND "/sync-call/success", test_sync_call_success);
   g_test_add_func (DBUS_BACKEND "/sync-call/error", test_sync_call_error);
