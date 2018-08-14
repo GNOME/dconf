@@ -7,12 +7,17 @@ gvdb_deps = [
   glib_dep,
 ]
 
+cflags = [
+  '-DG_LOG_DOMAIN="gvdb (via dconf)"',
+  '-DG_LOG_USE_STRUCTURED=1',
+]
+
 libgvdb = static_library(
   'gvdb',
   sources: sources,
   include_directories: top_inc,
   dependencies: gvdb_deps,
-  c_args: '-DG_LOG_DOMAIN="gvdb (via dconf)"',
+  c_args: cflags,
   pic: true,
 )
 

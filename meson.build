@@ -34,6 +34,11 @@ endif
 
 add_project_arguments(common_flags, language: 'c')
 
+dconf_c_args = [
+  '-DG_LOG_DOMAIN="dconf"',
+  '-DG_LOG_USE_STRUCTURED=1',
+]
+
 gio_req_version = '>= 2.25.7'
 
 gio_dep = dependency('gio-2.0', version: gio_req_version)

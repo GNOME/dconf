@@ -3,7 +3,7 @@ libdconf_shm = static_library(
   sources: 'dconf-shm.c',
   include_directories: top_inc,
   dependencies: glib_dep,
-  c_args: '-DG_LOG_DOMAIN="dconf"',
+  c_args: dconf_c_args,
   pic: true,
 )
 
