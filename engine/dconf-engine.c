@@ -253,7 +253,7 @@ dconf_engine_move_subscriptions (GHashTable  *from_counts,
   guint from_count = GPOINTER_TO_UINT (g_hash_table_lookup (from_counts, path));
   guint old_to_count = GPOINTER_TO_UINT (g_hash_table_lookup (to_counts, path));
   // Detect overflows
-  g_assert (old_to_count <= G_MAXUINT32 - from_count);
+  g_assert (old_to_count <= G_MAXUINT - from_count);
   guint new_to_count = old_to_count + from_count;
   if (from_count != 0)
     {
@@ -275,7 +275,7 @@ dconf_engine_inc_subscriptions (GHashTable  *counts,
 {
   guint old_count = GPOINTER_TO_UINT (g_hash_table_lookup (counts, path));
   // Detect overflows
-  g_assert (old_count < G_MAXUINT32);
+  g_assert (old_count < G_MAXUINT);
   guint new_count = old_count + 1;
   g_hash_table_replace (counts, g_strdup (path), GUINT_TO_POINTER (new_count));
   return new_count;
