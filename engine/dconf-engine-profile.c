@@ -189,12 +189,12 @@ static FILE *
 dconf_engine_open_profile_file (const gchar *profile)
 {
   const gchar * const *xdg_data_dirs;
-  const gchar *prefix = "/etc";
+  const gchar *prefix = SYSCONFDIR;
   FILE *fp;
 
   xdg_data_dirs = g_get_system_data_dirs ();
 
-  /* First time through, we check "/etc", then we check XDG_DATA_DIRS,
+  /* First time through, we check SYSCONFDIR, then we check XDG_DATA_DIRS,
    * in order.  We stop looking as soon as we successfully open a file
    * or in the case that we run out of XDG_DATA_DIRS.
    *
