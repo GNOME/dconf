@@ -23,7 +23,7 @@
 
 #include "../common/dconf-changeset.h"
 
-DConfChangeset *                dconf_gvdb_utils_read_file              (const gchar     *filename,
+DConfChangeset *                dconf_gvdb_utils_read_and_back_up_file  (const gchar     *filename,
                                                                          gboolean        *file_missing,
                                                                          GError         **error);
 gboolean                        dconf_gvdb_utils_write_file             (const gchar     *filename,

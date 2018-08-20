@@ -32,9 +32,9 @@
 #include <string.h>
 
 DConfChangeset *
-dconf_gvdb_utils_read_file (const gchar  *filename,
-                            gboolean     *file_missing,
-                            GError      **error)
+dconf_gvdb_utils_read_and_back_up_file (const gchar  *filename,
+                                        gboolean     *file_missing,
+                                        GError      **error)
 {
   DConfChangeset *database;
   GError *my_error = NULL;
