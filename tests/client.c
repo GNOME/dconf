@@ -86,28 +86,22 @@ fail_one_call (void)
   g_error_free (error);
 }
 
-static void
-log_handler (const gchar    *log_domain,
-             GLogLevelFlags  log_level,
-             const gchar    *message,
-             gpointer        user_data)
+static GLogWriterOutput
+log_writer_cb (GLogLevelFlags   log_level,
+               const GLogField *fields,
+               gsize            n_fields,
+               gpointer         user_data)
 {
-  if (strstr (message, "--expected error from testcase--"))
-    return;
+  gsize i;
 
-  g_log_default_handler (log_domain, log_level, message, user_data);
-}
+  for (i = 0; i < n_fields; i++)
+    {
+      if (g_strcmp0 (fields[i].key, "MESSAGE") == 0 &&
+          strstr (fields[i].value, "--expected error from testcase--"))
+        return G_LOG_WRITER_HANDLED;
+    }
 
-static gboolean
-fatal_log_handler (const gchar    *log_domain,
-                   GLogLevelFlags  log_level,
-                   const gchar    *message,
-                   gpointer        user_data)
-{
-  if (strstr (message, "--expected error from testcase--"))
-    return FALSE;
-
-  return TRUE;
+  return G_LOG_WRITER_UNHANDLED;
 }
 
 static void
@@ -116,8 +110,7 @@ test_fast (void)
   DConfClient *client;
   gint i;
 
-  g_log_set_default_handler (log_handler, NULL);
-  g_test_log_set_fatal_handler (fatal_log_handler, NULL);
+  g_log_set_writer_func (log_writer_cb, NULL, NULL);
 
   client = dconf_client_new ();
   g_signal_connect (client, "changed", G_CALLBACK (changed), NULL);

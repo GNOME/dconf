@@ -107,7 +107,7 @@ dconf_writer_real_begin (DConfWriter  *writer,
     {
       gboolean missing;
 
-      writer->priv->commited_values = dconf_gvdb_utils_read_file (writer->priv->filename, &missing, error);
+      writer->priv->commited_values = dconf_gvdb_utils_read_and_back_up_file (writer->priv->filename, &missing, error);
 
       if (!writer->priv->commited_values)
         return FALSE;

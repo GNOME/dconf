@@ -12,8 +12,6 @@ install_headers(
 
 sources = files('dconf-client.c')
 
-cflags = '-DG_LOG_DOMAIN="dconf"'
-
 deps = [
   libdconf_common_hidden_dep,
   libdconf_gdbus_thread_dep,
@@ -24,7 +22,7 @@ libdconf_client = static_library(
   sources: sources,
   include_directories: top_inc,
   dependencies: libdconf_gdbus_thread_dep,
-  c_args: cflags,
+  c_args: dconf_c_args,
   pic: true,
 )
 
@@ -40,7 +38,7 @@ libdconf = shared_library(
   soversion: soversion,
   include_directories: top_inc,
   dependencies: deps,
-  c_args: cflags,
+  c_args: dconf_c_args,
   install: true,
 )
 

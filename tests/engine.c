@@ -1,7 +1,5 @@
 #define _GNU_SOURCE
 
-#define GLIB_VERSION_MIN_REQUIRED GLIB_VERSION_2_36 /* Suppress deprecation warnings */
-
 #include "../engine/dconf-engine.h"
 #include "../engine/dconf-engine-profile.h"
 #include "../common/dconf-enums.h"
@@ -36,6 +34,14 @@ fopen (const char *filename,
 
   return (* real_fopen) (filename, mode);
 }
+
+static void assert_no_messages (void);
+static void assert_pop_message (const gchar    *expected_domain,
+                                GLogLevelFlags  expected_log_level,
+                                const gchar    *expected_message_fragment);
+static void assert_maybe_pop_message (const gchar    *expected_domain,
+                                      GLogLevelFlags  expected_log_level,
+                                      const gchar    *expected_message_fragment);
 
 static GThread *main_thread;
 static GString *change_log;
@@ -144,47 +150,39 @@ test_five_times (const gchar *filename,
   g_free (expected_names);
 }
 
+typedef struct
+{
+  const gchar *profile_path;
+  const gchar *expected_stderr_pattern;
+} ProfileParserOpenData;
+
+static void
+test_profile_parser_errors (gconstpointer test_data)
+{
+  const ProfileParserOpenData *data = test_data;
+  DConfEngineSource **sources;
+  gint n_sources;
+
+  if (g_test_subprocess ())
+    {
+      g_log_set_always_fatal (G_LOG_LEVEL_ERROR);
+
+      sources = dconf_engine_profile_open (data->profile_path, &n_sources);
+      g_assert_cmpint (n_sources, ==, 0);
+      g_assert (sources == NULL);
+      return;
+    }
+
+  g_test_trap_subprocess (NULL, 0, 0);
+  g_test_trap_assert_passed ();
+  g_test_trap_assert_stderr (data->expected_stderr_pattern);
+}
+
 static void
 test_profile_parser (void)
 {
   DConfEngineSource **sources;
   gint n_sources;
-
-  if (g_test_trap_fork (0, G_TEST_TRAP_SILENCE_STDERR))
-    {
-      g_log_set_always_fatal (G_LOG_LEVEL_ERROR);
-
-      sources = dconf_engine_profile_open (SRCDIR "/profile/this-file-does-not-exist", &n_sources);
-      g_assert_cmpint (n_sources, ==, 0);
-      g_assert (sources == NULL);
-      exit (0);
-    }
-  g_test_trap_assert_passed ();
-  g_test_trap_assert_stderr ("*WARNING*: unable to open named profile*");
-
-  if (g_test_trap_fork (0, G_TEST_TRAP_SILENCE_STDERR))
-    {
-      g_log_set_always_fatal (G_LOG_LEVEL_ERROR);
-
-      sources = dconf_engine_profile_open (SRCDIR "/profile/broken-profile", &n_sources);
-      g_assert_cmpint (n_sources, ==, 0);
-      g_assert (sources == NULL);
-      exit (0);
-    }
-  g_test_trap_assert_passed ();
-  g_test_trap_assert_stderr ("*WARNING*: unknown dconf database*unknown dconf database*");
-
-  if (g_test_trap_fork (0, G_TEST_TRAP_SILENCE_STDERR))
-    {
-      g_log_set_always_fatal (G_LOG_LEVEL_ERROR);
-
-      sources = dconf_engine_profile_open (SRCDIR "/profile/gdm", &n_sources);
-      g_assert_cmpint (n_sources, ==, 0);
-      g_assert (sources == NULL);
-      exit (0);
-    }
-  g_test_trap_assert_passed ();
-  g_test_trap_assert_stderr ("*WARNING*: unknown dconf database*unknown dconf database*");
 
   test_five_times (SRCDIR "/profile/empty-profile", 0);
   test_five_times (SRCDIR "/profile/test-profile", 1, "test");
@@ -370,11 +368,12 @@ test_file_source (void)
   g_assert (source != NULL);
   g_assert (source->values == NULL);
   g_assert (source->locks == NULL);
-  g_test_expect_message ("dconf", G_LOG_LEVEL_WARNING, "*unable to open file '/path/to/db'*");
   reopened = dconf_engine_source_refresh (source);
   g_assert (source->values == NULL);
   g_assert (source->locks == NULL);
   dconf_engine_source_free (source);
+
+  assert_pop_message ("dconf", G_LOG_LEVEL_WARNING, "unable to open file '/path/to/db'");
 
   source = dconf_engine_source_new ("file-db:/path/to/db");
   g_assert (source != NULL);
@@ -459,7 +458,7 @@ test_service_source (void)
   gboolean reopened;
 
   /* Make sure we deal with errors from the service sensibly */
-  if (g_test_trap_fork (0, G_TEST_TRAP_SILENCE_STDERR))
+  if (g_test_subprocess ())
     {
       g_log_set_always_fatal (G_LOG_LEVEL_ERROR);
 
@@ -470,8 +469,10 @@ test_service_source (void)
       g_assert (source->locks == NULL);
       reopened = dconf_engine_source_refresh (source);
 
-      exit (0);
+      return;
     }
+
+  g_test_trap_subprocess (NULL, 0, 0);
   g_test_trap_assert_passed ();
   g_test_trap_assert_stderr ("*WARNING*: unable to open file*unknown/nil*expect degraded performance*");
 
@@ -546,7 +547,7 @@ test_system_source (void)
   g_assert (source != NULL);
 
   /* Check to see that we get the warning about the missing file. */
-  if (g_test_trap_fork (0, G_TEST_TRAP_SILENCE_STDERR))
+  if (g_test_subprocess ())
     {
       g_log_set_always_fatal (G_LOG_LEVEL_ERROR);
 
@@ -571,8 +572,10 @@ test_system_source (void)
 
       dconf_engine_source_free (source);
 
-      exit (0);
+      return;
     }
+
+  g_test_trap_subprocess (NULL, 0, 0);
   g_test_trap_assert_passed ();
   /* Check that we only saw the warning, but only one time. */
   g_test_trap_assert_stderr ("*this gvdb does not exist; expect degraded performance*");
@@ -926,35 +929,6 @@ check_read (DConfEngine *engine,
     }
 }
 
-static gboolean
-is_expected (const gchar    *log_domain,
-             GLogLevelFlags  log_level,
-             const gchar    *message)
-{
-  return g_str_equal (log_domain, "dconf") &&
-         log_level == (G_LOG_LEVEL_WARNING | G_LOG_FLAG_FATAL) &&
-         strstr (message, "unable to open file '" SYSCONFDIR "/dconf/db");
-}
-
-static gboolean
-fatal_handler (const gchar    *log_domain,
-               GLogLevelFlags  log_level,
-               const gchar    *message,
-               gpointer        user_data)
-{
-  return !is_expected (log_domain, log_level, message);
-}
-
-static void
-normal_handler (const gchar    *log_domain,
-                GLogLevelFlags  log_level,
-                const gchar    *message,
-                gpointer        user_data)
-{
-  if (!is_expected (log_domain, log_level, message))
-    g_error ("unexpected error: %s\n", message);
-}
-
 static void
 test_read (void)
 {
@@ -965,13 +939,10 @@ test_read (void)
   DConfEngine *engine;
   guint i, j, k;
   guint n;
-  guint handler_id;
 
   /* This test throws a lot of messages about missing databases.
    * Capture and ignore them.
    */
-  g_test_log_set_fatal_handler (fatal_handler, NULL);
-  handler_id = g_log_set_handler ("dconf", G_LOG_LEVEL_WARNING | G_LOG_FLAG_FATAL, normal_handler, NULL);
 
   /* Our test strategy is as follows:
    *
@@ -1136,6 +1107,9 @@ test_read (void)
               /* Clean up */
               setup_state (n, i, 0, NULL);
               dconf_engine_unref (engine);
+
+              assert_maybe_pop_message ("dconf", G_LOG_LEVEL_WARNING,
+                                        "unable to open file '" SYSCONFDIR "/dconf/db");
             }
       }
 
@@ -1144,7 +1118,7 @@ test_read (void)
   g_free (profile_filename);
   dconf_mock_shm_reset ();
 
-  g_log_remove_handler ("dconf", handler_id);
+  assert_no_messages ();
 }
 
 static void
@@ -1560,12 +1534,13 @@ test_change_fast (void)
   g_variant_unref (value);
 
   /* Fail the attempted write.  This should cause a warning and a change. */
-  g_test_expect_message ("dconf", G_LOG_LEVEL_WARNING, "failed to commit changes to dconf: something failed");
   error = g_error_new_literal (G_FILE_ERROR, G_FILE_ERROR_NOENT, "something failed");
   dconf_mock_dbus_async_reply (NULL, error);
   g_clear_error (&error);
   g_assert_cmpstr (change_log->str, ==, "/value:1::nil;");
   g_string_set_size (change_log, 0);
+
+  assert_pop_message ("dconf", G_LOG_LEVEL_WARNING, "failed to commit changes to dconf: something failed");
 
   /* Verify that the value became unset due to the failure */
   value = dconf_engine_read (engine, DCONF_READ_FLAGS_NONE, NULL, "value");
@@ -1611,12 +1586,12 @@ test_change_fast (void)
   value = dconf_engine_read (engine, DCONF_READ_FLAGS_NONE, NULL, "/value");
   g_assert_cmpstr (g_variant_get_string (value, NULL), ==, "value");
   g_variant_unref (value);
-  g_test_expect_message ("dconf", G_LOG_LEVEL_WARNING, "failed to commit changes to dconf: something failed");
   error = g_error_new_literal (G_FILE_ERROR, G_FILE_ERROR_NOENT, "something failed");
   dconf_mock_dbus_async_reply (NULL, error);
   g_clear_error (&error);
   g_assert_cmpstr (change_log->str, ==, "/:2:to-reset,value:nil;");
   g_string_set_size (change_log, 0);
+  assert_pop_message ("dconf", G_LOG_LEVEL_WARNING, "failed to commit changes to dconf: something failed");
   value = dconf_engine_read (engine, DCONF_READ_FLAGS_NONE, NULL, "value");
   g_assert (value == NULL);
   dconf_mock_dbus_assert_no_async ();
@@ -1891,11 +1866,12 @@ test_sync (void)
   /* The write will try to check the system-db for a lock.  That will
    * fail because it doesn't exist...
    */
-  g_test_expect_message ("dconf", G_LOG_LEVEL_WARNING, "*unable to open file*");
   change = dconf_changeset_new_write ("/value", g_variant_new_boolean (TRUE));
   success = dconf_engine_change_fast (engine, change, NULL, &error);
   g_assert_no_error (error);
   g_assert (success);
+
+  assert_pop_message ("dconf", G_LOG_LEVEL_WARNING, "unable to open file");
 
   /* Spin up some waiters */
   for (i = 0; i < G_N_ELEMENTS (waiter_threads); i++)
@@ -1917,10 +1893,12 @@ test_sync (void)
     waiter_threads[i] = g_thread_new ("test waiter", waiter_thread, engine);
   g_usleep(100 * G_TIME_SPAN_MILLISECOND);
   error = g_error_new_literal (G_FILE_ERROR, G_FILE_ERROR_NOENT, "some error");
-  g_test_expect_message ("dconf", G_LOG_LEVEL_WARNING, "failed to commit changes to dconf: some error");
   g_atomic_int_set (&it_is_good_to_be_done, TRUE);
   dconf_mock_dbus_async_reply (NULL, error);
   g_clear_error (&error);
+
+  assert_pop_message ("dconf", G_LOG_LEVEL_WARNING, "failed to commit changes to dconf: some error");
+
   /* Make sure they all quit by joining them */
   for (i = 0; i < G_N_ELEMENTS (waiter_threads); i++)
     g_thread_join (waiter_threads[i]);
@@ -1956,18 +1934,149 @@ test_sync (void)
   dconf_mock_shm_reset ();
 }
 
+/* Log handling. */
+typedef struct
+{
+  GLogLevelFlags log_level;
+  GLogField *fields;
+  gsize n_fields;
+} LogMessage;
+
+static void
+log_message_clear (LogMessage *message)
+{
+  gsize i;
+
+  for (i = 0; i < message->n_fields; i++)
+    {
+      g_free ((gpointer) message->fields[i].key);
+      g_free ((gpointer) message->fields[i].value);
+    }
+}
+
+static GArray *logged_messages = NULL;
+
+static GLogWriterOutput
+log_writer_cb (GLogLevelFlags   log_level,
+               const GLogField *fields,
+               gsize            n_fields,
+               gpointer         user_data)
+{
+  LogMessage *message;
+  gsize i;
+
+  /* If we’re running as a subprocess, the parent process is going to be
+   * checking our stderr, so just behave normally. */
+  if (g_test_subprocess ())
+    return g_log_writer_default (log_level, fields, n_fields, user_data);
+
+  /* We only care about dconf messages and non-debug messages. */
+  if (log_level == G_LOG_LEVEL_DEBUG)
+    return G_LOG_WRITER_HANDLED;
+
+  for (i = 0; i < n_fields; i++)
+    {
+      if (g_strcmp0 (fields[i].key, "GLIB_DOMAIN") == 0 &&
+          g_strcmp0 (fields[i].value, "dconf") != 0)
+        return G_LOG_WRITER_HANDLED;
+    }
+
+  /* Append the message to the queue. */
+  g_array_set_size (logged_messages, logged_messages->len + 1);
+  message = &g_array_index (logged_messages, LogMessage, logged_messages->len - 1);
+
+  message->log_level = log_level;
+  message->fields = g_new0 (GLogField, n_fields);
+  message->n_fields = n_fields;
+
+  for (i = 0; i < n_fields; i++)
+    {
+      gsize length = (fields[i].length < 0) ? strlen (fields[i].value) + 1 : fields[i].length;
+      message->fields[i].key = g_strdup (fields[i].key);
+      message->fields[i].value = g_malloc0 (length);
+      memcpy ((gpointer) message->fields[i].value, fields[i].value, length);
+      message->fields[i].length = fields[i].length;
+    }
+
+  return G_LOG_WRITER_HANDLED;
+}
+
+/* Assert there are no logged messages in the queue. */
+static void
+assert_no_messages (void)
+{
+  g_assert_cmpuint (logged_messages->len, ==, 0);
+}
+
+/* Assert there is at least one logged message in the queue, and the oldest
+ * logged message matches the given expectations. If so, pop it from the queue;
+ * if not, abort. */
+static void
+assert_pop_message (const gchar    *expected_domain,
+                    GLogLevelFlags  expected_log_level,
+                    const gchar    *expected_message_fragment)
+{
+  const LogMessage *logged_message;
+  gsize i;
+  const gchar *message = NULL, *domain = NULL;
+
+  g_assert_cmpuint (logged_messages->len, >, 0);
+  logged_message = &g_array_index (logged_messages, LogMessage, 0);
+
+  for (i = 0; i < logged_message->n_fields; i++)
+    {
+      if (g_strcmp0 (logged_message->fields[i].key, "MESSAGE") == 0)
+        message = logged_message->fields[i].value;
+      else if (g_strcmp0 (logged_message->fields[i].key, "GLIB_DOMAIN") == 0)
+        domain = logged_message->fields[i].value;
+    }
+
+  g_assert_cmpstr (domain, ==, expected_domain);
+  g_assert_cmpuint (logged_message->log_level, ==, expected_log_level);
+  g_assert_cmpstr (strstr (message, expected_message_fragment), !=, NULL);
+
+  g_array_remove_index (logged_messages, 0);
+}
+
+/* If there is at least one logged message in the queue, act like
+ * assert_pop_message(). Otherwise, if the queue is empty, return. */
+static void
+assert_maybe_pop_message (const gchar    *expected_domain,
+                          GLogLevelFlags  expected_log_level,
+                          const gchar    *expected_message_fragment)
+{
+  if (logged_messages->len == 0)
+    return;
+
+  assert_pop_message (expected_domain, expected_log_level, expected_message_fragment);
+}
 
 int
 main (int argc, char **argv)
 {
+  const ProfileParserOpenData profile_parser0 =
+    { SRCDIR "/profile/this-file-does-not-exist", "*WARNING*: unable to open named profile*" };
+  const ProfileParserOpenData profile_parser1 =
+    { SRCDIR "/profile/broken-profile", "*WARNING*: unknown dconf database*unknown dconf database*" };
+  const ProfileParserOpenData profile_parser2 =
+    { SRCDIR "/profile/gdm", "*WARNING*: unknown dconf database*unknown dconf database*" };
+  int retval;
+
   g_setenv ("XDG_RUNTIME_DIR", "/RUNTIME/", TRUE);
   g_setenv ("XDG_CONFIG_HOME", "/HOME/.config", TRUE);
   g_unsetenv ("DCONF_PROFILE");
+
+  logged_messages = g_array_new (FALSE, FALSE, sizeof (LogMessage));
+  g_array_set_clear_func (logged_messages, (GDestroyNotify) log_message_clear);
+  g_log_set_writer_func (log_writer_cb, NULL, NULL);
 
   main_thread = g_thread_self ();
 
   g_test_init (&argc, &argv, NULL);
 
+  g_test_add_data_func ("/engine/profile-parser/errors/0", &profile_parser0, test_profile_parser_errors);
+  g_test_add_data_func ("/engine/profile-parser/errors/1", &profile_parser1, test_profile_parser_errors);
+  g_test_add_data_func ("/engine/profile-parser/errors/2", &profile_parser2, test_profile_parser_errors);
   g_test_add_func ("/engine/profile-parser", test_profile_parser);
   g_test_add_func ("/engine/signal-threadsafety", test_signal_threadsafety);
   g_test_add_func ("/engine/sources/user", test_user_source);
@@ -1985,5 +2094,10 @@ main (int argc, char **argv)
   g_test_add_func ("/engine/signals", test_signals);
   g_test_add_func ("/engine/sync", test_sync);
 
-  return g_test_run ();
+  retval = g_test_run ();
+
+  assert_no_messages ();
+  g_array_unref (logged_messages);
+
+  return retval;
 }
