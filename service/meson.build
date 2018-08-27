@@ -23,14 +23,12 @@ sources = [
   'main.c',
 ]
 
-dconf_generated = gnome.gdbus_codegen(
+lib_sources += gnome.gdbus_codegen(
   'dconf-generated',
   dconf_namespace + '.xml',
   interface_prefix: dconf_namespace + '.',
   namespace: 'DConfDBus',
 )
-
-lib_sources += dconf_generated
 
 libdconf_service = static_library(
   'dconf-service',
@@ -43,12 +41,6 @@ libdconf_service = static_library(
     libdconf_shm,
     libgvdb,
   ],
-)
-
-libdconf_service_dep = declare_dependency(
-  link_with: libdconf_service,
-  dependencies: gio_unix_dep,
-  sources: dconf_generated,
 )
 
 executable(
