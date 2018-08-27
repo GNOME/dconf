@@ -30,7 +30,7 @@ unit_tests = [
   ['gdbus-filter', 'dbus.c', '-DDBUS_BACKEND="/gdbus/filter"', libdconf_gdbus_filter_dep, []],
   ['engine', 'engine.c', '-DSRCDIR="@0@"'.format(test_dir), [dl_dep, libdconf_engine_dep, m_dep], libdconf_mock],
   ['client', 'client.c', '-DSRCDIR="@0@"'.format(test_dir), [libdconf_client_dep, libdconf_engine_dep], libdconf_mock],
-  ['writer', 'writer.c', '-DSRCDIR="@0@"'.format(test_dir), [glib_dep, dl_dep, m_dep], [libdconf_service, libdconf_mock]],
+  ['writer', 'writer.c', '-DSRCDIR="@0@"'.format(test_dir), [glib_dep, dl_dep, m_dep, libdconf_service_dep], [libdconf_mock]],
 ]
 
 foreach unit_test: unit_tests
