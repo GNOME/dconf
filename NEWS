@@ -1,5 +1,18 @@
-Changes in the next version
-===========================
+Changes in dconf 0.29.2
+=======================
+
+ - Service: When corrupt GVDB files are found, they are now
+   transparently backed up and replaced with an empty database.
+   (Philip Withnall, !8)
+ - Replace all hard-coded /etc path with sysconfdir. This is useful for
+   JHBuild environments and systems that don't want to use /etc/dconf.
+   (Ting-Wei Lan; !21, #739229)
+ - Engine: Change overflow thresholds in subscription counts from
+   GMAXUINT32 to GMAXUINT (Daniel Playfair Cal; !20)
+ - Change meson flag used to build Gtk-Doc from enable-gtk-doc to
+   gtk_doc (Daniel Playfair Cal; !19)
+ - Declare libdconf_service as a dependency to fix the build in
+   massively parallelised environments (Emanuelle Bassi; !22)
 
 Changes in dconf 0.29.1
 =======================
