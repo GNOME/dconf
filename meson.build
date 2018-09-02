@@ -1,6 +1,6 @@
 project(
   'dconf', ['c', 'vala'],
-  version: '0.29.3',
+  version: '0.30.0',
   license: 'LGPL2.1+',
   meson_version: '>= 0.46.0',
 )
