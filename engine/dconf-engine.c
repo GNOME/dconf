@@ -974,6 +974,7 @@ dconf_engine_watch_established (DConfEngine  *engine,
                                      ow->path);
 
   dconf_engine_unlock_subscription_counts (engine);
+  g_clear_pointer (&ow->path, g_free);
   dconf_engine_call_handle_free (handle);
 }
 
