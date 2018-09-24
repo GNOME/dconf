@@ -33,6 +33,14 @@
 
   <maintainer>
     <foaf:Person>
+      <foaf:name>Marek Kašík</foaf:name>
+      <foaf:mbox rdf:resource="mailto:mkasik@redhat.com"/>
+      <gnome:userid>mkasik</gnome:userid>
+    </foaf:Person>
+  </maintainer>
+
+  <maintainer>
+    <foaf:Person>
       <foaf:name>Philip Withnall</foaf:name>
       <foaf:mbox rdf:resource="mailto:philip@tecnocode.co.uk"/>
       <foaf:mbox rdf:resource="mailto:withnall@endlessm.com"/>
