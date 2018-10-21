@@ -17,6 +17,7 @@
  * Author: Ryan Lortie <desrt@desrt.ca>
  */
 
+#define GVDB_USE_WEAK_SYMBOLS
 #include "gvdb-reader.h"
 #include "gvdb-format.h"
 
