@@ -102,8 +102,8 @@ dconf_gvdb_utils_read_and_back_up_file (const gchar  *filename,
   if (table != NULL)
     {
       gchar **names;
-      gint n_names;
-      gint i;
+      gsize n_names;
+      gsize i;
 
       names = gvdb_table_get_names (table, &n_names);
       for (i = 0; i < n_names; i++)

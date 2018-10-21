@@ -170,7 +170,7 @@ gvdb_table_list (GvdbTable   *table,
 
 gchar **
 gvdb_table_get_names (GvdbTable *table,
-                      gint      *length)
+                      gsize     *length)
 {
   if (length)
     *length = 0;

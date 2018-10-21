@@ -35,8 +35,8 @@ test_reader_empty (void)
   GError *error = NULL;
   GvdbTable *table;
   gchar **names;
-  gint n_names;
-  gint i;
+  gsize n_names;
+  gsize i;
 
   table = gvdb_table_new (SRCDIR "/gvdbs/empty_gvdb", TRUE, &error);
   g_assert_no_error (error);
@@ -85,7 +85,7 @@ verify_table (GvdbTable *table)
 {
   GVariant *value;
   gchar **list;
-  gint n_names;
+  gsize n_names;
   gboolean has;
 
   /* We could not normally expect these to be in a particular order but
@@ -221,7 +221,7 @@ test_nested (void)
   GvdbTable *table;
   GvdbTable *locks;
   gchar **names;
-  gint n_names;
+  gsize n_names;
   gboolean has;
 
   table = gvdb_table_new (SRCDIR "/gvdbs/nested_gvdb", TRUE, &error);
@@ -277,8 +277,8 @@ inspect_carefully (GvdbTable *table,
   };
   gint found_items;
   gchar **names;
-  gint n_names;
-  gint i;
+  gsize n_names;
+  gsize i;
 
   if (level > 100)
     return;
