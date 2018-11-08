@@ -151,9 +151,91 @@ test_fast (void)
   check_and_free (dconf_client_read (client, "/test/value"), NULL);
   check_and_free (dconf_client_read_full (client, "/test/value", DCONF_READ_DEFAULT_VALUE, NULL), NULL);
 
+  g_assert_cmpint (g_queue_get_length (&dconf_mock_dbus_outstanding_call_handles), == , 0);
+
   /* Cleanup */
   g_signal_handlers_disconnect_by_func (client, changed, NULL);
   g_object_unref (client);
+}
+
+static gboolean changed_a, changed_b, changed_c;
+
+static void
+coalesce_changed (DConfClient         *client,
+                  const gchar         *prefix,
+                  const gchar * const *changes,
+                  const gchar         *tag,
+                  gpointer             user_data)
+{
+  changed_a = g_str_equal (prefix, "/test/a") || g_strv_contains (changes, "a");
+  changed_b = g_str_equal (prefix, "/test/b") || g_strv_contains (changes, "b");
+  changed_c = g_str_equal (prefix, "/test/c") || g_strv_contains (changes, "c");
+}
+
+static void
+test_coalesce (void)
+{
+  gint i, a, b, c;
+  gboolean should_change_a, should_change_b, should_change_c;
+  g_autoptr(DConfClient) client = NULL;
+
+  gint changes[][3] = {
+    {1, 0, 0},
+    {1, 1, 1},
+    {0, 1, 1},
+    {0, 0, 1},
+    {0, 0, 0},
+    {1, 0, 0},
+    {1, 0, 0},
+  };
+
+  client = dconf_client_new ();
+  g_signal_connect (client, "changed", G_CALLBACK (coalesce_changed), NULL);
+
+  a = b = c = 0;
+
+  for (i = 0; i != G_N_ELEMENTS (changes); ++i)
+    {
+      g_autoptr(DConfChangeset) changeset = NULL;
+
+      should_change_a = changes[i][0];
+      should_change_b = changes[i][1];
+      should_change_c = changes[i][2];
+
+      changeset = dconf_changeset_new ();
+
+      if (should_change_a)
+        dconf_changeset_set (changeset, "/test/a", g_variant_new_int32 (++a));
+      if (should_change_b)
+        dconf_changeset_set (changeset, "/test/b", g_variant_new_int32 (++b));
+      if (should_change_c)
+        dconf_changeset_set (changeset, "/test/c", g_variant_new_int32 (++c));
+
+      changed_a = changed_b = changed_c = FALSE;
+
+      g_assert_true (dconf_client_change_fast (client, changeset, NULL));
+
+      /* Notifications should be only about keys we have just written. */
+      g_assert_cmpint (should_change_a, ==, changed_a);
+      g_assert_cmpint (should_change_b, ==, changed_b);
+      g_assert_cmpint (should_change_c, ==, changed_c);
+
+      /* We should see value from the most recent write or NULL if we haven't written it yet. */
+      check_and_free (dconf_client_read (client, "/test/a"), a == 0 ? NULL : g_variant_new_int32 (a));
+      check_and_free (dconf_client_read (client, "/test/b"), b == 0 ? NULL : g_variant_new_int32 (b));
+      check_and_free (dconf_client_read (client, "/test/c"), c == 0 ? NULL : g_variant_new_int32 (c));
+    }
+
+  dconf_mock_dbus_async_reply (g_variant_new ("(s)", "1"), NULL);
+  dconf_mock_dbus_async_reply (g_variant_new ("(s)", "2"), NULL);
+  dconf_mock_dbus_async_reply (g_variant_new ("(s)", "3"), NULL);
+
+  /* There should be no more requests since all but first two have been
+   * coalesced together. */
+  dconf_mock_dbus_assert_no_async ();
+
+  /* Cleanup */
+  g_signal_handlers_disconnect_by_func (client, changed, NULL);
 }
 
 int
@@ -167,6 +249,7 @@ main (int argc, char **argv)
 
   g_test_add_func ("/client/lifecycle", test_lifecycle);
   g_test_add_func ("/client/basic-fast", test_fast);
+  g_test_add_func ("/client/coalesce", test_coalesce);
 
   return g_test_run ();
 }

@@ -172,7 +172,7 @@ struct _DConfEngine
 
   GMutex              queue_lock;    /* This lock is for pending, in_flight, queue_cond */
   GCond               queue_cond;    /* Signalled when the queues empty */
-  GQueue              pending;       /* DConfChangeset */
+  DConfChangeset     *pending;       /* DConfChangeset */
   GQueue              in_flight;     /* DConfChangeset */
 
   gchar              *last_handled;  /* reply tag from last item in in_flight */
@@ -402,8 +402,7 @@ dconf_engine_unref (DConfEngine *engine)
 
       g_free (engine->last_handled);
 
-      while (!g_queue_is_empty (&engine->pending))
-        dconf_changeset_unref ((DConfChangeset *) g_queue_pop_head (&engine->pending));
+      g_clear_pointer (&engine->pending, dconf_changeset_unref);
 
       while (!g_queue_is_empty (&engine->in_flight))
         dconf_changeset_unref ((DConfChangeset *) g_queue_pop_head (&engine->in_flight));
@@ -735,8 +734,11 @@ dconf_engine_read (DConfEngine    *engine,
           /* Check the pending queue first because those were submitted
            * more recently.
            */
-          found_key = dconf_engine_find_key_in_queue (&engine->pending, key, &value) ||
-                      dconf_engine_find_key_in_queue (&engine->in_flight, key, &value);
+          if (engine->pending != NULL)
+            found_key = dconf_changeset_get (engine->pending, key, &value);
+
+          if (!found_key)
+            found_key = dconf_engine_find_key_in_queue (&engine->in_flight, key, &value);
 
           dconf_engine_unlock_queues (engine);
         }
@@ -1249,7 +1251,7 @@ dconf_engine_change_completed (DConfEngine  *engine,
 static void
 dconf_engine_manage_queue (DConfEngine *engine)
 {
-  if (!g_queue_is_empty (&engine->pending) && g_queue_get_length (&engine->in_flight) < MAX_IN_FLIGHT)
+  if (engine->pending != NULL && g_queue_get_length (&engine->in_flight) < MAX_IN_FLIGHT)
     {
       OutstandingChange *oc;
       GVariant *parameters;
@@ -1257,7 +1259,7 @@ dconf_engine_manage_queue (DConfEngine *engine)
       oc = dconf_engine_call_handle_new (engine, dconf_engine_change_completed,
                                          G_VARIANT_TYPE ("(s)"), sizeof (OutstandingChange));
 
-      oc->change = g_queue_pop_head (&engine->pending);
+      oc->change = g_steal_pointer (&engine->pending);
 
       parameters = dconf_engine_prepare_change (engine, oc->change);
 
@@ -1275,7 +1277,7 @@ dconf_engine_manage_queue (DConfEngine *engine)
       /* The in-flight queue should not be empty if we have changes
        * pending...
        */
-      g_assert (g_queue_is_empty (&engine->pending));
+      g_assert (engine->pending == NULL);
 
       g_cond_broadcast (&engine->queue_cond);
     }
@@ -1321,7 +1323,6 @@ dconf_engine_change_fast (DConfEngine     *engine,
                           gpointer         origin_tag,
                           GError         **error)
 {
-  GList *node;
   g_debug ("change_fast");
   if (dconf_changeset_is_empty (changeset))
     return TRUE;
@@ -1340,27 +1341,6 @@ dconf_engine_change_fast (DConfEngine     *engine,
    */
   dconf_engine_lock_queues (engine);
 
-  for (node = g_queue_peek_head_link (&engine->pending); node; node = node->next)
-    {
-      DConfChangeset *queued_change = node->data;
-
-      if (dconf_changeset_is_similar_to (changeset, queued_change))
-        {
-          /* We found a similar item in the queue.
-           *
-           * We want to drop the one that's in the queue already since
-           * we want our new (more recent) change to take precedence.
-           *
-           * The pending queue owned the changeset, so free it.
-           */
-          g_queue_delete_link (&engine->pending, node);
-          dconf_changeset_unref (queued_change);
-
-          /* There will only have been one, so stop looking. */
-          break;
-        }
-    }
-
   /* No matter what we're going to queue up this change, so put it in
    * the pending queue now.
    *
@@ -1371,7 +1351,11 @@ dconf_engine_change_fast (DConfEngine     *engine,
    * The change might get tossed before being sent if the loop above
    * finds it on a future call.
    */
-  g_queue_push_tail (&engine->pending, dconf_changeset_ref (changeset));
+  if (engine->pending == NULL)
+    engine->pending = dconf_changeset_new ();
+
+  dconf_changeset_change (engine->pending, changeset);
+
   dconf_engine_manage_queue (engine);
 
   dconf_engine_unlock_queues (engine);
