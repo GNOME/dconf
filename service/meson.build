@@ -51,7 +51,7 @@ libdconf_service_dep = declare_dependency(
   sources: dconf_generated,
 )
 
-executable(
+dconf_service = executable(
   'dconf-service',
   sources,
   include_directories: top_inc,
