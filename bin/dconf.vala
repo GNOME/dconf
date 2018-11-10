@@ -186,7 +186,10 @@ void dconf_list (string?[] args) throws Error {
 
 	DConf.verify_dir (dir);
 
-	foreach (var item in client.list (dir)) {
+	var items = client.list (dir);
+	GLib.qsort_with_data<string> (items, sizeof (string), (a, b) => GLib.strcmp (a, b));
+
+	foreach (var item in items) {
 		print ("%s\n", item);
 	}
 }
