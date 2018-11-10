@@ -45,3 +45,17 @@ foreach unit_test: unit_tests
 
   test(unit_test[0], exe, is_parallel: false, env: envs)
 endforeach
+
+python3 = find_program('python3', required: false)
+dbus_daemon = find_program('dbus-daemon', required: false)
+
+if python3.found() and dbus_daemon.found()
+  test_dconf_py = find_program('test-dconf.py')
+  test(
+    'dconf',
+    test_dconf_py,
+    args: [dconf.full_path(), dconf_service.full_path()]
+  )
+else
+  message('Skipping dconf test because python3 or dbus-daemon is not available')
+endif
