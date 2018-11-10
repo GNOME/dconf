@@ -56,10 +56,7 @@ def dconf_write(key, value):
 
 
 def dconf_list(key):
-    lines = dconf('list', key).stdout.splitlines()
-    # FIXME: Change dconf to produce sorted output.
-    lines.sort()
-    return lines
+    return dconf('list', key).stdout.splitlines()
 
 
 def dconf_watch(path):
@@ -223,23 +220,19 @@ class DBusTest(unittest.TestCase):
         self.assertEqual(watch_org.stdout.read(), dedent(expected))
 
     def test_dump_load(self):
-        # FIXME: This test depends on:
-        # * order of groups
-        # * order of items within groups
-        # Change dconf to produce output in sorted order.
-
         keyfile = dedent('''\
         [/]
         password='secret'
+
+        [org/editor]
+        window-fullscreen=true
+        window-size=(1024, 768)
 
         [org/editor/language/c-sharp]
         tab-width=8
 
         [org/editor/language/c]
         tab-width=2
-
-        [org/editor]
-        window-size=(1280, 977)
         ''')
 
         # Load and dump is identity.
