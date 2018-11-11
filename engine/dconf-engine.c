@@ -154,8 +154,6 @@
  * sources_lock or queue_lock
  */
 
-#define MAX_IN_FLIGHT 2
-
 static GSList *dconf_engine_global_list;
 static GMutex  dconf_engine_global_lock;
 
@@ -173,7 +171,7 @@ struct _DConfEngine
   GMutex              queue_lock;    /* This lock is for pending, in_flight, queue_cond */
   GCond               queue_cond;    /* Signalled when the queues empty */
   DConfChangeset     *pending;       /* DConfChangeset */
-  GQueue              in_flight;     /* DConfChangeset */
+  DConfChangeset     *in_flight;     /* DConfChangeset */
 
   gchar              *last_handled;  /* reply tag from last item in in_flight */
 
@@ -403,9 +401,7 @@ dconf_engine_unref (DConfEngine *engine)
       g_free (engine->last_handled);
 
       g_clear_pointer (&engine->pending, dconf_changeset_unref);
-
-      while (!g_queue_is_empty (&engine->in_flight))
-        dconf_changeset_unref ((DConfChangeset *) g_queue_pop_head (&engine->in_flight));
+      g_clear_pointer (&engine->in_flight, dconf_changeset_unref);
 
       for (i = 0; i < engine->n_sources; i++)
         dconf_engine_source_free (engine->sources[i]);
@@ -737,8 +733,8 @@ dconf_engine_read (DConfEngine    *engine,
           if (engine->pending != NULL)
             found_key = dconf_changeset_get (engine->pending, key, &value);
 
-          if (!found_key)
-            found_key = dconf_engine_find_key_in_queue (&engine->in_flight, key, &value);
+          if (!found_key && engine->in_flight != NULL)
+            found_key = dconf_changeset_get (engine->in_flight, key, &value);
 
           dconf_engine_unlock_queues (engine);
         }
@@ -1174,36 +1170,12 @@ dconf_engine_change_completed (DConfEngine  *engine,
                                const GError *error)
 {
   OutstandingChange *oc = handle;
+  DConfChangeset *expected;
 
   dconf_engine_lock_queues (engine);
 
-  /* D-Bus guarantees ordered delivery of messages.
-   *
-   * The dconf-service handles requests in-order.
-   *
-   * The reply we just received should therefore be at the head of
-   * our 'in flight' queue.
-   *
-   * Due to https://bugs.freedesktop.org/show_bug.cgi?id=59780 it is
-   * possible that we receive an out-of-sequence error message, however,
-   * so only assume that messages are in-order for positive replies.
-   */
-  if (reply)
-    {
-      DConfChangeset *expected;
-
-      expected = g_queue_pop_head (&engine->in_flight);
-      g_assert (expected && oc->change == expected);
-    }
-  else
-    {
-      gboolean found;
-
-      g_assert (error != NULL);
-
-      found = g_queue_remove (&engine->in_flight, oc->change);
-      g_assert (found);
-    }
+  expected = g_steal_pointer (&engine->in_flight);
+  g_assert (expected && oc->change == expected);
 
   /* We just popped a change from the in-flight queue, possibly
    * making room for another to be added.  Check that.
@@ -1251,7 +1223,7 @@ dconf_engine_change_completed (DConfEngine  *engine,
 static void
 dconf_engine_manage_queue (DConfEngine *engine)
 {
-  if (engine->pending != NULL && g_queue_get_length (&engine->in_flight) < MAX_IN_FLIGHT)
+  if (engine->pending != NULL && engine->in_flight == NULL)
     {
       OutstandingChange *oc;
       GVariant *parameters;
@@ -1259,7 +1231,7 @@ dconf_engine_manage_queue (DConfEngine *engine)
       oc = dconf_engine_call_handle_new (engine, dconf_engine_change_completed,
                                          G_VARIANT_TYPE ("(s)"), sizeof (OutstandingChange));
 
-      oc->change = g_steal_pointer (&engine->pending);
+      oc->change = engine->in_flight = g_steal_pointer (&engine->pending);
 
       parameters = dconf_engine_prepare_change (engine, oc->change);
 
@@ -1268,11 +1240,9 @@ dconf_engine_manage_queue (DConfEngine *engine)
                                          engine->sources[0]->object_path,
                                          "ca.desrt.dconf.Writer", "Change",
                                          parameters, &oc->handle, NULL);
-
-      g_queue_push_tail (&engine->in_flight, oc->change);
     }
 
-  if (g_queue_is_empty (&engine->in_flight))
+  if (engine->in_flight == NULL)
     {
       /* The in-flight queue should not be empty if we have changes
        * pending...
@@ -1543,7 +1513,7 @@ dconf_engine_has_outstanding (DConfEngine *engine)
    * also empty, so we only really need to check one of them...
    */
   dconf_engine_lock_queues (engine);
-  has = !g_queue_is_empty (&engine->in_flight);
+  has = engine->in_flight != NULL;
   dconf_engine_unlock_queues (engine);
 
   return has;
@@ -1554,7 +1524,7 @@ dconf_engine_sync (DConfEngine *engine)
 {
   g_debug ("sync");
   dconf_engine_lock_queues (engine);
-  while (!g_queue_is_empty (&engine->in_flight))
+  while (engine->in_flight != NULL)
     g_cond_wait (&engine->queue_cond, &engine->queue_lock);
   dconf_engine_unlock_queues (engine);
 }
