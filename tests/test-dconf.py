@@ -58,6 +58,12 @@ def dconf_list(key):
     return dconf('list', key).stdout.splitlines()
 
 
+def dconf_complete(suffix, prefix):
+    lines = dconf('_complete', suffix, prefix).stdout.splitlines()
+    lines.sort()
+    return lines
+
+
 def dconf_watch(path):
     args = [dconf_exe, 'watch', path]
     return subprocess.Popen(args,
@@ -246,6 +252,59 @@ class DBusTest(unittest.TestCase):
         keyfile_org = dconf('dump', '/org/').stdout
         keyfile_com = dconf('dump', '/com/').stdout
         self.assertEqual(keyfile_org, keyfile_com)
+
+    def test_complete(self):
+        keyfile = dedent('''\
+        [org]
+        calamity=false
+
+        [org/calculator]
+        window-position=(0, 0)
+
+        [org/calendar]
+        window-position=(0, 0)
+
+        [org/history]
+        file0='/tmp/a'
+        file1='/tmp/b'
+        file2='/tmp/c'
+        ''')
+
+        dconf('load', '/', input=keyfile)
+
+        # Empty string is completed to '/'.
+        completions = dconf_complete('', '')
+        self.assertEqual(completions, ['/'])
+        completions = dconf_complete('/', '')
+        self.assertEqual(completions, ['/'])
+
+        # Invalid paths don't return any completions.
+        completions = dconf_complete('', 'foo/')
+        self.assertEqual(completions, [])
+        completions = dconf_complete('/', 'foo/')
+        self.assertEqual(completions, [])
+
+        # Key completions include trailing whitespace,
+        # directory completions do not.
+        completions = dconf_complete('', '/org/')
+        self.assertEqual(completions,
+                         ['/org/calamity ',
+                          '/org/calculator/',
+                          '/org/calendar/',
+                          '/org/history/'])
+
+        # Only matches with given prefix are returned.
+        completions = dconf_complete('', '/org/cal')
+        self.assertEqual(completions,
+                         ['/org/calamity ',
+                          '/org/calculator/',
+                          '/org/calendar/'])
+
+        # Only matches with given suffix are returned.
+        completions = dconf_complete('/', '/org/cal')
+        self.assertEqual(completions,
+                         ['/org/calculator/',
+                          '/org/calendar/'])
 
 
 if __name__ == '__main__':
