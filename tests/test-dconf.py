@@ -306,6 +306,37 @@ class DBusTest(unittest.TestCase):
                          ['/org/calculator/',
                           '/org/calendar/'])
 
+    def test_compile_precedence(self):
+        # Prepare key file database directory.
+        user_d = os.path.join(self.temporary_dir.name, 'user.d')
+        os.mkdir(user_d, mode=0o700)
+
+        # Required from compile utility specifically.
+        os.mkdir(os.path.join(self.config_home, 'dconf'), mode=0o700)
+
+        def write_config_d(name):
+            keyfile = dedent('''
+            [org]
+            file = {name}
+            '''.format(name=name))
+
+            with open(os.path.join(user_d, name), 'w') as file:
+                file.write(keyfile)
+
+        write_config_d('00')
+        write_config_d('25')
+        write_config_d('50')
+        write_config_d('99')
+
+        # Compile directly into user configuration file.
+        dconf('compile',
+              os.path.join(self.config_home, 'dconf', 'user'),
+              user_d)
+
+        # Files are processed in reverse lexicographical order,
+        # and in case of conflict first value should win:
+        self.assertEqual(dconf_read('/org/file'), '99')
+
 
 if __name__ == '__main__':
     # Make sure we don't pick up mandatory profile.
