@@ -58,7 +58,7 @@ queue_up_100_writes (DConfClient *client)
   gint i;
 
   /* We send 100 writes, letting them pile up.
-   * At no time should there be more than 2 writes on the wire.
+   * At no time should there be more than one write on the wire.
    */
   for (i = 0; i < 100; i++)
     {
@@ -71,7 +71,7 @@ queue_up_100_writes (DConfClient *client)
       check_and_free (dconf_client_read_full (client, "/test/value", DCONF_READ_DEFAULT_VALUE, NULL), NULL);
     }
 
-  g_assert_cmpint (g_queue_get_length (&dconf_mock_dbus_outstanding_call_handles), ==, 2);
+  g_assert_cmpint (g_queue_get_length (&dconf_mock_dbus_outstanding_call_handles), ==, 1);
 }
 
 static void
@@ -108,7 +108,6 @@ static void
 test_fast (void)
 {
   DConfClient *client;
-  gint i;
 
   g_log_set_writer_func (log_writer_cb, NULL, NULL);
 
@@ -119,30 +118,23 @@ test_fast (void)
 
   /* Start indicating that the writes failed.
    *
-   * For the first failures, we should continue to see the most recently
-   * written value (99).
-   *
-   * After we fail that last one, we should see NULL returned.
+   * Because of the pending-merge logic, we should only have had to fail two calls.
    *
    * Each time, we should see a change notify.
    */
 
-  for (i = 0; g_queue_get_length (&dconf_mock_dbus_outstanding_call_handles) > 1; i++)
-    {
-      changed_was_called = FALSE;
-      fail_one_call ();
-      g_assert (changed_was_called);
+  g_assert_cmpint (g_queue_get_length (&dconf_mock_dbus_outstanding_call_handles), == , 1);
 
-      check_and_free (dconf_client_read (client, "/test/value"), g_variant_new_int32 (99));
-      check_and_free (dconf_client_read_full (client, "/test/value", DCONF_READ_DEFAULT_VALUE, NULL), NULL);
-    }
+  changed_was_called = FALSE;
+  fail_one_call ();
+  g_assert (changed_was_called);
 
-  /* Because of the pending-merging logic, we should only have had to
-   * fail two calls.
-   */
-  g_assert (i == 2);
+  /* For the first failure, we should continue to see the most recently written value (99) */
+  check_and_free (dconf_client_read (client, "/test/value"), g_variant_new_int32 (99));
+  check_and_free (dconf_client_read_full (client, "/test/value", DCONF_READ_DEFAULT_VALUE, NULL), NULL);
 
-  /* Fail the last call. */
+  g_assert_cmpint (g_queue_get_length (&dconf_mock_dbus_outstanding_call_handles), == , 1);
+
   changed_was_called = FALSE;
   fail_one_call ();
   g_assert (changed_was_called);
@@ -228,9 +220,8 @@ test_coalesce (void)
 
   dconf_mock_dbus_async_reply (g_variant_new ("(s)", "1"), NULL);
   dconf_mock_dbus_async_reply (g_variant_new ("(s)", "2"), NULL);
-  dconf_mock_dbus_async_reply (g_variant_new ("(s)", "3"), NULL);
 
-  /* There should be no more requests since all but first two have been
+  /* There should be no more requests since all but first have been
    * coalesced together. */
   dconf_mock_dbus_assert_no_async ();
 
