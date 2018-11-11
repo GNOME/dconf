@@ -77,34 +77,24 @@
  *
  * In fast mode we have to do some management of the queue.  If we
  * immediately put all requests "in flight" then we can end up in a
- * situation where the application writes many values for the same key
- * and the service is kept (needlessly) busy writing over and over to
- * the same key for some time after the requests stop coming in.
+ * situation where the application performs many writes in a sequence
+ * and the service is kept (needlessly) busy writing over and over
+ * again.
  *
  * If we limit the number of in-flight requests and put the other ones
- * into a pending queue then we can perform merging of similar changes.
- * If we notice that an item in the pending queue writes to the same
- * keys as the newly-added request then we can simply drop the existing
- * request (since its effect will be nullified by the new request).
+ * into a pending queue then we can merge pending changes together.
+ * If we notice a pending write to the same key as in newly-added
+ * request then we can simply drop the existing write (since its effect
+ * will be nullified by the new request).
  *
  * We want to keep the number of in-flight requests low in order to
- * maximise our chance of dropping pending items, but we probably want
- * it higher than 1 so that we can pipeline to hide latency.
+ * maximise our chance of merging pending changes together, probably not
+ * higher than 1, even at the cost of additional latency.
  *
  * In order to minimise complexity, all changes go first to the pending
  * queue.  Changes are dispatched from the pending queue (and moved to
  * the in-flight queue) when the number of requests in-flight is lower
  * than the maximum.
- *
- * For both 'in_flight' and 'pending' queues we push to the tail and pop
- * from the head.  This puts the first operation on the head and the
- * most recent operation on the tail.
- *
- * Since new operation go first to the pending queue, we find the most
- * recent operations at the tail of that queue.  Since we want to return
- * the most-recently written value, we therefore scan for values
- * starting at the tail of the pending queue and ending at the head of
- * the in-flight queue.
  *
  * NB: I tell a lie.  Async is not supported yet.
  *
@@ -170,8 +160,8 @@ struct _DConfEngine
 
   GMutex              queue_lock;    /* This lock is for pending, in_flight, queue_cond */
   GCond               queue_cond;    /* Signalled when the queues empty */
-  DConfChangeset     *pending;       /* DConfChangeset */
-  DConfChangeset     *in_flight;     /* DConfChangeset */
+  DConfChangeset     *pending;       /* Yet to be sent on the wire. */
+  DConfChangeset     *in_flight;     /* Already sent but awaiting response. */
 
   gchar              *last_handled;  /* reply tag from last item in in_flight */
 
@@ -1138,13 +1128,13 @@ dconf_engine_prepare_change (DConfEngine     *engine,
 /* This function promotes changes from the pending queue to the
  * in-flight queue by sending the appropriate D-Bus message.
  *
- * Of course, this is only possible when there are pending items and
+ * Of course, this is only possible when there is a pending item and
  * room in the in-flight queue.  For this reason, this function gets
  * called in two situations:
  *
  *   - an item has been added to the pending queue (due to an API call)
  *
- *   - an item has been removed from the inflight queue (due to a D-Bus
+ *   - an item has been removed from the in-flight queue (due to a D-Bus
  *     reply having been received)
  *
  * It will move a maximum of one item.
@@ -1177,7 +1167,7 @@ dconf_engine_change_completed (DConfEngine  *engine,
   expected = g_steal_pointer (&engine->in_flight);
   g_assert (expected && oc->change == expected);
 
-  /* We just popped a change from the in-flight queue, possibly
+  /* We just popped a change from the in-flight queue
    * making room for another to be added.  Check that.
    */
   dconf_engine_manage_queue (engine);
@@ -1302,13 +1292,6 @@ dconf_engine_change_fast (DConfEngine     *engine,
 
   dconf_changeset_seal (changeset);
 
-  /* Check for duplicates in the pending queue.
-   *
-   * Note: order doesn't really matter here since "similarity" is an
-   * equivalence class and we've ensured that there are no pairwise
-   * similar changes in the queue already (ie: at most we will have only
-   * one similar item to the one we are adding).
-   */
   dconf_engine_lock_queues (engine);
 
   /* No matter what we're going to queue up this change, so put it in
@@ -1317,9 +1300,6 @@ dconf_engine_change_fast (DConfEngine     *engine,
    * There may be room in the in_flight queue, so we try to manage the
    * queue right away in order to try to promote it there (which causes
    * the D-Bus message to actually be sent).
-   *
-   * The change might get tossed before being sent if the loop above
-   * finds it on a future call.
    */
   if (engine->pending == NULL)
     engine->pending = dconf_changeset_new ();
