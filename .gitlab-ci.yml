@@ -42,7 +42,7 @@ test:
   except:
     - tags
   artifacts:
-    when: on_failure
+    when: always
     name: "dconf-_${CI_COMMIT_REF_NAME}"
     paths:
       - "_build/meson-logs"
