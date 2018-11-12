@@ -147,6 +147,97 @@ class DBusTest(unittest.TestCase):
 
         self.temporary_dir.cleanup()
 
+    def test_invalid_usage(self):
+        """Invalid dconf usage results in non-zero exit code and help message.
+        """
+        cases = [
+            # No command:
+            [],
+
+            # Invalid command:
+            ['no-such-command'],
+
+            # Too many arguments:
+            ['blame', 'a'],
+
+            # Missing arguments:
+            ['compile'],
+            ['compile', 'output'],
+            # Too many arguments:
+            ['compile', 'output', 'dir1', 'dir2'],
+
+            # Missing arguments:
+            ['_complete'],
+            ['_complete', ''],
+            # Too many arguments:
+            ['_complete', '', '/', '/'],
+
+            # Missing argument:
+            ['dump'],
+            # Dir is required:
+            ['dump', '/key'],
+            # Too many arguments:
+            ['dump', '/a/', '/b/'],
+
+            # Missing argument:
+            ['list'],
+            # Dir is required:
+            ['list', '/foo/bar'],
+            # Too many arguments:
+            ['list', '/foo', '/bar'],
+
+            # Missing argument:
+            ['list-locks'],
+            # Dir is required:
+            ['list-locks', '/key'],
+            # Too many arguments:
+            ['list-locks', '/a/', '/b/'],
+
+            # Missing argument:
+            ['load'],
+            # Dir is required:
+            ['load', '/key'],
+            # Too many arguments:
+            ['load', '/a/', '/b/'],
+
+            # Missing argument:
+            ['read'],
+            # Key is required:
+            ['read', '/dir/'],
+            # Too many arguments:
+            ['read', '/a', '/b'],
+            ['read', '-d', '/a', '/b'],
+
+            # Missing arguments:
+            ['reset'],
+            # Invalid path:
+            ['reset', 'test/test'],
+            # Too many arguments:
+            ['reset', '/test', '/test'],
+            ['reset', '-f', '/', '/'],
+
+            # Missing arguments:
+            ['watch'],
+            # Invalid path:
+            ['watch', 'foo'],
+            # Too many arguments:
+            ['watch', '/a', '/b'],
+
+            # Missing arguments:
+            ['write'],
+            ['write', '/key'],
+            # Invalid value:
+            ['write', '/key', 'not-a-gvariant-value'],
+            # Too many arguments:
+            ['write', '/key', '1', '2'],
+        ]
+
+        for args in cases:
+            with self.subTest(args=args):
+                with self.assertRaises(subprocess.CalledProcessError) as cm:
+                    dconf(*args, stderr=subprocess.PIPE)
+                self.assertRegex(cm.exception.stderr, 'Usage:')
+
     def test_read_nonexisiting(self):
         """Reading missing key produces no output. """
 

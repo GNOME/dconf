@@ -173,6 +173,10 @@ void dconf_read (string?[] args) throws Error {
 
 	DConf.verify_key (key);
 
+	if (args[index + 1] != null) {
+		throw new OptionError.FAILED ("too many arguments");
+	}
+
 	var result = client.read_full (key, flags, null);
 
 	if (result != null) {
@@ -200,6 +204,10 @@ void dconf_list_locks (string?[] args) throws Error {
 
 	DConf.verify_dir (dir);
 
+	if (args[3] != null) {
+		throw new OptionError.FAILED ("too many arguments");
+	}
+
 	foreach (var item in client.list_locks (dir)) {
 		print ("%s\n", item);
 	}
@@ -208,9 +216,20 @@ void dconf_list_locks (string?[] args) throws Error {
 void dconf_write (string?[] args) throws Error {
 	var client = new DConf.Client ();
 	var key = args[2];
+	if (key == null) {
+		throw new OptionError.FAILED ("key not specified");
+	}
+
 	var val = args[3];
+	if (val == null) {
+		throw new OptionError.FAILED ("value not specified");
+	}
 
 	DConf.verify_key (key);
+
+	if (args[4] != null) {
+		throw new OptionError.FAILED ("too many arguments");
+	}
 
 	client.write_sync (key, Variant.parse (null, val));
 }
@@ -228,6 +247,10 @@ void dconf_reset (string?[] args) throws Error {
 	var path = args[index];
 
 	DConf.verify_path (path);
+
+	if (args[index + 1] != null) {
+		throw new OptionError.FAILED ("too many arguments");
+	}
 
 	if (DConf.is_dir (path) && !force) {
 		throw new OptionError.FAILED ("-f must be given to (recursively) reset entire dirs");
@@ -259,6 +282,10 @@ void dconf_watch (string?[] args) throws Error {
 
 	DConf.verify_path (path);
 
+	if (args[3] != null) {
+		throw new OptionError.FAILED ("too many arguments");
+	}
+
 	client.changed.connect (watch_function);
 	client.watch_sync (path);
 
@@ -274,7 +301,18 @@ void dconf_blame (string?[] args) throws Error {
 
 void dconf_complete (string[] args) throws Error {
 	var suffix = args[2];
+	if (suffix == null) {
+		throw new OptionError.FAILED ("suffix not specified");
+	}
+
 	var path = args[3];
+	if (path == null) {
+		throw new OptionError.FAILED ("path not specified");
+	}
+
+	if (args[4] != null) {
+		throw new OptionError.FAILED ("too many arguments");
+	}
 
 	if (path == "") {
 		print ("/\n");

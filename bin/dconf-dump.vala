@@ -39,6 +39,10 @@ void dconf_dump (string[] args) throws Error {
 
 	DConf.verify_dir (dir);
 
+	if (args[3] != null) {
+		throw new OptionError.FAILED ("too many arguments");
+	}
+
 	add_to_keyfile (kf, client, dir);
 	print ("%s", kf.to_data ());
 }
@@ -61,6 +65,10 @@ KeyFile keyfile_from_stdin () throws Error {
 void dconf_load (string[] args) throws Error {
 	var dir = args[2];
 	DConf.verify_dir (dir);
+
+	if (args[3] != null) {
+		throw new OptionError.FAILED ("too many arguments");
+	}
 
 	var changeset = new DConf.Changeset ();
 	var kf = keyfile_from_stdin ();
