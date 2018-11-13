@@ -409,6 +409,48 @@ class DBusTest(unittest.TestCase):
         # Lexicographically last value should win:
         self.assertEqual(dconf_read('/org/file'), '99')
 
+    @unittest.expectedFailure
+    def test_redundant_disk_writes(self):
+        """Redundant disk writes are avoided.
+
+        When write or reset operations don't modify actual contents of the
+        database, the database file shouldn't be needlessly rewritten. Check
+        mtime after each redundant operation to verify that.
+        """
+
+        config = os.path.join(self.config_home, 'dconf', 'user')
+
+        def move_time_back(path):
+            """Moves file mtime 60 seconds back and returns its new value.
+
+            Used to avoid false positives during comparison checks in the case
+            that mtime is stored with low precision.
+            """
+            atime = os.path.getatime(config)
+            mtime = os.path.getmtime(config)
+
+            os.utime(config, times=(atime, mtime - 60))
+
+            return os.path.getmtime(config)
+
+        # Activate service to trigger initial database write.
+        dconf_write('/prime', '5')
+
+        # Sanity check that database is rewritten when necessary.
+        saved_mtime = move_time_back(config)
+        dconf_write('/prime', '13')
+        self.assertLess(saved_mtime, os.path.getmtime(config))
+
+        # Write the same value as one already in the database.
+        saved_mtime = move_time_back(config)
+        dconf('write', '/prime', '13')
+        self.assertEqual(saved_mtime, os.path.getmtime(config))
+
+        # Reset not directory which is not present in the database.
+        saved_mtime = move_time_back(config)
+        dconf('reset', '-f', '/non-existing/directory/')
+        self.assertEqual(saved_mtime, os.path.getmtime(config))
+
 
 if __name__ == '__main__':
     # Make sure we don't pick up mandatory profile.
