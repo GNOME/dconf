@@ -599,6 +599,68 @@ class DBusTest(unittest.TestCase):
                 # Now database should be marked as invalid.
                 self.assertEqual(b'\0'*8, mm[:8])
 
+    @unittest.expectedFailure
+    def test_update_failure(self):
+        """Update should skip invalid configuration directory and continue with
+        others. Failure to update one of databases should be indicated with
+        non-zero exit code.
+        
+        Regression test for issue #42.
+        """
+
+        # A few different scenarios when loading data from key-file:
+        valid_key_file = '[org]\na = 1'
+
+        invalid_key_file = "<html>This isn't a key-file nor valid HTML."
+
+        invalid_group_name = dedent('''\
+        [org//no/me]
+        a = 2
+        ''')
+
+        invalid_key_name = dedent('''\
+        [org/gnome]
+        b// = 2
+        ''')
+
+        invalid_value = dedent('''\
+        [org/gnome]
+        c = 2x2
+        ''')
+
+        db = os.path.join(self.temporary_dir.name, 'db')
+
+        # Database name,     valid, content
+        cases = [('site_aa', True,  valid_key_file),
+                 ('site_bb', False, invalid_key_file),
+                 ('site_cc', False, invalid_group_name),
+                 ('site_dd', False, invalid_key_name),
+                 ('site_ee', False, invalid_value),
+                 ('site_ff', True,  valid_key_file)]
+
+        for (name, is_valid, content) in cases:
+            conf_dir = os.path.join(db, '{}.d'.format(name))
+            conf_file = os.path.join(conf_dir, '{}.conf'.format(name))
+
+            os.makedirs(conf_dir)
+
+            with open(conf_file, 'w') as file:
+                file.write(content)
+
+        # Return code should indicate failure.
+        with self.assertRaises(subprocess.CalledProcessError) as cm:
+            dconf('update', db, stderr=subprocess.PIPE)
+
+        for (name, is_valid, content) in cases:
+            path = os.path.join(db, name)
+            if is_valid:
+                # This one was valid so db should be written successfully.
+                self.assertTrue(os.path.exists(path))
+                self.assertNotRegex(cm.exception.stderr, name)
+            else:
+                # This one was broken so we shouldn't create corresponding db.
+                self.assertFalse(os.path.exists(path))
+                self.assertRegex(cm.exception.stderr, name)
 
 if __name__ == '__main__':
     # Make sure we don't pick up mandatory profile.
