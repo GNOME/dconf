@@ -599,6 +599,78 @@ class DBusTest(unittest.TestCase):
                 # Now database should be marked as invalid.
                 self.assertEqual(b'\0'*8, mm[:8])
 
+    @unittest.expectedFailure
+    def test_update_failure(self):
+        """Update should skip invalid configuration directory and continue with
+        others. Failure to update one of databases should be indicated with
+        non-zero exit code.
+        
+        Regression test for issue #42.
+        """
+        db = os.path.join(self.temporary_dir.name, 'db')
+
+        valid = os.path.join(db, 'valid')
+        valid_d = os.path.join(db, 'valid.d')
+
+        invalid = os.path.join(db, 'invalid')
+        invalid_d = os.path.join(db, 'invalid.d')
+
+        os.makedirs(valid_d)
+        os.makedirs(invalid_d)
+
+
+        # A few different failure scenarios when loading data from key-file:
+
+        invalid_key_file = "<html>This isn't a key-file nor valid HTML."
+
+        invalid_group_name = dedent('''\
+        [org//no/me]
+        a = 2
+        ''')
+
+        invalid_key_name = dedent('''\
+        [org/gnome]
+        b// = 2
+        ''')
+
+        invalid_value = dedent('''\
+        [org/gnome]
+        c = 2x2
+        ''')
+
+        cases = [(invalid_key_file, 'invalid key-file'),
+                 (invalid_group_name, 'invalid group name'),
+                 (invalid_key_name, 'invalid key name'),
+                 (invalid_value, 'invalid value')]
+
+        for (invalid_content, msg) in cases:
+            with self.subTest(msg=msg):
+                with open(os.path.join(valid_d, '00.conf'), 'w') as file:
+                    file.write('[org]\na = 1')
+
+                with open(os.path.join(invalid_d, '00.conf'), 'w') as file:
+                    file.write(invalid_content)
+
+                # Clean from previous test cases:
+                try:
+                    os.unlink(valid)
+                except FileNotFoundError:
+                    pass
+                try:
+                    os.unlink(invalid)
+                except FileNotFoundError:
+                    pass
+
+                # Return code should indicate failure.
+                with self.assertRaises(subprocess.CalledProcessError) as cm:
+                    dconf('update', db)
+
+                # This one was fine so db should be written successfully.
+                self.assertTrue(os.path.exists(valid))
+
+                # This one was broken so we shouldn't create corresponding db.
+                self.assertFalse(os.path.exists(invalid))
+
 
 if __name__ == '__main__':
     # Make sure we don't pick up mandatory profile.
