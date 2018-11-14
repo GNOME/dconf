@@ -98,6 +98,7 @@ class DBusTest(unittest.TestCase):
         os.mkdir(self.runtime_dir, mode=0o700)
         os.mkdir(self.config_home, mode=0o700)
         os.mkdir(self.dbus_dir, mode=0o700)
+        os.mkdir(os.path.join(self.config_home, 'dconf'))
 
         os.environ['XDG_RUNTIME_DIR'] = self.runtime_dir
         os.environ['XDG_CONFIG_HOME'] = self.config_home
@@ -475,9 +476,6 @@ class DBusTest(unittest.TestCase):
         user_d = os.path.join(self.temporary_dir.name, 'user.d')
         os.mkdir(user_d, mode=0o700)
 
-        # Required from compile utility specifically.
-        os.mkdir(os.path.join(self.config_home, 'dconf'), mode=0o700)
-
         def write_config_d(name):
             keyfile = dedent('''
             [org]
@@ -541,6 +539,34 @@ class DBusTest(unittest.TestCase):
         saved_mtime = move_time_back(config)
         dconf('reset', '-f', '/non-existing/directory/')
         self.assertEqual(saved_mtime, os.path.getmtime(config))
+
+    def test_compile_dotfiles(self):
+        """Compile ignores files starting with a dot."""
+
+        user_d = os.path.join(self.temporary_dir.name, 'user.d')
+        os.mkdir(user_d)
+
+        a_conf = dedent('''\
+        [math]
+        a=42
+        ''')
+
+        a_conf_swp = dedent('''\
+        [math]
+        b=13
+        ''')
+
+        with open(os.path.join(user_d, 'a.conf'), 'w') as file:
+            file.write(a_conf)
+
+        with open(os.path.join(user_d, '.a.conf.swp'), 'w') as file:
+            file.write(a_conf_swp)
+
+        dconf('compile',
+              os.path.join(self.config_home, 'dconf', 'user'),
+              user_d)
+
+        self.assertEqual(a_conf, dconf('dump', '/').stdout)
 
 
 if __name__ == '__main__':
