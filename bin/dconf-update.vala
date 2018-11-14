@@ -251,7 +251,19 @@ void dconf_compile (string[] args) throws GLib.Error {
 extern const string CONFIG_SYSCONFDIR;
 
 void dconf_update (string[] args) throws GLib.Error {
-	update_all (CONFIG_SYSCONFDIR + "/dconf/db");
+	var index = 2;
+	var dbpath = CONFIG_SYSCONFDIR + "/dconf/db";
+
+	if (args[index] != null) {
+		dbpath = args[index];
+		index ++;
+	}
+
+	if (args[index] != null) {
+		throw new OptionError.FAILED ("too many arguments");
+	}
+
+	update_all (dbpath);
 }
 
 // vim:noet ts=4 sw=4

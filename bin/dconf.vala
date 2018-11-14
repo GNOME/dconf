@@ -64,7 +64,7 @@ void show_help (bool requested, string? command) {
 
 		case "update":
 			description = "Update the system dconf databases";
-			synopsis = "";
+			synopsis = " [DIR] ";
 			break;
 
 		case "watch":
