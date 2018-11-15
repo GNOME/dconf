@@ -109,46 +109,39 @@ Gvdb.HashTable read_directory (string dirname) throws GLib.Error {
 			throw e;
 		}
 
-		try {
-			foreach (var group in kf.get_groups ()) {
-				if (group.has_prefix ("/") || group.has_suffix ("/") || "//" in group) {
-					stderr.printf ("%s: ignoring invalid group name: %s\n", filename, group);
+		foreach (var group in kf.get_groups ()) {
+			if (group.has_prefix ("/") || group.has_suffix ("/") || "//" in group) {
+				throw new KeyFileError.PARSE ("%s: invalid group name: %s".printf (filename, group));
+			}
+
+			foreach (var key in kf.get_keys (group)) {
+				if ("/" in key) {
+					throw new KeyFileError.INVALID_VALUE ("%s: [%s]: invalid key name: %s",
+																								filename, group, key);
+				}
+
+				var path = "/" + group + "/" + key;
+
+				if (table.lookup (path) != null) {
+					/* We process the files in reverse alphabetical order.  If the key is already set then
+					 * it must have been set from a file with higher precedence so we should ignore this
+					 * one.
+					 */
 					continue;
 				}
 
-				foreach (var key in kf.get_keys (group)) {
-					if ("/" in key) {
-						throw new KeyFileError.INVALID_VALUE ("%s: [%s]: invalid key name: %s",
-						                                      filename, group, key);
-					}
+				var text = kf.get_value (group, key);
 
-					var path = "/" + group + "/" + key;
-
-					if (table.lookup (path) != null) {
-						/* We process the files in reverse alphabetical order.  If the key is already set then
-						 * it must have been set from a file with higher precedence so we should ignore this
-						 * one.
-						 */
-						continue;
-					}
-
-					var text = kf.get_value (group, key);
-
-					try {
-						var value = Variant.parse (null, text);
-						unowned Gvdb.Item item = table.insert (path);
-						item.set_parent (get_parent (table, path));
-						item.set_value (value);
-					} catch (VariantParseError e) {
-						e.message = "%s: [%s]: %s: invalid value: %s (%s)".printf (filename, group, key, text, e.message);
-						throw e;
-					}
+				try {
+					var value = Variant.parse (null, text);
+					unowned Gvdb.Item item = table.insert (path);
+					item.set_parent (get_parent (table, path));
+					item.set_value (value);
+				} catch (VariantParseError e) {
+					e.message = "%s: [%s]: %s: invalid value: %s (%s)".printf (filename, group, key, text, e.message);
+					throw e;
 				}
 			}
-		} catch (KeyFileError e) {
-			/* This should never happen... */
-			warning ("unexpected keyfile error: %s.  Please file a bug.", e.message);
-			assert_not_reached ();
 		}
 	}
 
