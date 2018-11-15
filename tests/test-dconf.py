@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, see <http://www.gnu.org/licenses/>.
 
+import mmap
 import os
 import subprocess
 import sys
@@ -567,6 +568,36 @@ class DBusTest(unittest.TestCase):
               user_d)
 
         self.assertEqual(a_conf, dconf('dump', '/').stdout)
+
+    def test_database_invalidation(self):
+        """Update invalidates previous database by overwriting the header with
+        null bytes.
+        """
+
+        db = os.path.join(self.temporary_dir.name, 'db')
+        local = os.path.join(db, 'local')
+        local_d = os.path.join(db, 'local.d')
+
+        os.makedirs(local_d)
+
+        with open(os.path.join(local_d, 'local.conf'), 'w') as file:
+            file.write(dedent('''\
+            [org/gnome/desktop/background]
+            picture-uri = 'file:///usr/share/backgrounds/gnome/ColdWarm.jpg'
+            '''))
+
+        # Compile database for the first time.
+        dconf('update', db)
+
+        with open(local, 'rb') as file:
+            with mmap.mmap(file.fileno(), 8, mmap.MAP_SHARED, prot=mmap.PROT_READ) as mm:
+                # Sanity check that database is valid.
+                self.assertNotEqual(b'\0'*8, mm[:8])
+
+                dconf('update', db)
+
+                # Now database should be marked as invalid.
+                self.assertEqual(b'\0'*8, mm[:8])
 
 
 if __name__ == '__main__':
