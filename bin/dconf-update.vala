@@ -235,14 +235,21 @@ void maybe_update_from_directory (string dirname) throws GLib.Error {
 }
 
 void update_all (string dirname) throws GLib.Error {
+	var failed = false;
+
 	foreach (var name in list_directory (dirname, Posix.S_IFDIR)) {
 		if (name.has_suffix (".d")) {
 			try {
 				maybe_update_from_directory (name);
 			} catch (Error e) {
+				failed = true;
 				printerr ("unable to compile %s: %s\n", name, e.message);
 			}
 		}
+	}
+
+	if (failed) {
+		Process.exit (2);
 	}
 }
 
