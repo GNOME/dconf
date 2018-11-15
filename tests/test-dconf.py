@@ -599,7 +599,6 @@ class DBusTest(unittest.TestCase):
                 # Now database should be marked as invalid.
                 self.assertEqual(b'\0'*8, mm[:8])
 
-    @unittest.expectedFailure
     def test_update_failure(self):
         """Update should skip invalid configuration directory and continue with
         others. Failure to update one of databases should be indicated with
