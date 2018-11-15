@@ -8,7 +8,18 @@ void add_to_keyfile (KeyFile kf, DConf.Client client, string topdir, string? rel
 		this_group = "/";
 	}
 
-	foreach (var item in client.list (this_dir)) {
+	var items = client.list (this_dir);
+	GLib.qsort_with_data<string> (items, sizeof (string), (a, b) => {
+		var a_dir = a.has_suffix ("/");
+		var b_dir = b.has_suffix ("/");
+		if (a_dir != b_dir) {
+			return (int) a_dir - (int) b_dir;
+		} else {
+			return GLib.strcmp (a, b);
+		}
+	});
+
+	foreach (var item in items) {
 		if (item.has_suffix ("/")) {
 			add_to_keyfile (kf, client, topdir, rel + item);
 		} else {

@@ -11,7 +11,7 @@ bin_deps = [
   valac.find_library('posix'),
 ]
 
-executable(
+dconf = executable(
   'dconf',
   sources,
   include_directories: top_inc,
