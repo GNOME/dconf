@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, see <http://www.gnu.org/licenses/>.
 
+import mmap
 import os
 import subprocess
 import sys
@@ -98,6 +99,7 @@ class DBusTest(unittest.TestCase):
         os.mkdir(self.runtime_dir, mode=0o700)
         os.mkdir(self.config_home, mode=0o700)
         os.mkdir(self.dbus_dir, mode=0o700)
+        os.mkdir(os.path.join(self.config_home, 'dconf'))
 
         os.environ['XDG_RUNTIME_DIR'] = self.runtime_dir
         os.environ['XDG_CONFIG_HOME'] = self.config_home
@@ -146,6 +148,97 @@ class DBusTest(unittest.TestCase):
             p.wait()
 
         self.temporary_dir.cleanup()
+
+    def test_invalid_usage(self):
+        """Invalid dconf usage results in non-zero exit code and help message.
+        """
+        cases = [
+            # No command:
+            [],
+
+            # Invalid command:
+            ['no-such-command'],
+
+            # Too many arguments:
+            ['blame', 'a'],
+
+            # Missing arguments:
+            ['compile'],
+            ['compile', 'output'],
+            # Too many arguments:
+            ['compile', 'output', 'dir1', 'dir2'],
+
+            # Missing arguments:
+            ['_complete'],
+            ['_complete', ''],
+            # Too many arguments:
+            ['_complete', '', '/', '/'],
+
+            # Missing argument:
+            ['dump'],
+            # Dir is required:
+            ['dump', '/key'],
+            # Too many arguments:
+            ['dump', '/a/', '/b/'],
+
+            # Missing argument:
+            ['list'],
+            # Dir is required:
+            ['list', '/foo/bar'],
+            # Too many arguments:
+            ['list', '/foo', '/bar'],
+
+            # Missing argument:
+            ['list-locks'],
+            # Dir is required:
+            ['list-locks', '/key'],
+            # Too many arguments:
+            ['list-locks', '/a/', '/b/'],
+
+            # Missing argument:
+            ['load'],
+            # Dir is required:
+            ['load', '/key'],
+            # Too many arguments:
+            ['load', '/a/', '/b/'],
+
+            # Missing argument:
+            ['read'],
+            # Key is required:
+            ['read', '/dir/'],
+            # Too many arguments:
+            ['read', '/a', '/b'],
+            ['read', '-d', '/a', '/b'],
+
+            # Missing arguments:
+            ['reset'],
+            # Invalid path:
+            ['reset', 'test/test'],
+            # Too many arguments:
+            ['reset', '/test', '/test'],
+            ['reset', '-f', '/', '/'],
+
+            # Missing arguments:
+            ['watch'],
+            # Invalid path:
+            ['watch', 'foo'],
+            # Too many arguments:
+            ['watch', '/a', '/b'],
+
+            # Missing arguments:
+            ['write'],
+            ['write', '/key'],
+            # Invalid value:
+            ['write', '/key', 'not-a-gvariant-value'],
+            # Too many arguments:
+            ['write', '/key', '1', '2'],
+        ]
+
+        for args in cases:
+            with self.subTest(args=args):
+                with self.assertRaises(subprocess.CalledProcessError) as cm:
+                    dconf(*args, stderr=subprocess.PIPE)
+                self.assertRegex(cm.exception.stderr, 'Usage:')
 
     def test_read_nonexisiting(self):
         """Reading missing key produces no output. """
@@ -384,9 +477,6 @@ class DBusTest(unittest.TestCase):
         user_d = os.path.join(self.temporary_dir.name, 'user.d')
         os.mkdir(user_d, mode=0o700)
 
-        # Required from compile utility specifically.
-        os.mkdir(os.path.join(self.config_home, 'dconf'), mode=0o700)
-
         def write_config_d(name):
             keyfile = dedent('''
             [org]
@@ -451,6 +541,126 @@ class DBusTest(unittest.TestCase):
         dconf('reset', '-f', '/non-existing/directory/')
         self.assertEqual(saved_mtime, os.path.getmtime(config))
 
+    def test_compile_dotfiles(self):
+        """Compile ignores files starting with a dot."""
+
+        user_d = os.path.join(self.temporary_dir.name, 'user.d')
+        os.mkdir(user_d)
+
+        a_conf = dedent('''\
+        [math]
+        a=42
+        ''')
+
+        a_conf_swp = dedent('''\
+        [math]
+        b=13
+        ''')
+
+        with open(os.path.join(user_d, 'a.conf'), 'w') as file:
+            file.write(a_conf)
+
+        with open(os.path.join(user_d, '.a.conf.swp'), 'w') as file:
+            file.write(a_conf_swp)
+
+        dconf('compile',
+              os.path.join(self.config_home, 'dconf', 'user'),
+              user_d)
+
+        self.assertEqual(a_conf, dconf('dump', '/').stdout)
+
+    def test_database_invalidation(self):
+        """Update invalidates previous database by overwriting the header with
+        null bytes.
+        """
+
+        db = os.path.join(self.temporary_dir.name, 'db')
+        local = os.path.join(db, 'local')
+        local_d = os.path.join(db, 'local.d')
+
+        os.makedirs(local_d)
+
+        with open(os.path.join(local_d, 'local.conf'), 'w') as file:
+            file.write(dedent('''\
+            [org/gnome/desktop/background]
+            picture-uri = 'file:///usr/share/backgrounds/gnome/ColdWarm.jpg'
+            '''))
+
+        # Compile database for the first time.
+        dconf('update', db)
+
+        with open(local, 'rb') as file:
+            with mmap.mmap(file.fileno(), 8, mmap.MAP_SHARED, prot=mmap.PROT_READ) as mm:
+                # Sanity check that database is valid.
+                self.assertNotEqual(b'\0'*8, mm[:8])
+
+                dconf('update', db)
+
+                # Now database should be marked as invalid.
+                self.assertEqual(b'\0'*8, mm[:8])
+
+    @unittest.expectedFailure
+    def test_update_failure(self):
+        """Update should skip invalid configuration directory and continue with
+        others. Failure to update one of databases should be indicated with
+        non-zero exit code.
+        
+        Regression test for issue #42.
+        """
+
+        # A few different scenarios when loading data from key-file:
+        valid_key_file = '[org]\na = 1'
+
+        invalid_key_file = "<html>This isn't a key-file nor valid HTML."
+
+        invalid_group_name = dedent('''\
+        [org//no/me]
+        a = 2
+        ''')
+
+        invalid_key_name = dedent('''\
+        [org/gnome]
+        b// = 2
+        ''')
+
+        invalid_value = dedent('''\
+        [org/gnome]
+        c = 2x2
+        ''')
+
+        db = os.path.join(self.temporary_dir.name, 'db')
+
+        # Database name,     valid, content
+        cases = [('site_aa', True,  valid_key_file),
+                 ('site_bb', False, invalid_key_file),
+                 ('site_cc', False, invalid_group_name),
+                 ('site_dd', False, invalid_key_name),
+                 ('site_ee', False, invalid_value),
+                 ('site_ff', True,  valid_key_file)]
+
+        for (name, is_valid, content) in cases:
+            conf_dir = os.path.join(db, '{}.d'.format(name))
+            conf_file = os.path.join(conf_dir, '{}.conf'.format(name))
+
+            os.makedirs(conf_dir)
+
+            with open(conf_file, 'w') as file:
+                file.write(content)
+
+        # Return code should indicate failure.
+        with self.assertRaises(subprocess.CalledProcessError) as cm:
+            dconf('update', db, stderr=subprocess.PIPE)
+
+        for (name, is_valid, content) in cases:
+            path = os.path.join(db, name)
+            if is_valid:
+                # This one was valid so db should be written successfully.
+                self.assertTrue(os.path.exists(path))
+                self.assertNotRegex(cm.exception.stderr, name)
+            else:
+                # This one was broken so we shouldn't create corresponding db.
+                self.assertFalse(os.path.exists(path))
+                self.assertRegex(cm.exception.stderr, name)
 
 if __name__ == '__main__':
     # Make sure we don't pick up mandatory profile.
