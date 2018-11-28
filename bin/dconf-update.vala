@@ -162,21 +162,44 @@ Gvdb.HashTable read_directory (string dirname) throws GLib.Error {
 	return table;
 }
 
+time_t get_directory_mtime (string dirname, Posix.Stat dir_buf) throws GLib.Error {
+	Posix.Stat lockdir_buf;
+	Posix.Stat file_buf;
+	time_t latest_mtime = dir_buf.st_mtime;
+
+	var files = list_directory (dirname, Posix.S_IFREG);
+
+	foreach (var filename in files) {
+		if (Posix.stat (filename, out file_buf) == 0 && file_buf.st_mtime > latest_mtime)
+			latest_mtime = file_buf.st_mtime;
+	}
+
+	if (Posix.stat (dirname + "/locks", out lockdir_buf) == 0 && Posix.S_ISDIR (lockdir_buf.st_mode)) {
+		if (lockdir_buf.st_mtime > latest_mtime) {
+			// if the lock directory has been updated more recently then consider its timestamp instead
+			latest_mtime = lockdir_buf.st_mtime;
+		}
+
+		files = list_directory (dirname + "/locks", Posix.S_IFREG);
+
+		foreach (var filename in files) {
+			if (Posix.stat (filename, out file_buf) == 0 && file_buf.st_mtime > latest_mtime)
+				latest_mtime = file_buf.st_mtime;
+		}
+	}
+
+	return latest_mtime;
+}
+
 void maybe_update_from_directory (string dirname) throws GLib.Error {
 	Posix.Stat dir_buf;
 
 	if (Posix.stat (dirname, out dir_buf) == 0 && Posix.S_ISDIR (dir_buf.st_mode)) {
-		Posix.Stat lockdir_buf;
 		Posix.Stat file_buf;
 
 		var filename = dirname.substring (0, dirname.length - 2);
 
-		if (Posix.stat (dirname + "/locks", out lockdir_buf) == 0 && lockdir_buf.st_mtime > dir_buf.st_mtime) {
-			// if the lock directory has been updated more recently then consider its timestamp instead
-			dir_buf.st_mtime = lockdir_buf.st_mtime;
-		}
-
-		if (Posix.stat (filename, out file_buf) == 0 && file_buf.st_mtime > dir_buf.st_mtime) {
+		if (Posix.stat (filename, out file_buf) == 0 && file_buf.st_mtime > get_directory_mtime (dirname, dir_buf)) {
 			return;
 		}
 
