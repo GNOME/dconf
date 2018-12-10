@@ -749,8 +749,12 @@ if __name__ == '__main__':
     mandatory_profile = '/run/dconf/user/{}'.format(os.getuid())
     assert not os.path.isfile(mandatory_profile)
 
-    # Avoid profile sourced from environment
+    # Avoid profile sourced from environment or system data dirs.
     os.environ.pop('DCONF_PROFILE', None)
+    os.environ.pop('XDG_DATA_DIRS', None)
+    # Avoid interfering with external message buses.
+    os.environ.pop('DBUS_SYSTEM_BUS_ADDRESS', None)
+    os.environ.pop('DBUS_SESSION_BUS_ADDRESS', None)
 
     if len(sys.argv) < 3:
         message = 'Usage: {} path-to-dconf path-to-dconf-service'.format(
