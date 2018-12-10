@@ -73,6 +73,10 @@ def dconf_write(key, value):
 def dconf_list(key):
     return dconf('list', key).stdout.splitlines()
 
+def dconf_locks(key, **kwargs):
+    lines = dconf('list-locks', key, **kwargs).stdout.splitlines()
+    lines.sort()
+    return lines
 
 def dconf_complete(suffix, prefix):
     lines = dconf('_complete', suffix, prefix).stdout.splitlines()
@@ -660,6 +664,85 @@ class DBusTest(unittest.TestCase):
                 # This one was broken so we shouldn't create corresponding db.
                 self.assertFalse(os.path.exists(path))
                 self.assertRegex(cm.exception.stderr, name)
+
+    def test_locks(self):
+        """Key paths can be locked in system databases.
+
+        - Update configures locks based on files found in "locks" subdirectory.
+        - Locks can be listed with list-locks command.
+        - Locks are enforced during write.
+        """
+
+        db = os.path.join(self.temporary_dir.name, 'db')
+        profile = os.path.join(self.temporary_dir.name, 'profile')
+        site = os.path.join(db, 'site')
+        site_d = os.path.join(db, 'site.d')
+        site_locks = os.path.join(db, site_d, 'locks')
+
+        os.makedirs(site_locks)
+
+        # For meaningful test of locks we need two sources, first of which
+        # should be writable. We will use user-db and file-db.
+        with open(profile, 'w') as file:
+            file.write(dedent('''\
+            user-db:user
+            file-db:{}
+            '''.format(site)))
+
+        # Environment to use for all dconf client invocations.
+        env = dict(os.environ)
+        env['DCONF_PROFILE'] = profile
+
+        # Default settings
+        with open(os.path.join(site_d, '10-site-defaults'), 'w') as file:
+            file.write(dedent('''\
+            # Some useful default settings for our site
+            [system/proxy/http]
+            host='172.16.0.1'
+            enabled=true
+
+            [org/gnome/desktop/background]
+            picture-uri='file:///usr/local/rupert-corp/company-wallpaper.jpeg'
+            '''))
+
+        # Lock proxy settings.
+        with open(os.path.join(site_locks, '10-proxy-lock'), 'w') as file:
+            file.write(dedent('''\
+            # Prevent changes to proxy
+            /system/proxy/http/host
+            /system/proxy/http/enabled
+            /system/proxy/ftp/host
+            /system/proxy/ftp/enabled
+            '''))
+
+        # Compile site configuration.
+        dconf('update', db)
+
+        # Test list-locks:
+        self.assertEqual(['/system/proxy/ftp/enabled',
+                          '/system/proxy/ftp/host',
+                          '/system/proxy/http/enabled',
+                          '/system/proxy/http/host'],
+                         dconf_locks('/', env=env))
+
+        self.assertEqual(['/system/proxy/http/enabled',
+                          '/system/proxy/http/host'],
+                         dconf_locks('/system/proxy/http/', env=env))
+
+        self.assertEqual([],
+                         dconf_locks('/org/gnome/', env=env))
+
+        # Changing unlocked defaults is fine.
+        dconf('write', '/org/gnome/desktop/background/picture-uri',
+              '"file:///usr/share/backgrounds/gnome/ColdWarm.jpg"',
+              env=env)
+
+        # It is an error to change locked keys.
+        with self.assertRaises(subprocess.CalledProcessError) as cm:
+            dconf('write', '/system/proxy/http/enabled', 'false',
+                  env=env, stderr=subprocess.PIPE)
+        self.assertRegex(cm.exception.stderr, 'non-writable keys')
+
 
 if __name__ == '__main__':
     # Make sure we don't pick up mandatory profile.
