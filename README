@@ -62,8 +62,6 @@ but still depends on libglib.  It is not recommended to use this library
 unless you have a legacy dependency on libdbus-1 (such as in Qt
 applications).
 
-bin/ is written in Vala, hence the Vala compiler is required.
-
 Installing dconf follows the typical meson dance:
 
   meson builddir
