@@ -1,14 +1,10 @@
 sources = gvdb_builder + libdconf_vapi + files(
-  'dconf-dump.vala',
-  'dconf-update.vala',
-  'dconf.vala',
-  'gvdb.vapi',
+  'dconf.c',
 )
 
 bin_deps = [
   libdconf_common_dep,
   libdconf_dep,
-  valac.find_library('posix'),
 ]
 
 dconf = executable(

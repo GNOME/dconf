@@ -1,5 +1,5 @@
 project(
-  'dconf', ['c', 'vala'],
+  'dconf', ['c'],
   version: '0.31.1',
   license: 'LGPL2.1+',
   meson_version: '>= 0.46.0',
@@ -20,7 +20,6 @@ revision = 0
 libversion = '@0@.@1@.@2@'.format(soversion, current, revision)
 
 cc = meson.get_compiler('c')
-valac = meson.get_compiler('vala')
 
 # compiler flags
 common_flags = ['-DSYSCONFDIR="@0@"'.format(dconf_sysconfdir)]
