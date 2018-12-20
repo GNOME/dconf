@@ -87,6 +87,14 @@ test_flag_nonexistent (void)
   dconf_shm_flag ("does-not-exist");
 }
 
+#if defined(_FILE_OFFSET_BITS) && _FILE_OFFSET_BITS == 64
+#define PWRITE_SYM "pwrite64"
+#else
+#define PWRITE_SYM "pwrite"
+#endif
+
+#undef pwrite
+
 static gboolean should_fail_pwrite;
 /* interpose */
 ssize_t
@@ -95,7 +103,7 @@ pwrite (int fd, const void *buf, size_t count, off_t offset)
   static ssize_t (* real_pwrite) (int, const void *, size_t, off_t);
 
   if (!real_pwrite)
-    real_pwrite = dlsym (RTLD_NEXT, "pwrite");
+    real_pwrite = dlsym (RTLD_NEXT, PWRITE_SYM);
 
   if (should_fail_pwrite)
     {
