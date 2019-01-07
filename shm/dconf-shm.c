@@ -21,6 +21,7 @@
 #include "config.h"
 
 #include "dconf-shm.h"
+#include "dconf-shm-mockable.h"
 
 #include <sys/mman.h>
 #include <unistd.h>
@@ -82,7 +83,7 @@ dconf_shm_open (const gchar *name)
    * By writing to the second byte in the file we ensure we don't
    * overwrite the first byte (which is the one we care about).
    */
-  if (pwrite (fd, "", 1, 1) != 1)
+  if (dconf_shm_pwrite (fd, "", 1, 1) != 1)
     {
       g_critical ("failed to allocate file '%s': %s.  dconf will not work properly.", filename, g_strerror (errno));
       goto out;
@@ -124,7 +125,7 @@ dconf_shm_flag (const gchar *name)
        * If this fails then it will probably fail for the client too.
        * If it doesn't then there's not really much we can do...
        */
-      if (pwrite (fd, "", 1, 1) == 1)
+      if (dconf_shm_pwrite (fd, "", 1, 1) == 1)
         {
           guint8 *shm;
 
