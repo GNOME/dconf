@@ -2,6 +2,7 @@
 
 #include "../engine/dconf-engine.h"
 #include "../engine/dconf-engine-profile.h"
+#include "../engine/dconf-engine-mockable.h"
 #include "../common/dconf-enums.h"
 #include "dconf-mock.h"
 
@@ -17,13 +18,9 @@ static const gchar *filename_to_replace;
 static const gchar *filename_to_replace_it_with;
 
 FILE *
-fopen (const char *filename,
+dconf_engine_fopen (const char *filename,
        const char *mode)
 {
-  static FILE * (*real_fopen) (const char *, const char *);
-
-  if (!real_fopen)
-    real_fopen = dlsym (RTLD_NEXT, "fopen");
 
   if (filename_to_replace && g_str_equal (filename, filename_to_replace))
     {
@@ -32,7 +29,7 @@ fopen (const char *filename,
       filename = filename_to_replace_it_with;
     }
 
-  return (* real_fopen) (filename, mode);
+  return fopen (filename, mode);
 }
 
 static void assert_no_messages (void);

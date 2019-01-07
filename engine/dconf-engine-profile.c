@@ -21,6 +21,7 @@
 #include "config.h"
 
 #include "dconf-engine-profile.h"
+#include "dconf-engine-mockable.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -207,7 +208,7 @@ dconf_engine_open_profile_file (const gchar *profile)
       gchar *filename;
 
       filename = g_build_filename (prefix, "dconf/profile", profile, NULL);
-      fp = fopen (filename, "r");
+      fp = dconf_engine_fopen (filename, "r");
 
       /* If it wasn't ENOENT then we don't want to continue on to check
        * other paths.  Fail immediately.
@@ -236,7 +237,7 @@ dconf_engine_open_mandatory_profile (void)
   memcpy (path, MANDATORY_DIR, mdlen);
   snprintf (path + mdlen, 20, "%u", (guint) getuid ());
 
-  return fopen (path, "r");
+  return dconf_engine_fopen (path, "r");
 }
 
 static FILE *
@@ -253,7 +254,7 @@ dconf_engine_open_runtime_profile (void)
   memcpy (path, runtime_dir, rdlen);
   memcpy (path + rdlen, RUNTIME_PROFILE, sizeof RUNTIME_PROFILE);
 
-  return fopen (path, "r");
+  return dconf_engine_fopen (path, "r");
 }
 
 DConfEngineSource **
@@ -311,7 +312,7 @@ dconf_engine_profile_open (const gchar *profile,
       if (profile[0] != '/')
         file = dconf_engine_open_profile_file (profile);
       else
-        file = fopen (profile, "r");
+        file = dconf_engine_fopen (profile, "r");
     }
 
   if (file != NULL)
