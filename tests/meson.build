@@ -24,11 +24,11 @@ unit_tests = [
   # [name, sources, c_args, dependencies, link_with]
   ['paths', 'paths.c', [], libdconf_common_dep, []],
   ['changeset', 'changeset.c', [], libdconf_common_dep, []],
-  ['shm', ['shm.c', 'tmpdir.c'], [], [dl_dep, libdconf_common_dep, libdconf_shm_dep], []],
+  ['shm', ['shm.c', 'tmpdir.c'], [], [dl_dep, libdconf_common_dep, libdconf_shm_test_dep], []],
   ['gvdb', 'gvdb.c', '-DSRCDIR="@0@"'.format(test_dir), libgvdb_dep, []],
   ['gdbus-thread', 'dbus.c', '-DDBUS_BACKEND="/gdbus/thread"', libdconf_gdbus_thread_dep, []],
   ['gdbus-filter', 'dbus.c', '-DDBUS_BACKEND="/gdbus/filter"', libdconf_gdbus_filter_dep, []],
-  ['engine', 'engine.c', '-DSRCDIR="@0@"'.format(test_dir), [dl_dep, libdconf_engine_dep, m_dep], libdconf_mock],
+  ['engine', 'engine.c', '-DSRCDIR="@0@"'.format(test_dir), [dl_dep, libdconf_engine_test_dep, m_dep], libdconf_mock],
   ['client', 'client.c', '-DSRCDIR="@0@"'.format(test_dir), [libdconf_client_dep, libdconf_engine_dep], libdconf_mock],
   ['writer', 'writer.c', '-DSRCDIR="@0@"'.format(test_dir), [glib_dep, dl_dep, m_dep, libdconf_service_dep], [libdconf_mock]],
 ]
