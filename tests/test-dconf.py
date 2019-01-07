@@ -105,6 +105,7 @@ class DBusTest(unittest.TestCase):
         os.mkdir(self.dbus_dir, mode=0o700)
         os.mkdir(os.path.join(self.config_home, 'dconf'))
 
+        os.environ['DCONF_BLAME'] = ''
         os.environ['XDG_RUNTIME_DIR'] = self.runtime_dir
         os.environ['XDG_CONFIG_HOME'] = self.config_home
 
@@ -743,6 +744,22 @@ class DBusTest(unittest.TestCase):
                   env=env, stderr=subprocess.PIPE)
         self.assertRegex(cm.exception.stderr, 'non-writable keys')
 
+    def test_dconf_blame(self):
+        """Blame returns recorded information about write operations.
+
+        Recorded information include sender bus name, sender process id and
+        object path the write operations was invoked on.
+        """
+
+        p = subprocess.Popen([dconf_exe, 'write', '/prime', '307'])
+        p.wait()
+
+        blame = dconf('blame').stdout
+        print(blame)
+
+        self.assertRegex(blame, 'Sender: ')
+        self.assertRegex(blame, 'PID: {}'.format(p.pid))
+        self.assertRegex(blame, 'Object path: /ca/desrt/dconf/Writer/user')
 
 if __name__ == '__main__':
     # Make sure we don't pick up mandatory profile.
