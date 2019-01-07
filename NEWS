@@ -1,3 +1,36 @@
+Changes in dconf 0.31.1
+=======================
+
+ - Engine: Fix memory leak when subscribing to a path. (Guido Günther; !25)
+
+ - CI: Always store test artifacts so we always get code coverage results.
+   (Philip Withnall; !32)
+
+ - Sort output of list and dump commands. (Tomasz Miąsko; !31)
+
+ - Tests: Add integration tests for dconf and dconf-service running within
+   a separate D-Bus session and clean XDG_RUNTIME_DIR and XDG_CONFIG_HOME.
+   (Tomasz Miąsko; !31)
+
+ - Engine: Coalesce pending writes into a single changeset.
+   (Tomasz Miąsko; !30)
+
+ - Consistently validate the number of arguments.
+   Add optional directory argument for update command.
+   (Tomasz Miąsko; !33)
+
+ - Tests: Add further integration tests (Tomasz Miąsko; !33)
+
+ - Check mtimes of files when updating databases. (Marek Kasik; !27; #11)
+
+ - Indicate update failure with non-zero exit code. Consistently handle
+   invalid configuration in update. (Tomasz Miąsko; !34; #42)
+
+ - Replace Bugzilla by Gitlab URL in DOAP file. (Andre Klapper)
+
+ - Tests: Add test for key paths locked in system databases
+   (Tomasz Miąsko; !35)
+
 Changes in dconf 0.30.0
 =======================
 
