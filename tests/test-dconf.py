@@ -237,6 +237,9 @@ class DBusTest(unittest.TestCase):
             ['write', '/key', 'not-a-gvariant-value'],
             # Too many arguments:
             ['write', '/key', '1', '2'],
+
+            # Too many arguments:
+            ['update', 'a', 'b'],
         ]
 
         for args in cases:
@@ -244,6 +247,15 @@ class DBusTest(unittest.TestCase):
                 with self.assertRaises(subprocess.CalledProcessError) as cm:
                     dconf(*args, stderr=subprocess.PIPE)
                 self.assertRegex(cm.exception.stderr, 'Usage:')
+
+    def test_help(self):
+        """Help show usage information on stdout and exits with success."""
+
+        stdout = dconf('help', 'write').stdout
+        self.assertRegex(stdout, 'dconf write KEY VALUE')
+
+        stdout = dconf('help', 'help').stdout
+        self.assertRegex(stdout, 'dconf help COMMAND')
 
     def test_read_nonexisiting(self):
         """Reading missing key produces no output. """
