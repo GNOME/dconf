@@ -5,7 +5,7 @@ before_script:
   - apt install -y -qq build-essential meson pkg-config gtk-doc-tools
                        libxml2-utils gobject-introspection dbus dbus-x11
                        libdbus-1-dev libgirepository1.0-dev libglib2.0-dev
-                       bash-completion lcov valac
+                       bash-completion lcov
   - export LANG=C.UTF-8
 
 stages:
