@@ -105,6 +105,7 @@ class DBusTest(unittest.TestCase):
         os.mkdir(self.dbus_dir, mode=0o700)
         os.mkdir(os.path.join(self.config_home, 'dconf'))
 
+        os.environ['DCONF_BLAME'] = ''
         os.environ['XDG_RUNTIME_DIR'] = self.runtime_dir
         os.environ['XDG_CONFIG_HOME'] = self.config_home
 
@@ -236,6 +237,9 @@ class DBusTest(unittest.TestCase):
             ['write', '/key', 'not-a-gvariant-value'],
             # Too many arguments:
             ['write', '/key', '1', '2'],
+
+            # Too many arguments:
+            ['update', 'a', 'b'],
         ]
 
         for args in cases:
@@ -243,6 +247,15 @@ class DBusTest(unittest.TestCase):
                 with self.assertRaises(subprocess.CalledProcessError) as cm:
                     dconf(*args, stderr=subprocess.PIPE)
                 self.assertRegex(cm.exception.stderr, 'Usage:')
+
+    def test_help(self):
+        """Help show usage information on stdout and exits with success."""
+
+        stdout = dconf('help', 'write').stdout
+        self.assertRegex(stdout, 'dconf write KEY VALUE')
+
+        stdout = dconf('help', 'help').stdout
+        self.assertRegex(stdout, 'dconf help COMMAND')
 
     def test_read_nonexisiting(self):
         """Reading missing key produces no output. """
@@ -743,6 +756,22 @@ class DBusTest(unittest.TestCase):
                   env=env, stderr=subprocess.PIPE)
         self.assertRegex(cm.exception.stderr, 'non-writable keys')
 
+    def test_dconf_blame(self):
+        """Blame returns recorded information about write operations.
+
+        Recorded information include sender bus name, sender process id and
+        object path the write operations was invoked on.
+        """
+
+        p = subprocess.Popen([dconf_exe, 'write', '/prime', '307'])
+        p.wait()
+
+        blame = dconf('blame').stdout
+        print(blame)
+
+        self.assertRegex(blame, 'Sender: ')
+        self.assertRegex(blame, 'PID: {}'.format(p.pid))
+        self.assertRegex(blame, 'Object path: /ca/desrt/dconf/Writer/user')
 
 if __name__ == '__main__':
     # Make sure we don't pick up mandatory profile.
