@@ -56,11 +56,22 @@ pkg.generate(
   variables: 'exec_prefix=${prefix}',
 )
 
-libdconf_vapi = files('dconf.vapi')
+if vapigen_dep.found()
+  vapi_data = files(
+    'dconf.vapi',
+    'dconf.deps',
+  )
 
-vapi_data = libdconf_vapi + files('dconf.deps')
+  vapi_dir = vapigen_dep.get_pkgconfig_variable(
+    'vapidir',
+    define_variable: ['datadir', dconf_datadir]
+  )
 
-install_data(
-  vapi_data,
-  install_dir: vapi_dir,
-)
+  install_data(
+    vapi_data,
+    install_dir: vapi_dir,
+  )
+endif
+
+
+
