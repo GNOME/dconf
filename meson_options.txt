@@ -1,3 +1,4 @@
 option('bash_completion', type: 'boolean', value: true, description: 'install bash completion files')
 option('man', type: 'boolean', value: true, description: 'generate man pages')
 option('gtk_doc', type: 'boolean', value: false, description: 'use gtk-doc to build documentation')
+option('vapi', type: 'boolean', value: true, description: 'install dconf client vapi')
