@@ -33,6 +33,7 @@
     <cmdsynopsis>
       <command>dconf</command>
       <arg choice="plain">read</arg>
+      <arg choice="opt">-d</arg>
       <arg choice="plain"><replaceable>KEY</replaceable></arg>
     </cmdsynopsis>
     <cmdsynopsis>
@@ -61,6 +62,7 @@
     <cmdsynopsis>
       <command>dconf</command>
       <arg choice="plain">update</arg>
+      <arg choice="opt"><replaceable>DBDIR</replaceable></arg>
     </cmdsynopsis>
     <cmdsynopsis>
       <command>dconf</command>

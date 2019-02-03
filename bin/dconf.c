@@ -938,6 +938,12 @@ dconf_compile (const gchar **argv,
   return gvdb_table_write_contents (table, output, byteswap, error);
 }
 
+static gchar *
+get_system_db_path ()
+{
+    return g_build_filename (SYSCONFDIR, "dconf", "db", NULL);
+}
+
 static gboolean
 dconf_update (const gchar **argv,
               GError      **error)
@@ -951,7 +957,7 @@ dconf_update (const gchar **argv,
       index += 1;
     }
   else
-    dir = g_build_filename (SYSCONFDIR, "dconf", "db", NULL);
+    dir = get_system_db_path ();
 
   if (argv[index] != NULL)
     return option_error_set (error, "too many arguments");
@@ -1004,7 +1010,7 @@ static const Command commands[] = {
   {
     "update", dconf_update,
     "Update the system dconf databases",
-    ""
+    " [DBDIR] "
   },
   {
     "watch", dconf_watch,
@@ -1115,6 +1121,12 @@ command_show_help (const Command *cmd,
 
           if (strstr (cmd->synopsis, " SUFFIX ") != NULL)
             g_string_append (s, "  SUFFIX      An empty string '' or '/'.\n");
+
+          if (strstr (cmd->synopsis, " [DBDIR] ") != NULL)
+            {
+              g_autofree gchar *path = get_system_db_path ();
+              g_string_append_printf (s, "  DBDIR       The databases directory. Default: %s\n", path);
+            }
 
           g_string_append (s, "\n");
         }
