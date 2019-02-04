@@ -1,4 +1,4 @@
-sources = gvdb_builder + libdconf_vapi + files(
+sources = gvdb_builder + files(
   'dconf.c',
 )
 
