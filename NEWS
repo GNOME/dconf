@@ -1,3 +1,16 @@
+Changes in dconf 0.31.2
+=======================
+
+ - Bin: rewrite dconf utility in C. Updates are no longer conditional on
+   the mtime of the database directory and files. Help information is shown
+   on erroneous usage, but not otherwise. (Tomasz Miąsko; !39)
+
+ - build: Make dconf client vapi file installation optional, and thus the
+   Vala dependency optional (still built by default) (Tomasz Miąsko; !40)
+
+ - bin: Add a new database directory argument for the update command
+   (Tomasz Miąsko, Takao Fujiwara; !39, !41)
+
 Changes in dconf 0.31.1
 =======================
 
