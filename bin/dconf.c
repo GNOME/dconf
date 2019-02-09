@@ -578,14 +578,29 @@ keyfile_foreach (GKeyFile           *kf,
   return TRUE;
 }
 
+typedef struct {
+  DConfClient    *client;
+  DConfChangeset *changeset;
+  gboolean        force;
+} LoadContext;
+
 static void
 changeset_set (const gchar *path,
                GVariant    *value,
                gpointer     user_data)
 {
-  DConfChangeset *changeset = user_data;
+  LoadContext *ctx = user_data;
 
-  dconf_changeset_set (changeset, path, value);
+  /* When force option is used, ignore changes made to non-writeable keys to
+   * avoid rejecting the whole changeset.
+   */
+  if (ctx->force && !dconf_client_is_writable (ctx->client, path))
+    {
+      g_fprintf (stderr, "warning: ignored non-writable key '%s'\n", path);
+      return;
+    }
+
+  dconf_changeset_set (ctx->changeset, path, value);
 }
 
 static gboolean
@@ -593,27 +608,39 @@ dconf_load (const gchar **argv,
             GError      **error)
 {
   const gchar *dir;
+  gint index = 0;
+  gboolean force = FALSE;
   g_autoptr(GError) local_error = NULL;
   g_autoptr(GKeyFile) kf = NULL;
   g_autoptr(DConfChangeset) changeset = NULL;
   g_autoptr (DConfClient) client = NULL;
 
-  dir = argv[0];
+  if (argv[index] != NULL && strcmp (argv[index], "-f") == 0)
+    {
+      force = TRUE;
+      index += 1;
+    }
+
+  dir = argv[index];
   if (!dconf_is_dir (dir, &local_error))
     return option_error_propagate (error, &local_error);
 
-  if (argv[1] != NULL)
+  index += 1;
+
+  if (argv[index] != NULL)
     return option_error_set (error, "too many arguments");
 
   kf = keyfile_from_stdin (error);
   if (kf == NULL)
     return FALSE;
 
+  client = dconf_client_new ();
   changeset = dconf_changeset_new ();
-  if (!keyfile_foreach (kf, dir, changeset_set, changeset, error))
+
+  LoadContext ctx = { client, changeset, force };
+  if (!keyfile_foreach (kf, dir, changeset_set, &ctx, error))
     return FALSE;
 
-  client = dconf_client_new ();
   return dconf_client_change_sync (client, changeset, NULL, NULL, error);
 }
 
@@ -1024,8 +1051,8 @@ static const Command commands[] = {
   },
   {
     "load", dconf_load, 
-    "Populate a subpath from stdin",
-    " DIR "
+    "Populate a subpath from stdin.  -f ignore locked keys.",
+    " [-f] DIR "
   },
   {
     "blame", dconf_blame,
