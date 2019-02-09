@@ -62,8 +62,8 @@ def dconf(*args, **kwargs):
     return subprocess.run(argv, **kwargs)
 
 
-def dconf_read(key):
-    return dconf('read', key).stdout.rstrip('\n')
+def dconf_read(key, **kwargs):
+    return dconf('read', key, **kwargs).stdout.rstrip('\n')
 
 
 def dconf_write(key, value):
@@ -684,6 +684,7 @@ class DBusTest(unittest.TestCase):
         - Update configures locks based on files found in "locks" subdirectory.
         - Locks can be listed with list-locks command.
         - Locks are enforced during write.
+        - Load can ignore changes to locked keys using -f option.
         """
 
         db = os.path.join(self.temporary_dir.name, 'db')
@@ -754,6 +755,26 @@ class DBusTest(unittest.TestCase):
             dconf('write', '/system/proxy/http/enabled', 'false',
                   env=env, stderr=subprocess.PIPE)
         self.assertRegex(cm.exception.stderr, 'non-writable keys')
+
+        keyfile = dedent('''\
+        [system/proxy/http]
+        enabled=false
+        [org/gnome/desktop]
+        background='Winter.png'
+        ''')
+
+        # Load fails to apply changes if some key is locked ...
+        with self.assertRaises(subprocess.CalledProcessError) as cm:
+            dconf('load', '/', input=keyfile, env=env, stderr=subprocess.PIPE)
+        self.assertRegex(cm.exception.stderr, 'non-writable keys')
+        self.assertEqual('true', dconf_read('/system/proxy/http/enabled', env=env))
+        self.assertEqual("'ColdWarm.jpg'", dconf_read('/org/gnome/desktop/background', env=env))
+
+        # ..., unless invoked with -f option, then it changes unlocked keys.
+        stderr = dconf('load', '-f', '/', input=keyfile, env=env, stderr=subprocess.PIPE).stderr
+        self.assertRegex(stderr, 'ignored non-writable key')
+        self.assertEqual('true', dconf_read('/system/proxy/http/enabled', env=env))
+        self.assertEqual("'Winter.png'", dconf_read('/org/gnome/desktop/background', env=env))
 
     def test_dconf_blame(self):
         """Blame returns recorded information about write operations.
