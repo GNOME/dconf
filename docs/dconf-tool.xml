@@ -77,6 +77,7 @@
     <cmdsynopsis>
       <command>dconf</command>
       <arg choice="plain">load</arg>
+      <arg choice="opt">-f</arg>
       <arg choice="plain"><replaceable>DIR</replaceable></arg>
     </cmdsynopsis>
     <cmdsynopsis>
@@ -180,7 +181,13 @@
       <varlistentry>
         <term><option>load</option></term>
 
-        <listitem><para>Populate a subpath from stdin. The expected format is the same as produced by <option>dump</option>.</para></listitem>
+        <listitem>
+          <para>
+            Populate a subpath from stdin. The expected format is the same as produced by <option>dump</option>.
+            Attempting to change non-writable keys cancels the load command.
+            To ignore changes to non-writable keys instead, use <option>-f</option>.
+          </para>
+        </listitem>
       </varlistentry>
 
       <varlistentry>
