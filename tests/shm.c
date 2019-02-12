@@ -10,6 +10,7 @@
 #include <dlfcn.h>
 
 #include "../shm/dconf-shm.h"
+#include "../shm/dconf-shm-mockable.h"
 #include "tmpdir.h"
 
 static void
@@ -90,20 +91,15 @@ test_flag_nonexistent (void)
 static gboolean should_fail_pwrite;
 /* interpose */
 ssize_t
-pwrite (int fd, const void *buf, size_t count, off_t offset)
+dconf_shm_pwrite (int fd, const void *buf, size_t count, off_t offset)
 {
-  static ssize_t (* real_pwrite) (int, const void *, size_t, off_t);
-
-  if (!real_pwrite)
-    real_pwrite = dlsym (RTLD_NEXT, "pwrite");
-
   if (should_fail_pwrite)
     {
       errno = ENOSPC;
       return -1;
     }
 
-  return (* real_pwrite) (fd, buf, count, offset);
+  return pwrite (fd, buf, count, offset);
 }
 
 static void
