@@ -714,8 +714,8 @@ class DBusTest(unittest.TestCase):
             host='172.16.0.1'
             enabled=true
 
-            [org/gnome/desktop/background]
-            picture-uri='file:///usr/local/rupert-corp/company-wallpaper.jpeg'
+            [org/gnome/desktop]
+            background='company-wallpaper.jpeg'
             '''))
 
         # Lock proxy settings.
@@ -746,9 +746,8 @@ class DBusTest(unittest.TestCase):
                          dconf_locks('/org/gnome/', env=env))
 
         # Changing unlocked defaults is fine.
-        dconf('write', '/org/gnome/desktop/background/picture-uri',
-              '"file:///usr/share/backgrounds/gnome/ColdWarm.jpg"',
-              env=env)
+        dconf('write', '/org/gnome/desktop/background',
+              '"ColdWarm.jpg"', env=env)
 
         # It is an error to change locked keys.
         with self.assertRaises(subprocess.CalledProcessError) as cm:
