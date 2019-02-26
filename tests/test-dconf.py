@@ -802,8 +802,8 @@ if __name__ == '__main__':
     os.environ.pop('DCONF_PROFILE', None)
     os.environ.pop('XDG_DATA_DIRS', None)
     # Avoid interfering with external message buses.
-    os.environ.pop('DBUS_SYSTEM_BUS_ADDRESS', None)
-    os.environ.pop('DBUS_SESSION_BUS_ADDRESS', None)
+    os.environ['DBUS_SYSTEM_BUS_ADDRESS'] = ''
+    os.environ['DBUS_SESSION_BUS_ADDRESS'] = ''
 
     if len(sys.argv) < 3:
         message = 'Usage: {} path-to-dconf path-to-dconf-service'.format(
