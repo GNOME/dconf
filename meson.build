@@ -1,6 +1,6 @@
 project(
   'dconf', ['c'],
-  version: '0.31.3',
+  version: '0.31.92',
   license: 'LGPL2.1+',
   meson_version: '>= 0.47.0',
 )

@@ -1,3 +1,19 @@
+Changes in dconf 0.31.92
+========================
+
+ - bin: Add an option to ignore changes to locked keys during load
+   (Tomasz Miąsko; #1; !43)
+
+ - tests: Use more concise key and value (Tomasz Miąsko; #1; !43)
+
+ - tests: shm: fix pwrite wrapper with -D_FILE_OFFSET_BITS=64 (Ben Wolsieffer; !37)
+
+ - tests: replace usage of dlsym with separate modules containing functions that need to be mocked out
+   (Daniel Playfair Cal; !37)
+
+ - tests: Avoid using real system bus during tests
+   (Tomasz Miąsko; #51; !45)
+
 Changes in dconf 0.31.2
 =======================
 
