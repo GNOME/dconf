@@ -10,6 +10,7 @@ gvdb_deps = [
 cflags = [
   '-DG_LOG_DOMAIN="gvdb (via dconf)"',
   '-DG_LOG_USE_STRUCTURED=1',
+  '-DGVDB_USE_WEAK_SYMBOLS',
 ]
 
 libgvdb = static_library(
