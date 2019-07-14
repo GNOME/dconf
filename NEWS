@@ -1,3 +1,11 @@
+Changes in dconf 0.33.4
+=======================
+
+ - Factor out a common method to route completion of DBus methods through
+   (Cosimo Checchi, #29)
+ - build: Use weak bindings in gvdb to fix linking with LLD
+   (Ting-Wei Lan, #28)
+
 Changes in dconf 0.32.0
 =======================
 
