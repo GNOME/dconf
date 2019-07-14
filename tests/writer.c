@@ -179,6 +179,139 @@ test_writer_begin_corrupt_file (Fixture       *fixture,
     }
 }
 
+/**
+ * Test that committing a write operation when no writes have been queued
+ * does not result in a database write.
+ */
+static void test_writer_commit_no_change (Fixture       *fixture,
+                                          gconstpointer  test_data)
+{
+  const char *db_name = "nonexistent";
+  g_autoptr(DConfWriter) writer = NULL;
+  DConfWriterClass *writer_class;
+  gboolean retval;
+  g_autoptr(GError) local_error = NULL;
+  g_autofree gchar *db_filename = g_build_filename (fixture->dconf_dir, db_name, NULL);
+
+  /* Create a writer. */
+  writer = DCONF_WRITER (dconf_writer_new (DCONF_TYPE_WRITER, db_name));
+  g_assert_nonnull (writer);
+  writer_class = DCONF_WRITER_GET_CLASS (writer);
+
+  /* Check the database doesn’t exist. */
+  g_assert_false (g_file_test (db_filename, G_FILE_TEST_EXISTS));
+
+  /* Begin transaction */
+  retval = writer_class->begin (writer, &local_error);
+  g_assert_no_error (local_error);
+  g_assert_true (retval);
+
+  /* Commit transaction */
+  retval = writer_class->commit (writer, &local_error);
+  g_assert_no_error (local_error);
+  g_assert_true (retval);
+
+  /* Check the database still doesn’t exist. */
+  g_assert_false (g_file_test (db_filename, G_FILE_TEST_EXISTS));
+
+  /* End transaction */
+  writer_class->end (writer);
+}
+
+/**
+ * Test that committing a write operation when writes that would not change
+ * the database have been queued does not result in a database write.
+ */
+static void test_writer_commit_empty_changes (Fixture       *fixture,
+                                              gconstpointer  test_data)
+{
+  const char *db_name = "nonexistent";
+  g_autoptr(DConfWriter) writer = NULL;
+  DConfWriterClass *writer_class;
+  gboolean retval;
+  g_autoptr(GError) local_error = NULL;
+  g_autofree gchar *db_filename = g_build_filename (fixture->dconf_dir, db_name, NULL);
+
+  /* Create a writer. */
+  writer = DCONF_WRITER (dconf_writer_new (DCONF_TYPE_WRITER, db_name));
+  g_assert_nonnull (writer);
+  writer_class = DCONF_WRITER_GET_CLASS (writer);
+
+  /* Check the database doesn’t exist. */
+  g_assert_false (g_file_test (db_filename, G_FILE_TEST_EXISTS));
+
+  /* Begin transaction */
+  retval = writer_class->begin (writer, &local_error);
+  g_assert_no_error (local_error);
+  g_assert_true (retval);
+
+  /* Make a redundant/empty change to the database */
+  DConfChangeset *changes = dconf_changeset_new();
+  writer_class->change (writer, changes, NULL);
+  g_assert_no_error (local_error);
+  g_assert_true (retval);
+
+  /* Commit transaction */
+  retval = writer_class->commit (writer, &local_error);
+  g_assert_no_error (local_error);
+  g_assert_true (retval);
+
+  /* Check the database still doesn't exist */
+  g_assert_false (g_file_test (db_filename, G_FILE_TEST_EXISTS));
+
+  /* End transaction */
+  writer_class->end (writer);
+}
+
+/**
+ * Test that committing a write operation when writes that would change
+ * the database have been queued does result in a database write.
+ */
+static void test_writer_commit_real_changes (Fixture       *fixture,
+                                             gconstpointer  test_data)
+{
+  const char *db_name = "nonexistent";
+  g_autoptr(DConfWriter) writer = NULL;
+  DConfWriterClass *writer_class;
+  gboolean retval;
+  g_autoptr(GError) local_error = NULL;
+  g_autofree gchar *db_filename = g_build_filename (fixture->dconf_dir, db_name, NULL);
+
+  /* Create a writer. */
+  writer = DCONF_WRITER (dconf_writer_new (DCONF_TYPE_WRITER, db_name));
+  g_assert_nonnull (writer);
+  writer_class = DCONF_WRITER_GET_CLASS (writer);
+
+  /* Check the database doesn’t exist. */
+  g_assert_false (g_file_test (db_filename, G_FILE_TEST_EXISTS));
+
+  /* Begin transaction */
+  retval = writer_class->begin (writer, &local_error);
+  g_assert_no_error (local_error);
+  g_assert_true (retval);
+
+  /* Make a real change to the database */
+  DConfChangeset *changes = dconf_changeset_new();
+  dconf_changeset_set(changes, "/key", g_variant_new ("(s)", "value"));
+  writer_class->change (writer, changes, NULL);
+  g_assert_no_error (local_error);
+  g_assert_true (retval);
+
+  /* Commit transaction */
+  retval = writer_class->commit (writer, &local_error);
+  g_assert_no_error (local_error);
+  g_assert_true (retval);
+
+  /* Check the database now exists */
+  g_assert_true (g_file_test (db_filename, G_FILE_TEST_EXISTS));
+
+  /* End transaction */
+  writer_class->end (writer);
+
+  /* Clean up. */
+  g_assert_cmpint (g_unlink (db_filename), ==, 0);
+}
+
 int
 main (int argc, char **argv)
 {
@@ -221,6 +354,12 @@ main (int argc, char **argv)
               test_writer_begin_corrupt_file, tear_down);
   g_test_add ("/writer/begin/corrupt-file/2", Fixture, &corrupt_file_data2, set_up,
               test_writer_begin_corrupt_file, tear_down);
+  g_test_add ("/writer/commit/redundant_change/0", Fixture, NULL, set_up,
+              test_writer_commit_no_change, tear_down);
+  g_test_add ("/writer/commit/redundant_change/1", Fixture, NULL, set_up,
+              test_writer_commit_empty_changes, tear_down);
+  g_test_add ("/writer/commit/redundant_change/2", Fixture, NULL, set_up,
+              test_writer_commit_real_changes, tear_down);
 
   retval = g_test_run ();
 
