@@ -187,7 +187,7 @@ dconf_gdbus_get_bus_common (GBusType       bus_type,
       return NULL;
     }
 
-  return dconf_gdbus_get_bus_data[bus_type];
+  return g_object_ref (dconf_gdbus_get_bus_data[bus_type]);
 }
 
 static GDBusConnection *
@@ -260,7 +260,7 @@ static gboolean
 dconf_gdbus_method_call (gpointer user_data)
 {
   DConfGDBusCall *call = user_data;
-  GDBusConnection *connection;
+  g_autoptr(GDBusConnection) connection = NULL;
   const GError *error = NULL;
 
   connection = dconf_gdbus_get_bus_in_worker (call->bus_type, &error);
@@ -315,8 +315,9 @@ static gboolean
 dconf_gdbus_summon_bus (gpointer user_data)
 {
   GBusType bus_type = GPOINTER_TO_INT (user_data);
+  g_autoptr(GDBusConnection) connection = NULL;
 
-  dconf_gdbus_get_bus_in_worker (bus_type, NULL);
+  connection = dconf_gdbus_get_bus_in_worker (bus_type, NULL);
 
   return G_SOURCE_REMOVE;
 }
@@ -359,7 +360,7 @@ dconf_engine_dbus_call_sync_func (GBusType             bus_type,
                                   GError             **error)
 {
   const GError *inner_error = NULL;
-  GDBusConnection *connection;
+  g_autoptr(GDBusConnection) connection = NULL;
 
   connection = dconf_gdbus_get_bus_for_sync (bus_type, &inner_error);
 
