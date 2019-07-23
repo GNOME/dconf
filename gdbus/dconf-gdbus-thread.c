@@ -71,6 +71,13 @@ typedef struct
   DConfEngineCallHandle *handle;
 } DConfGDBusCall;
 
+typedef struct
+{
+  GBusType bus_type;
+  GDBusConnection *connection;
+  GError **error;
+} GetBusData;
+
 static gpointer
 dconf_gdbus_worker_thread (gpointer user_data)
 {
@@ -164,80 +171,42 @@ dconf_gdbus_signal_handler (GDBusConnection *connection,
  *   - success: we end up with a GDBusConnection.
  *
  *   - failure: we end up with a GError.
- *
- * One way or another we put the result in dconf_gdbus_get_bus_data[] so
- * that we only have one pointer value to check.  We know what type of
- * result it is by dconf_gdbus_get_bus_is_error[].
  */
 
 static GMutex   dconf_gdbus_get_bus_lock;
 static GCond    dconf_gdbus_get_bus_cond;
-static gpointer dconf_gdbus_get_bus_data[5];
-static gboolean dconf_gdbus_get_bus_is_error[5];
 
 static GDBusConnection *
-dconf_gdbus_get_bus_common (GBusType       bus_type,
-                            const GError **error)
+dconf_gdbus_get_bus_in_worker (GBusType   bus_type,
+                               GError   **error)
 {
-  if (dconf_gdbus_get_bus_is_error[bus_type])
+  GDBusConnection *connection;
+
+  connection = g_bus_get_sync (bus_type, NULL, error);
+
+  if (connection)
     {
-      if (error)
-        *error = dconf_gdbus_get_bus_data[bus_type];
+      gint subscription_id;
 
-      return NULL;
-    }
-
-  return dconf_gdbus_get_bus_data[bus_type];
-}
-
-static GDBusConnection *
-dconf_gdbus_get_bus_in_worker (GBusType       bus_type,
-                               const GError **error)
-{
-  g_assert_cmpint (bus_type, <, G_N_ELEMENTS (dconf_gdbus_get_bus_data));
-
-  /* We're in the worker thread and only the worker thread can ever set
-   * this variable so there is no need to take a lock.
-   */
-  if (dconf_gdbus_get_bus_data[bus_type] == NULL)
-    {
-      GDBusConnection *connection;
-      GError *error = NULL;
-      gpointer result;
-
-      connection = g_bus_get_sync (bus_type, NULL, &error);
-
-      if (connection)
-        {
-          g_dbus_connection_signal_subscribe (connection, NULL, "ca.desrt.dconf.Writer",
-                                              NULL, NULL, NULL, G_DBUS_SIGNAL_FLAGS_NO_MATCH_RULE,
-                                              dconf_gdbus_signal_handler, GINT_TO_POINTER (bus_type), NULL);
-          dconf_gdbus_get_bus_is_error[bus_type] = FALSE;
-          result = connection;
-        }
-      else
-        {
-          dconf_gdbus_get_bus_is_error[bus_type] = TRUE;
-          result = error;
-        }
-
-      g_assert (result != NULL);
-
-      /* It's possible that another thread was waiting for us to do
-       * this on its behalf.  Wake it up.
-       *
-       * The other thread cannot actually wake up until we release the
-       * mutex below so we have a guarantee that this CPU will have
-       * flushed all outstanding writes.  The other CPU has to acquire
-       * the lock so it cannot have done any out-of-order reads either.
-       */
+      /* Make sure that concurrent calls to this method won't add the subscription */
       g_mutex_lock (&dconf_gdbus_get_bus_lock);
-      dconf_gdbus_get_bus_data[bus_type] = result;
-      g_cond_broadcast (&dconf_gdbus_get_bus_cond);
+      subscription_id = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (connection),
+                                                            "dconf-gdbus-thread.subscription-id"));
+      if (subscription_id == 0)
+        {
+          subscription_id = g_dbus_connection_signal_subscribe (connection, NULL,
+                                                                "ca.desrt.dconf.Writer",
+                                                                NULL, NULL, NULL,
+                                                                G_DBUS_SIGNAL_FLAGS_NO_MATCH_RULE,
+                                                                dconf_gdbus_signal_handler,
+                                                                GINT_TO_POINTER (bus_type), NULL);
+          g_object_set_data (G_OBJECT (connection), "dconf-gdbus-thread.subscription-id",
+                             GINT_TO_POINTER (subscription_id));
+        }
       g_mutex_unlock (&dconf_gdbus_get_bus_lock);
     }
 
-  return dconf_gdbus_get_bus_common (bus_type, error);
+  return connection;
 }
 
 static void
@@ -260,8 +229,8 @@ static gboolean
 dconf_gdbus_method_call (gpointer user_data)
 {
   DConfGDBusCall *call = user_data;
-  GDBusConnection *connection;
-  const GError *error = NULL;
+  g_autoptr(GDBusConnection) connection = NULL;
+  GError *error = NULL;
 
   connection = dconf_gdbus_get_bus_in_worker (call->bus_type, &error);
 
@@ -271,7 +240,10 @@ dconf_gdbus_method_call (gpointer user_data)
                             -1, NULL, dconf_gdbus_method_call_done, call->handle);
 
   else
-    dconf_engine_call_handle_reply (call->handle, NULL, error);
+    {
+      dconf_engine_call_handle_reply (call->handle, NULL, error);
+      g_clear_error (&error);
+    }
 
   g_variant_unref (call->parameters);
   g_slice_free (DConfGDBusCall, call);
@@ -314,38 +286,37 @@ dconf_engine_dbus_call_async_func (GBusType                bus_type,
 static gboolean
 dconf_gdbus_summon_bus (gpointer user_data)
 {
-  GBusType bus_type = GPOINTER_TO_INT (user_data);
+  GetBusData *data = user_data;
 
-  dconf_gdbus_get_bus_in_worker (bus_type, NULL);
+  data->connection = dconf_gdbus_get_bus_in_worker (data->bus_type, data->error);
+
+  g_mutex_lock (&dconf_gdbus_get_bus_lock);
+  g_cond_broadcast (&dconf_gdbus_get_bus_cond);
+  g_mutex_unlock (&dconf_gdbus_get_bus_lock);
 
   return G_SOURCE_REMOVE;
 }
 
 static GDBusConnection *
-dconf_gdbus_get_bus_for_sync (GBusType       bus_type,
-                              const GError **error)
+dconf_gdbus_get_bus_for_sync (GBusType   bus_type,
+                              GError   **error)
 {
-  g_assert_cmpint (bus_type, <, G_N_ELEMENTS (dconf_gdbus_get_bus_data));
+  GetBusData data;
 
-  /* I'm not 100% sure we have to lock as much as we do here, but let's
-   * play it safe.
-   *
-   * This codepath is only hit on synchronous calls anyway.  You're
-   * probably not doing those if you care a lot about performance.
-   */
+  data.bus_type = bus_type;
+  data.connection = NULL;
+  data.error = error;
+
   g_mutex_lock (&dconf_gdbus_get_bus_lock);
-  if (dconf_gdbus_get_bus_data[bus_type] == NULL)
-    {
-      g_main_context_invoke (dconf_gdbus_get_worker_context (),
-                             dconf_gdbus_summon_bus,
-                             GINT_TO_POINTER (bus_type));
+  g_main_context_invoke (dconf_gdbus_get_worker_context (),
+                         dconf_gdbus_summon_bus,
+                         &data);
 
-      while (dconf_gdbus_get_bus_data[bus_type] == NULL)
-        g_cond_wait (&dconf_gdbus_get_bus_cond, &dconf_gdbus_get_bus_lock);
-    }
+  while (data.connection == NULL)
+    g_cond_wait (&dconf_gdbus_get_bus_cond, &dconf_gdbus_get_bus_lock);
   g_mutex_unlock (&dconf_gdbus_get_bus_lock);
 
-  return dconf_gdbus_get_bus_common (bus_type, error);
+  return data.connection;
 }
 
 GVariant *
@@ -358,17 +329,13 @@ dconf_engine_dbus_call_sync_func (GBusType             bus_type,
                                   const GVariantType  *reply_type,
                                   GError             **error)
 {
-  const GError *inner_error = NULL;
-  GDBusConnection *connection;
+  g_autoptr(GDBusConnection) connection;
 
-  connection = dconf_gdbus_get_bus_for_sync (bus_type, &inner_error);
+  connection = dconf_gdbus_get_bus_for_sync (bus_type, error);
 
   if (connection == NULL)
     {
       g_variant_unref (g_variant_ref_sink (parameters));
-
-      if (error)
-        *error = g_error_copy (inner_error);
 
       return NULL;
     }
