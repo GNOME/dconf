@@ -6,8 +6,8 @@ test_engine_dbus_call (void)
   GError *error = NULL;
   GVariant *reply;
 
-  /* Force a call to the engine to make sure at least one GDBusConnection
-   * is cached.
+  /* Force a call to the engine to ensure a GDBusConnection object
+   * is instantiated.
    */
   reply = dconf_engine_dbus_call_sync_func (G_BUS_TYPE_SESSION,
                                             "org.freedesktop.DBus", "/", "org.freedesktop.DBus", "ListNames",
