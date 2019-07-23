@@ -134,7 +134,7 @@
  * sources_lock or queue_lock
  */
 
-static GSList *dconf_engine_global_list;
+static GSList *dconf_engine_global_list = NULL;
 static GMutex  dconf_engine_global_lock;
 
 struct _DConfEngine
@@ -328,6 +328,9 @@ dconf_engine_new (const gchar    *profile,
   engine->sources = dconf_engine_profile_open (profile, &engine->n_sources);
 
   g_mutex_lock (&dconf_engine_global_lock);
+  /* Init D-Bus engine if not already initialized */
+  if (dconf_engine_global_list == NULL)
+    dconf_engine_dbus_init ();
   dconf_engine_global_list = g_slist_prepend (dconf_engine_global_list, engine);
   g_mutex_unlock (&dconf_engine_global_lock);
 
@@ -372,6 +375,9 @@ dconf_engine_unref (DConfEngine *engine)
           goto again;
         }
       dconf_engine_global_list = g_slist_remove (dconf_engine_global_list, engine);
+      /* De-init D-Bus engine (i.e. free resources) */
+      if (dconf_engine_global_list == NULL)
+        dconf_engine_dbus_deinit ();
       g_mutex_unlock (&dconf_engine_global_lock);
 
       g_mutex_clear (&engine->sources_lock);

@@ -6,6 +6,7 @@
 typedef struct
 {
   gpointer data; /* either GDBusConnection or GError */
+  guint    filter_id;
   guint    is_error;
   guint    waiting_for_serial;
   GQueue   queue;
@@ -17,6 +18,7 @@ typedef struct
   DConfEngineCallHandle *handle;
 } DConfGDBusCall;
 
+static gboolean dconf_gdbus_initialized = FALSE;
 static ConnectionState connections[3];
 static GMutex dconf_gdbus_lock;
 
@@ -26,6 +28,7 @@ connection_state_get_bus_type (ConnectionState *state)
   return state - connections;
 }
 
+/* Must be invoked with @dconf_gdbus_lock locked */
 static gboolean
 connection_state_ensure_success (ConnectionState  *state,
                                  GError          **error)
@@ -41,12 +44,13 @@ connection_state_ensure_success (ConnectionState  *state,
   return TRUE;
 }
 
+/* Must be invoked with @dconf_gdbus_lock locked */
 static GDBusConnection *
 connection_state_get_connection (ConnectionState *state)
 {
   g_assert (!state->is_error);
 
-  return state->data;
+  return g_object_ref (state->data);
 }
 
 /* This function can be slow (as compared to the one below). */
@@ -160,6 +164,7 @@ static ConnectionState *
 dconf_gdbus_get_connection_state (GBusType   bus_type,
                                   GError   **error)
 {
+  g_autoptr(GMutexLocker) locker = g_mutex_locker_new (&dconf_gdbus_lock);
   ConnectionState *state;
 
   g_assert (bus_type < G_N_ELEMENTS (connections));
@@ -180,9 +185,11 @@ dconf_gdbus_get_connection_state (GBusType   bus_type,
 
       if (connection)
         {
-          g_dbus_connection_add_filter (connection, dconf_gdbus_filter_function, state, NULL);
+          guint filter_id = g_dbus_connection_add_filter (connection, dconf_gdbus_filter_function,
+                                                          state, NULL);
           result = connection;
           state->is_error = FALSE;
+          state->filter_id = filter_id;
         }
       else
         {
@@ -214,6 +221,14 @@ dconf_engine_dbus_call_async_func (GBusType                bus_type,
   DConfGDBusCall *call;
   gboolean success;
 
+  if (!dconf_gdbus_initialized)
+    {
+      if (error)
+        *error = g_error_new_literal (DCONF_ERROR, DCONF_ERROR_FAILED,
+                                      "engine not initialized");
+      return FALSE;
+    }
+
   state = dconf_gdbus_get_connection_state (bus_type, error);
 
   if (state == NULL)
@@ -227,6 +242,7 @@ dconf_engine_dbus_call_async_func (GBusType                bus_type,
 
   g_mutex_lock (&dconf_gdbus_lock);
   {
+    g_autoptr(GDBusConnection) connection = NULL;
     volatile guint *serial_ptr;
     guint my_serial;
 
@@ -256,7 +272,8 @@ dconf_engine_dbus_call_async_func (GBusType                bus_type,
     else
       serial_ptr = &my_serial;
 
-    success = g_dbus_connection_send_message (connection_state_get_connection (state), message,
+    connection = connection_state_get_connection (state);
+    success = g_dbus_connection_send_message (connection, message,
                                               G_DBUS_SEND_MESSAGE_FLAGS_NONE, serial_ptr, error);
 
     if (success)
@@ -286,7 +303,16 @@ dconf_engine_dbus_call_sync_func (GBusType             bus_type,
                                   const GVariantType  *reply_type,
                                   GError             **error)
 {
+  g_autoptr(GDBusConnection) connection = NULL;
   ConnectionState *state;
+
+  if (!dconf_gdbus_initialized)
+    {
+      if (error)
+        *error = g_error_new_literal (DCONF_ERROR, DCONF_ERROR_FAILED,
+                                      "engine not initialized");
+      return NULL;
+    }
 
   state = dconf_gdbus_get_connection_state (bus_type, error);
 
@@ -297,9 +323,72 @@ dconf_engine_dbus_call_sync_func (GBusType             bus_type,
       return NULL;
     }
 
-  return g_dbus_connection_call_sync (connection_state_get_connection (state),
+  g_mutex_lock (&dconf_gdbus_lock);
+  connection = connection_state_get_connection (state);
+  g_mutex_unlock (&dconf_gdbus_lock);
+  return g_dbus_connection_call_sync (connection,
                                       bus_name, object_path, interface_name, method_name, parameters, reply_type,
                                       G_DBUS_CALL_FLAGS_NONE, -1, NULL, error);
+}
+
+void
+dconf_engine_dbus_init (void)
+{
+  g_autoptr(GMutexLocker) locker = g_mutex_locker_new (&dconf_gdbus_lock);
+
+  if (dconf_gdbus_initialized)
+    return;
+
+  dconf_gdbus_initialized = TRUE;
+
+  for (gint i = 0; i < G_N_ELEMENTS (connections); i++)
+    {
+      ConnectionState *state = &connections[i];
+
+      state->data = NULL;
+      state->filter_id = 0;
+      state->is_error = TRUE;
+      state->waiting_for_serial = FALSE;
+      g_queue_init (&state->queue);
+    }
+}
+
+void
+dconf_engine_dbus_deinit (void)
+{
+  g_autoptr(GMutexLocker) locker = g_mutex_locker_new (&dconf_gdbus_lock);
+
+  if (!dconf_gdbus_initialized)
+    return;
+
+  for (gint i = 0; i < G_N_ELEMENTS (connections); i++)
+    {
+      ConnectionState *state = &connections[i];
+      GDBusConnection *connection = NULL;
+      GError *error = NULL;
+
+      if (!state->is_error)
+        connection = state->data;
+      else
+        error = state->data;
+
+      if (state->filter_id > 0)
+        {
+          g_assert (connection != NULL);
+          g_dbus_connection_remove_filter (connection,
+                                           state->filter_id);
+        }
+
+      g_clear_error (&error);
+      g_clear_object (&connection);
+      state->data = NULL;
+      state->filter_id = 0;
+      state->is_error = TRUE;
+      state->waiting_for_serial = TRUE;
+      g_queue_clear (&state->queue);
+    }
+
+  dconf_gdbus_initialized = FALSE;
 }
 
 #ifndef PIC

@@ -97,3 +97,13 @@ dconf_engine_dbus_call_sync_func (GBusType             bus_type,
 
   return reply ? g_variant_take_ref (reply) : NULL;
 }
+
+void
+dconf_engine_dbus_init (void)
+{
+}
+
+void
+dconf_engine_dbus_deinit (void)
+{
+}

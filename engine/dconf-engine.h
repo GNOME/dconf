@@ -29,6 +29,11 @@ typedef struct _DConfEngine DConfEngine;
 
 typedef struct _DConfEngineCallHandle DConfEngineCallHandle;
 
+G_GNUC_INTERNAL
+void                    dconf_engine_dbus_init                          (void);
+G_GNUC_INTERNAL
+void                    dconf_engine_dbus_deinit                        (void);
+
 /* These functions need to be implemented by the client library */
 G_GNUC_INTERNAL
 void                    dconf_engine_dbus_init_for_testing              (void);
