@@ -1,12 +1,7 @@
 #include "../engine/dconf-engine.h"
 
-
-
-
 typedef struct
 {
-  gpointer data; /* either GDBusConnection or GError */
-  guint    is_error;
   guint    waiting_for_serial;
   GQueue   queue;
 } ConnectionState;
@@ -26,27 +21,10 @@ connection_state_get_bus_type (ConnectionState *state)
   return state - connections;
 }
 
-static gboolean
-connection_state_ensure_success (ConnectionState  *state,
-                                 GError          **error)
-{
-  if (state->is_error)
-    {
-      if (error)
-        *error = g_error_copy (state->data);
-
-      return FALSE;
-    }
-
-  return TRUE;
-}
-
 static GDBusConnection *
-connection_state_get_connection (ConnectionState *state)
+connection_state_get_connection (GBusType bus_type, GError **error)
 {
-  g_assert (!state->is_error);
-
-  return state->data;
+  return g_bus_get_sync (bus_type, NULL, error);
 }
 
 /* This function can be slow (as compared to the one below). */
@@ -161,40 +139,31 @@ dconf_gdbus_get_connection_state (GBusType   bus_type,
                                   GError   **error)
 {
   ConnectionState *state;
+  g_autoptr(GDBusConnection) connection;
 
   g_assert (bus_type < G_N_ELEMENTS (connections));
 
   state = &connections[bus_type];
 
-  if (g_once_init_enter (&state->data))
+  connection = g_bus_get_sync (bus_type, NULL, error);
+
+  if (connection)
     {
-      GDBusConnection *connection;
-      GError *error = NULL;
-      gpointer result;
+      gint filter_id;
 
-      /* This will only block the first time...
-       *
-       * Optimising this away is probably not worth the effort.
-       */
-      connection = g_bus_get_sync (bus_type, NULL, &error);
-
-      if (connection)
+      /* Make sure that concurrent calls to this method won't add the filter */
+      g_mutex_lock (&dconf_gdbus_lock);
+      filter_id = GPOINTER_TO_INT (g_object_get_data (G_OBJECT (connection),
+                                                           "dconf-gdbus-filter.filter-id"));
+      if (filter_id == 0)
         {
-          g_dbus_connection_add_filter (connection, dconf_gdbus_filter_function, state, NULL);
-          result = connection;
-          state->is_error = FALSE;
+          filter_id = g_dbus_connection_add_filter (connection, dconf_gdbus_filter_function,
+                                                         state, NULL);
+          g_object_set_data (G_OBJECT (connection), "dconf-gdbus-filter.filter-id",
+                             GINT_TO_POINTER (filter_id));
         }
-      else
-        {
-          result = error;
-          state->is_error = TRUE;
-        }
-
-      g_once_init_leave (&state->data, result);
+      g_mutex_unlock (&dconf_gdbus_lock);
     }
-
-  if (!connection_state_ensure_success (state, error))
-    return FALSE;
 
   return state;
 }
@@ -210,6 +179,7 @@ dconf_engine_dbus_call_async_func (GBusType                bus_type,
                                    GError                **error)
 {
   ConnectionState *state;
+  g_autoptr(GDBusConnection) connection = NULL;
   GDBusMessage *message;
   DConfGDBusCall *call;
   gboolean success;
@@ -221,6 +191,11 @@ dconf_engine_dbus_call_async_func (GBusType                bus_type,
       g_variant_unref (g_variant_ref_sink (parameters));
       return FALSE;
     }
+
+  connection = connection_state_get_connection (bus_type, error);
+
+  if (connection == NULL)
+    return FALSE;
 
   message = g_dbus_message_new_method_call (bus_name, object_path, interface_name, method_name);
   g_dbus_message_set_body (message, parameters);
@@ -256,7 +231,7 @@ dconf_engine_dbus_call_async_func (GBusType                bus_type,
     else
       serial_ptr = &my_serial;
 
-    success = g_dbus_connection_send_message (connection_state_get_connection (state), message,
+    success = g_dbus_connection_send_message (connection, message,
                                               G_DBUS_SEND_MESSAGE_FLAGS_NONE, serial_ptr, error);
 
     if (success)
@@ -287,6 +262,7 @@ dconf_engine_dbus_call_sync_func (GBusType             bus_type,
                                   GError             **error)
 {
   ConnectionState *state;
+  g_autoptr(GDBusConnection) connection = NULL;
 
   state = dconf_gdbus_get_connection_state (bus_type, error);
 
@@ -297,7 +273,12 @@ dconf_engine_dbus_call_sync_func (GBusType             bus_type,
       return NULL;
     }
 
-  return g_dbus_connection_call_sync (connection_state_get_connection (state),
+  connection = connection_state_get_connection (bus_type, error);
+
+  if (connection == NULL)
+    return NULL;
+
+  return g_dbus_connection_call_sync (connection,
                                       bus_name, object_path, interface_name, method_name, parameters, reply_type,
                                       G_DBUS_CALL_FLAGS_NONE, -1, NULL, error);
 }
