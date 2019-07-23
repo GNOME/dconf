@@ -156,6 +156,27 @@ dconf_gdbus_filter_function (GDBusConnection *connection,
   return message;
 }
 
+static void
+dconf_gdbus_bus_connection_closed (GDBusConnection *connection,
+                                   gboolean         remote_peer_vanished,
+                                   GError          *error,
+                                   gpointer         user_data)
+{
+  ConnectionState *state = user_data;
+  GError *cached_error = NULL;
+
+  if (state->is_error)
+    cached_error = state->data;
+  else
+    g_assert (connection == state->data);
+
+  state->data = NULL;
+  state->is_error = FALSE;
+
+  g_object_unref (connection);
+  g_clear_error (&cached_error);
+}
+
 static ConnectionState *
 dconf_gdbus_get_connection_state (GBusType   bus_type,
                                   GError   **error)
@@ -166,7 +187,7 @@ dconf_gdbus_get_connection_state (GBusType   bus_type,
 
   state = &connections[bus_type];
 
-  if (g_once_init_enter (&state->data))
+  if (!state->data)
     {
       GDBusConnection *connection;
       GError *error = NULL;
@@ -180,6 +201,9 @@ dconf_gdbus_get_connection_state (GBusType   bus_type,
 
       if (connection)
         {
+          g_signal_connect (connection, "closed",
+                            G_CALLBACK (dconf_gdbus_bus_connection_closed),
+                            state);
           g_dbus_connection_add_filter (connection, dconf_gdbus_filter_function, state, NULL);
           result = connection;
           state->is_error = FALSE;
@@ -190,11 +214,11 @@ dconf_gdbus_get_connection_state (GBusType   bus_type,
           state->is_error = TRUE;
         }
 
-      g_once_init_leave (&state->data, result);
+      state->data = result;
     }
 
   if (!connection_state_ensure_success (state, error))
-    return FALSE;
+    return NULL;
 
   return state;
 }
