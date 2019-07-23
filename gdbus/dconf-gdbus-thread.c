@@ -176,13 +176,13 @@ static gpointer dconf_gdbus_get_bus_data[5];
 static gboolean dconf_gdbus_get_bus_is_error[5];
 
 static GDBusConnection *
-dconf_gdbus_get_bus_common (GBusType       bus_type,
-                            const GError **error)
+dconf_gdbus_get_bus_common (GBusType   bus_type,
+                            GError   **error)
 {
   if (dconf_gdbus_get_bus_is_error[bus_type])
     {
       if (error)
-        *error = dconf_gdbus_get_bus_data[bus_type];
+        *error = g_error_copy (dconf_gdbus_get_bus_data[bus_type]);
 
       return NULL;
     }
@@ -191,8 +191,8 @@ dconf_gdbus_get_bus_common (GBusType       bus_type,
 }
 
 static GDBusConnection *
-dconf_gdbus_get_bus_in_worker (GBusType       bus_type,
-                               const GError **error)
+dconf_gdbus_get_bus_in_worker (GBusType   bus_type,
+                               GError   **error)
 {
   g_assert_cmpint (bus_type, <, G_N_ELEMENTS (dconf_gdbus_get_bus_data));
 
@@ -261,7 +261,7 @@ dconf_gdbus_method_call (gpointer user_data)
 {
   DConfGDBusCall *call = user_data;
   g_autoptr(GDBusConnection) connection = NULL;
-  const GError *error = NULL;
+  g_autoptr(GError) error = NULL;
 
   connection = dconf_gdbus_get_bus_in_worker (call->bus_type, &error);
 
@@ -323,8 +323,8 @@ dconf_gdbus_summon_bus (gpointer user_data)
 }
 
 static GDBusConnection *
-dconf_gdbus_get_bus_for_sync (GBusType       bus_type,
-                              const GError **error)
+dconf_gdbus_get_bus_for_sync (GBusType   bus_type,
+                              GError   **error)
 {
   g_assert_cmpint (bus_type, <, G_N_ELEMENTS (dconf_gdbus_get_bus_data));
 
@@ -359,17 +359,13 @@ dconf_engine_dbus_call_sync_func (GBusType             bus_type,
                                   const GVariantType  *reply_type,
                                   GError             **error)
 {
-  const GError *inner_error = NULL;
   g_autoptr(GDBusConnection) connection = NULL;
 
-  connection = dconf_gdbus_get_bus_for_sync (bus_type, &inner_error);
+  connection = dconf_gdbus_get_bus_for_sync (bus_type, error);
 
   if (connection == NULL)
     {
       g_variant_unref (g_variant_ref_sink (parameters));
-
-      if (error)
-        *error = g_error_copy (inner_error);
 
       return NULL;
     }
