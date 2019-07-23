@@ -67,6 +67,17 @@ GVariant *              dconf_engine_dbus_call_sync_func                (GBusTyp
                                                                          const GVariantType      *expected_type,
                                                                          GError                 **error);
 
+/* Helper function used by the client library to handle bus disconnection */
+G_GNUC_INTERNAL
+void                    dconf_engine_dbus_handle_connection_closed      (GDBusConnection         *connection,
+                                                                         gboolean                 remote_peer_vanished,
+                                                                         GError                  *error,
+                                                                         GMutex                  *bus_lock,
+                                                                         gboolean                *bus_is_error,
+                                                                         gpointer                *bus_data,
+                                                                         GCallback                bus_closed_callback,
+                                                                         gpointer                 bus_closed_callback_user_data);
+
 /* Notifies that a change occured.
  *
  * The engine lock is never held when calling this function so it is
