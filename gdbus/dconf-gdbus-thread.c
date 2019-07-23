@@ -190,18 +190,45 @@ dconf_gdbus_get_bus_common (GBusType   bus_type,
   return g_object_ref (dconf_gdbus_get_bus_data[bus_type]);
 }
 
+static void
+dconf_gdbus_bus_connection_closed (GDBusConnection *connection,
+                                   gboolean         remote_peer_vanished,
+                                   GError          *error,
+                                   gpointer         user_data)
+{
+  GBusType bus_type = GPOINTER_TO_INT (user_data);
+  GError *cached_error = NULL;
+
+  g_mutex_lock (&dconf_gdbus_get_bus_lock);
+
+  g_signal_handlers_disconnect_by_func (connection,
+                                        G_CALLBACK (dconf_gdbus_bus_connection_closed),
+                                        user_data);
+
+  if (dconf_gdbus_get_bus_is_error[bus_type])
+    cached_error = dconf_gdbus_get_bus_data[bus_type];
+  else
+    g_assert (connection == dconf_gdbus_get_bus_data[bus_type]);
+
+  dconf_gdbus_get_bus_data[bus_type] = NULL;
+  dconf_gdbus_get_bus_is_error[bus_type] = FALSE;
+
+  g_object_unref (connection);
+  g_clear_error (&cached_error);
+
+  g_mutex_unlock (&dconf_gdbus_get_bus_lock);
+}
+
 static GDBusConnection *
 dconf_gdbus_get_bus_in_worker (GBusType   bus_type,
                                GError   **error)
 {
+  GDBusConnection *connection;
   g_assert_cmpint (bus_type, <, G_N_ELEMENTS (dconf_gdbus_get_bus_data));
 
-  /* We're in the worker thread and only the worker thread can ever set
-   * this variable so there is no need to take a lock.
-   */
+  g_mutex_lock (&dconf_gdbus_get_bus_lock);
   if (dconf_gdbus_get_bus_data[bus_type] == NULL)
     {
-      GDBusConnection *connection;
       GError *error = NULL;
       gpointer result;
 
@@ -209,6 +236,9 @@ dconf_gdbus_get_bus_in_worker (GBusType   bus_type,
 
       if (connection)
         {
+          g_signal_connect (connection, "closed",
+                            G_CALLBACK (dconf_gdbus_bus_connection_closed),
+                            GINT_TO_POINTER (bus_type));
           g_dbus_connection_signal_subscribe (connection, NULL, "ca.desrt.dconf.Writer",
                                               NULL, NULL, NULL, G_DBUS_SIGNAL_FLAGS_NO_MATCH_RULE,
                                               dconf_gdbus_signal_handler, GINT_TO_POINTER (bus_type), NULL);
@@ -231,13 +261,15 @@ dconf_gdbus_get_bus_in_worker (GBusType   bus_type,
        * flushed all outstanding writes.  The other CPU has to acquire
        * the lock so it cannot have done any out-of-order reads either.
        */
-      g_mutex_lock (&dconf_gdbus_get_bus_lock);
       dconf_gdbus_get_bus_data[bus_type] = result;
-      g_cond_broadcast (&dconf_gdbus_get_bus_cond);
-      g_mutex_unlock (&dconf_gdbus_get_bus_lock);
     }
 
-  return dconf_gdbus_get_bus_common (bus_type, error);
+  connection = dconf_gdbus_get_bus_common (bus_type, error);
+
+  g_cond_broadcast (&dconf_gdbus_get_bus_cond);
+  g_mutex_unlock (&dconf_gdbus_get_bus_lock);
+
+  return connection;
 }
 
 static void
@@ -326,6 +358,8 @@ static GDBusConnection *
 dconf_gdbus_get_bus_for_sync (GBusType   bus_type,
                               GError   **error)
 {
+  g_autoptr(GDBusConnection) connection = NULL;
+
   g_assert_cmpint (bus_type, <, G_N_ELEMENTS (dconf_gdbus_get_bus_data));
 
   /* I'm not 100% sure we have to lock as much as we do here, but let's
@@ -344,9 +378,10 @@ dconf_gdbus_get_bus_for_sync (GBusType   bus_type,
       while (dconf_gdbus_get_bus_data[bus_type] == NULL)
         g_cond_wait (&dconf_gdbus_get_bus_cond, &dconf_gdbus_get_bus_lock);
     }
+  connection = dconf_gdbus_get_bus_common (bus_type, error);
   g_mutex_unlock (&dconf_gdbus_get_bus_lock);
 
-  return dconf_gdbus_get_bus_common (bus_type, error);
+  return g_steal_pointer (&connection);
 }
 
 GVariant *
