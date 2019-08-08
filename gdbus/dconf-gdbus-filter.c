@@ -6,7 +6,7 @@
 typedef struct
 {
   gpointer data; /* either GDBusConnection or GError */
-  guint    is_error;
+  gboolean is_error;
   guint    waiting_for_serial;
   GQueue   queue;
 } ConnectionState;
@@ -156,6 +156,22 @@ dconf_gdbus_filter_function (GDBusConnection *connection,
   return message;
 }
 
+static void
+dconf_gdbus_bus_connection_closed (GDBusConnection *connection,
+                                   gboolean         remote_peer_vanished,
+                                   GError          *error,
+                                   gpointer         user_data)
+{
+  ConnectionState *state = user_data;
+
+  dconf_engine_dbus_handle_connection_closed (connection, remote_peer_vanished, error,
+                                              &dconf_gdbus_lock,
+                                              &state->is_error,
+                                              &state->data,
+                                              G_CALLBACK (dconf_gdbus_bus_connection_closed),
+                                              user_data);
+}
+
 static ConnectionState *
 dconf_gdbus_get_connection_state (GBusType   bus_type,
                                   GError   **error)
@@ -166,7 +182,7 @@ dconf_gdbus_get_connection_state (GBusType   bus_type,
 
   state = &connections[bus_type];
 
-  if (g_once_init_enter (&state->data))
+  if (!state->data)
     {
       GDBusConnection *connection;
       GError *error = NULL;
@@ -180,6 +196,9 @@ dconf_gdbus_get_connection_state (GBusType   bus_type,
 
       if (connection)
         {
+          g_signal_connect (connection, "closed",
+                            G_CALLBACK (dconf_gdbus_bus_connection_closed),
+                            state);
           g_dbus_connection_add_filter (connection, dconf_gdbus_filter_function, state, NULL);
           result = connection;
           state->is_error = FALSE;
@@ -190,11 +209,11 @@ dconf_gdbus_get_connection_state (GBusType   bus_type,
           state->is_error = TRUE;
         }
 
-      g_once_init_leave (&state->data, result);
+      state->data = result;
     }
 
   if (!connection_state_ensure_success (state, error))
-    return FALSE;
+    return NULL;
 
   return state;
 }
@@ -213,62 +232,67 @@ dconf_engine_dbus_call_async_func (GBusType                bus_type,
   GDBusMessage *message;
   DConfGDBusCall *call;
   gboolean success;
+  volatile guint *serial_ptr;
+  guint my_serial;
+
+  /* Hold the lock to make sure nothing else updates state (e.g. invalidates
+   * connection) while we are processing here.
+   */
+  g_mutex_lock (&dconf_gdbus_lock);
 
   state = dconf_gdbus_get_connection_state (bus_type, error);
 
   if (state == NULL)
     {
       g_variant_unref (g_variant_ref_sink (parameters));
+
+      g_mutex_unlock (&dconf_gdbus_lock);
+
       return FALSE;
     }
 
   message = g_dbus_message_new_method_call (bus_name, object_path, interface_name, method_name);
   g_dbus_message_set_body (message, parameters);
 
-  g_mutex_lock (&dconf_gdbus_lock);
-  {
-    volatile guint *serial_ptr;
-    guint my_serial;
+  /* We need to set the serial in call->serial.  Sometimes we also
+   * need to set it in state->waiting_for_serial (in the case that no
+   * other items are queued yet).
+   *
+   * g_dbus_connection_send_message() only has one out_serial parameter
+   * so we can only set one of them atomically.  If needed, we elect
+   * to set the waiting_for_serial because that is the one that is
+   * accessed from the filter function without holding the lock.
+   *
+   * The serial number in the call structure is only accessed after the
+   * lock is acquired which allows us to take our time setting it (for
+   * as long as we're still holding the lock).
+   *
+   * In the case that waiting_for_serial should not be set we just use
+   * a local variable and use that to fill call->serial.
+   *
+   * Also: the queue itself isn't accessed until after the lock is
+   * taken, so we can delay adding the call to the queue until we know
+   * that the sending of the message was successful.
+   */
 
-    /* We need to set the serial in call->serial.  Sometimes we also
-     * need to set it in state->waiting_for_serial (in the case that no
-     * other items are queued yet).
-     *
-     * g_dbus_connection_send_message() only has one out_serial parameter
-     * so we can only set one of them atomically.  If needed, we elect
-     * to set the waiting_for_serial because that is the one that is
-     * accessed from the filter function without holding the lock.
-     *
-     * The serial number in the call structure is only accessed after the
-     * lock is acquired which allows us to take our time setting it (for
-     * as long as we're still holding the lock).
-     *
-     * In the case that waiting_for_serial should not be set we just use
-     * a local variable and use that to fill call->serial.
-     *
-     * Also: the queue itself isn't accessed until after the lock is
-     * taken, so we can delay adding the call to the queue until we know
-     * that the sending of the message was successful.
-     */
+  if (g_queue_is_empty (&state->queue))
+    serial_ptr = &state->waiting_for_serial;
+  else
+    serial_ptr = &my_serial;
 
-    if (g_queue_is_empty (&state->queue))
-      serial_ptr = &state->waiting_for_serial;
-    else
-      serial_ptr = &my_serial;
+  success = g_dbus_connection_send_message (connection_state_get_connection (state), message,
+                                            G_DBUS_SEND_MESSAGE_FLAGS_NONE, serial_ptr, error);
 
-    success = g_dbus_connection_send_message (connection_state_get_connection (state), message,
-                                              G_DBUS_SEND_MESSAGE_FLAGS_NONE, serial_ptr, error);
+  if (success)
+    {
+      call = g_slice_new (DConfGDBusCall);
 
-    if (success)
-      {
-        call = g_slice_new (DConfGDBusCall);
+      call->handle = handle;
+      call->serial = *serial_ptr;
 
-        call->handle = handle;
-        call->serial = *serial_ptr;
+      g_queue_push_tail (&state->queue, call);
+    }
 
-        g_queue_push_tail (&state->queue, call);
-      }
-  }
   g_mutex_unlock (&dconf_gdbus_lock);
 
   g_object_unref (message);
@@ -286,7 +310,13 @@ dconf_engine_dbus_call_sync_func (GBusType             bus_type,
                                   const GVariantType  *reply_type,
                                   GError             **error)
 {
+  g_autoptr(GDBusConnection) connection = NULL;
   ConnectionState *state;
+
+  /* Hold the lock to make sure nothing else updates state (e.g. invalidates
+   * connection) while we are processing here.
+   */
+  g_mutex_lock (&dconf_gdbus_lock);
 
   state = dconf_gdbus_get_connection_state (bus_type, error);
 
@@ -294,10 +324,21 @@ dconf_engine_dbus_call_sync_func (GBusType             bus_type,
     {
       g_variant_unref (g_variant_ref_sink (parameters));
 
+      g_mutex_unlock (&dconf_gdbus_lock);
+
       return NULL;
     }
 
-  return g_dbus_connection_call_sync (connection_state_get_connection (state),
+  /* Hold a ref to the connection to make sure the object is still
+   * valid even if we get a closed signal on it (in which case the
+   * actual call would fail but the object would still be alive)
+   * while processing here.
+   */
+  connection = g_object_ref (connection_state_get_connection (state));
+
+  g_mutex_unlock (&dconf_gdbus_lock);
+
+  return g_dbus_connection_call_sync (connection,
                                       bus_name, object_path, interface_name, method_name, parameters, reply_type,
                                       G_DBUS_CALL_FLAGS_NONE, -1, NULL, error);
 }
