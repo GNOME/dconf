@@ -1,3 +1,9 @@
+Changes in dconf 0.33.2
+=======================
+
+ - Drop references to GDBusConnection objects when D-Bus connections are closed
+   (Andre Magalhaes, #51)
+
 Changes in dconf 0.33.1
 =======================
 
