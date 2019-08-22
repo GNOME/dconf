@@ -572,6 +572,145 @@ test_diff (void)
     }
 }
 
+static DConfChangeset *
+changeset_from_string (const gchar *string, gboolean is_database)
+{
+  GVariant *parsed;
+  DConfChangeset *changes, *parsed_changes;
+
+  if (is_database)
+    changes = dconf_changeset_new_database (NULL);
+  else
+    changes = dconf_changeset_new ();
+
+  if (string != NULL)
+    {
+      parsed = g_variant_parse (NULL, string, NULL, NULL, NULL);
+      parsed_changes = dconf_changeset_deserialise (parsed);
+      dconf_changeset_change (changes, parsed_changes);
+      dconf_changeset_unref (parsed_changes);
+      g_variant_unref (parsed);
+    }
+
+  return changes;
+}
+
+static gchar *
+string_from_changeset (DConfChangeset *changeset)
+{
+  GVariant *serialised;
+  gchar *string;
+
+  if (dconf_changeset_is_empty (changeset))
+    return NULL;
+
+  serialised = dconf_changeset_serialise (changeset);
+  string = g_variant_print (serialised, TRUE);
+  g_variant_unref (serialised);
+  return string;
+}
+
+static void
+call_filter_changes (const gchar *base_string,
+                     const gchar *changes_string,
+                     const gchar *expected)
+{
+  DConfChangeset *base, *changes, *filtered;
+  gchar *filtered_string = NULL;
+
+  base = changeset_from_string (base_string, TRUE);
+  changes = changeset_from_string (changes_string, FALSE);
+  filtered = dconf_changeset_filter_changes (base, changes);
+  if (filtered != NULL)
+    {
+      filtered_string = string_from_changeset (filtered);
+      dconf_changeset_unref (filtered);
+    }
+
+  g_assert_cmpstr (filtered_string, ==, expected);
+
+  dconf_changeset_unref (base);
+  dconf_changeset_unref (changes);
+  g_free (filtered_string);
+}
+
+static void
+test_filter_changes (void)
+{
+  /* These tests are mostly negative, since dconf_changeset_filter_changes
+   * is called from dconf_changeset_diff */
+
+  // Define test changesets as serialised g_variant strings
+  const gchar *empty = NULL;
+  const gchar *a1 = "{'/a': @mv <'value1'>}";
+  const gchar *a2 = "{'/a': @mv <'value2'>}";
+  const gchar *b2 = "{'/b': @mv <'value2'>}";
+  const gchar *a1b1 = "{'/a': @mv <'value1'>, '/b': @mv <'value1'>}";
+  const gchar *a1b2 = "{'/a': @mv <'value1'>, '/b': @mv <'value2'>}";
+  const gchar *a1r1 = "{'/a': @mv <'value1'>, '/r/c': @mv <'value3'>}";
+  const gchar *key_reset = "{'/a': @mv nothing}";
+  const gchar *root_reset = "{'/': @mv nothing}";
+  const gchar *partial_reset = "{'/r/': @mv nothing}";
+
+  /* an empty changeset would not change an empty database */
+  call_filter_changes (empty, empty, NULL);
+
+  /* an empty changeset would not change a database with values */
+  call_filter_changes (a1, empty, NULL);
+
+  /* a changeset would not change a database with the same values */
+  call_filter_changes (a1, a1, NULL);
+  call_filter_changes (a1b2, a1b2, NULL);
+
+  /* A non-empty changeset would change an empty database */
+  call_filter_changes (empty, a1, a1);
+
+  /* a changeset would change a database with the same keys but
+   * different values */
+  call_filter_changes (a1, a2, a2);
+  call_filter_changes (a1b1, a1b2, b2);
+
+  /* A changeset would change a database with disjoint values */
+  call_filter_changes (a1, b2, b2);
+
+  /* A changeset would change a database with some equal and some new
+   * values */
+  call_filter_changes (a1, a1b2, b2);
+
+  /* A changeset would not change a database with some equal and some
+   * new values */
+  call_filter_changes (a1b2, a1, NULL);
+
+  /* A root reset has an effect on a database with values */
+  call_filter_changes (a1, root_reset, root_reset);
+  call_filter_changes (a1b2, root_reset, root_reset);
+
+  /* A root reset would have no effect on an empty database */
+  call_filter_changes (empty, root_reset, NULL);
+
+  /* A key reset would have no effect on an empty database */
+  call_filter_changes (empty, key_reset, NULL);
+
+  /* A key reset would have no effect on a database with other keys */
+  call_filter_changes (b2, key_reset, NULL);
+
+  /* A key reset would have an effect on a database containing that
+   * key */
+  call_filter_changes (a1, key_reset, key_reset);
+  call_filter_changes (a1b1, key_reset, key_reset);
+
+  /* A partial reset would have no effect on an empty database */
+  call_filter_changes (empty, partial_reset, NULL);
+
+  /* A partial reset would have no effect on a database with other
+   * values */
+  call_filter_changes (a1, partial_reset, NULL);
+
+  /* A partial reset would have an effect on a database with some values
+   * under that path */
+  call_filter_changes (a1r1, partial_reset, partial_reset);
+}
+
 int
 main (int argc, char **argv)
 {
@@ -584,6 +723,7 @@ main (int argc, char **argv)
   g_test_add_func ("/changeset/serialiser", test_serialiser);
   g_test_add_func ("/changeset/change", test_change);
   g_test_add_func ("/changeset/diff", test_diff);
+  g_test_add_func ("/changeset/filter", test_filter_changes);
 
   return g_test_run ();
 }
