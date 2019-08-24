@@ -311,6 +311,20 @@ dconf_changeset_get (DConfChangeset  *changeset,
 }
 
 /**
+ * dconf_changeset_table_iter_init:
+ * @changeset: a #DConfChangeset
+ * @iter: a pointer to a #GHashTableIter
+ *
+ * Creates a hash table iterator for the table of @changeset
+ **/
+void
+dconf_changeset_table_iter_init (DConfChangeset *changeset,
+                                 GHashTableIter *iter)
+{
+  g_hash_table_iter_init (iter, changeset->table);
+}
+
+/**
  * dconf_changeset_is_similar_to:
  * @changeset: a #DConfChangeset
  * @other: another #DConfChangeset

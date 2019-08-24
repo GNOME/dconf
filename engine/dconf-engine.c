@@ -1129,6 +1129,60 @@ dconf_engine_prepare_change (DConfEngine     *engine,
  */
 static void dconf_engine_manage_queue (DConfEngine *engine);
 
+/**
+ * dconf_engine_changeset_has_no_effect:
+ * @engine: a #DConfEngine to check the effect of the changes on
+ * @changeset: a #DConfChangeset
+ * @read_through: a #GQueue to include pending changes from
+ *
+ * Checks if @changeset would have no effect when applied to @engine
+ * (i.e. for all changes, the new value is the same as the old value,
+ * or the same as the pending value in @read_through).
+ *
+ * Returns: %TRUE if @changeset is empty
+ **/
+gboolean
+dconf_engine_changeset_has_no_effect (DConfEngine *engine, DConfChangeset *changeset)
+{
+  if (dconf_changeset_is_empty (changeset))
+    return TRUE;
+
+  GHashTableIter iter;
+  gpointer key, new_value;
+  GVariant *current_value;
+
+  dconf_changeset_table_iter_init (changeset, &iter);
+  while (g_hash_table_iter_next (&iter, &key, &new_value))
+    {
+      GVariant *current_value = dconf_engine_read (engine,
+                                                   DCONF_READ_USER_VALUE,
+                                                   NULL,
+                                                   key);
+
+      if (current_value == NULL)
+        {
+          return FALSE;
+        }
+      else
+        {
+          if (new_value == NULL)
+            {
+              g_variant_unref (current_value);
+              return FALSE;
+            }
+          else if (!g_variant_equal (current_value, new_value))
+            {
+              g_variant_unref (current_value);
+              return FALSE;
+            }
+
+          g_variant_unref (current_value);
+        }
+    }
+
+  return TRUE;
+}
+
 static void
 dconf_engine_emit_changes (DConfEngine    *engine,
                            DConfChangeset *changeset,
@@ -1273,6 +1327,8 @@ dconf_engine_change_fast (DConfEngine     *engine,
   if (dconf_changeset_is_empty (changeset))
     return TRUE;
 
+  gboolean has_no_effect = dconf_engine_changeset_has_no_effect (engine, changeset);
+
   if (!dconf_engine_changeset_changes_only_writable_keys (engine, changeset, error))
     return FALSE;
 
@@ -1297,7 +1353,8 @@ dconf_engine_change_fast (DConfEngine     *engine,
   dconf_engine_unlock_queue (engine);
 
   /* Emit the signal after dropping the lock to avoid deadlock on re-entry. */
-  dconf_engine_emit_changes (engine, changeset, origin_tag);
+  if (!has_no_effect)
+    dconf_engine_emit_changes (engine, changeset, origin_tag);
 
   return TRUE;
 }
