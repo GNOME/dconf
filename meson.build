@@ -48,10 +48,22 @@ glib_dep = dependency('glib-2.0', version: '>= 2.44.0')
 gio_module_dir = gio_dep.get_pkgconfig_variable('giomoduledir', define_variable: ['libdir', dconf_libdir])
 dbus_session_service_dir = dependency('dbus-1').get_pkgconfig_variable('session_bus_services_dir', define_variable: ['datadir', dconf_datadir])
 
-enable_bash_completion = get_option('bash_completion')
-if enable_bash_completion
-  # FIXME: the `.pc` file is wrong because `completionsdir` should be relative to `datadir`, not `prefix`
-  completions_dir = dependency('bash-completion').get_pkgconfig_variable('completionsdir', define_variable: ['prefix', dconf_prefix])
+enable_bash_completion = false
+if get_option('bash_completion_dir') == 'yes' or get_option('bash_completion_dir') == 'auto'
+  bash_completion_package = dependency('bash-completion', required: false)
+  if bash_completion_package.found()
+    # FIXME: the `.pc` file is wrong because `completionsdir` should be relative to `datadir`, not `prefix`
+    completions_dir = bash_completion_package.get_pkgconfig_variable('completionsdir',
+                                                                         define_variable: [ 'prefix', dconf_prefix ])
+  else
+    completions_dir = join_paths(dconf_datadir, 'bash-completion', 'completions')
+  endif
+  enable_bash_completion = true
+elif get_option('bash_completion_dir') == 'no' or get_option('bash_completion_dir') == ''
+  enable_bash_completion = false
+else
+  enable_bash_completion = true
+  completions_dir = get_option('bash_completion_dir')
 endif
 
 configure_file(
