@@ -7,7 +7,6 @@ configure_file(
   input: service + '.in',
   output: service,
   configuration: service_conf,
-  install: true,
   install_dir: dbus_session_service_dir,
 )
 
