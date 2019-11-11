@@ -516,7 +516,6 @@ class DBusTest(unittest.TestCase):
         # Lexicographically last value should win:
         self.assertEqual(dconf_read('/org/file'), '99')
 
-    @unittest.expectedFailure
     def test_redundant_disk_writes(self):
         """Redundant disk writes are avoided.
 
