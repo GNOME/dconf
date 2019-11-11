@@ -183,6 +183,8 @@ dconf_writer_real_commit (DConfWriter  *writer,
       close (invalidate_fd);
     }
 
+  writer->priv->need_write = FALSE;
+
   if (writer->priv->commited_values)
     dconf_changeset_unref (writer->priv->commited_values);
   writer->priv->commited_values = writer->priv->uncommited_values;

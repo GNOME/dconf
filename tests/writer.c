@@ -45,6 +45,29 @@ assert_n_warnings (guint expected_n_warnings)
   n_warnings = 0;
 }
 
+static guint64
+get_file_mtime_us (char *filename)
+{
+  GFile *file = g_file_new_for_path (filename);
+  GError *error = NULL;
+  GFileInfo *info = g_file_query_info (
+    file,
+    "time::*",
+    G_FILE_QUERY_INFO_NONE,
+    NULL,
+    &error);
+  if (!info)
+    {
+      printf ("failed with error %i: %s\n", error->code, error->message);
+      exit (1);
+    }
+
+  guint64 mtime_us =
+    g_file_info_get_attribute_uint64 (info, G_FILE_ATTRIBUTE_TIME_MODIFIED) * 1000000 +
+    g_file_info_get_attribute_uint32 (info, G_FILE_ATTRIBUTE_TIME_MODIFIED_USEC);
+  return mtime_us;
+}
+
 typedef struct
 {
   gchar *dconf_dir;  /* (owned) */
@@ -273,8 +296,10 @@ static void test_writer_commit_real_changes (Fixture       *fixture,
   const char *db_name = "nonexistent";
   g_autoptr(DConfWriter) writer = NULL;
   DConfWriterClass *writer_class;
+  DConfChangeset *changes;
   gboolean retval;
   g_autoptr(GError) local_error = NULL;
+  guint64 db_mtime_us;
   g_autofree gchar *db_filename = g_build_filename (fixture->dconf_dir, db_name, NULL);
 
   /* Create a writer. */
@@ -291,7 +316,7 @@ static void test_writer_commit_real_changes (Fixture       *fixture,
   g_assert_true (retval);
 
   /* Make a real change to the database */
-  DConfChangeset *changes = dconf_changeset_new();
+  changes = dconf_changeset_new();
   dconf_changeset_set(changes, "/key", g_variant_new ("(s)", "value"));
   writer_class->change (writer, changes, NULL);
   g_assert_no_error (local_error);
@@ -304,6 +329,47 @@ static void test_writer_commit_real_changes (Fixture       *fixture,
 
   /* Check the database now exists */
   g_assert_true (g_file_test (db_filename, G_FILE_TEST_EXISTS));
+  db_mtime_us = get_file_mtime_us (db_filename);
+
+  /* End transaction */
+  writer_class->end (writer);
+
+  /* Begin a second transaction */
+  retval = writer_class->begin (writer, &local_error);
+  g_assert_no_error (local_error);
+  g_assert_true (retval);
+
+  /* Make a redundant/empty change to the database */
+  changes = dconf_changeset_new();
+  writer_class->change (writer, changes, NULL);
+  g_assert_no_error (local_error);
+  g_assert_true (retval);
+
+  /* Commit transaction */
+  retval = writer_class->commit (writer, &local_error);
+  g_assert_no_error (local_error);
+  g_assert_true (retval);
+
+  /* End transaction */
+  writer_class->end (writer);
+
+  /* Check that no extra write was done (even afer committing a real change) */
+  g_assert_cmpuint (db_mtime_us, ==, get_file_mtime_us (db_filename));
+  db_mtime_us = get_file_mtime_us (db_filename);
+
+  /* Begin a third transaction */
+  retval = writer_class->begin (writer, &local_error);
+  g_assert_no_error (local_error);
+  g_assert_true (retval);
+
+  /* Commit transaction (with no changes at all) */
+  retval = writer_class->commit (writer, &local_error);
+  g_assert_no_error (local_error);
+  g_assert_true (retval);
+
+  /* Check that no extra write was done (even afer committing a real change) */
+  g_assert_cmpuint (db_mtime_us, ==, get_file_mtime_us (db_filename));
+  db_mtime_us = get_file_mtime_us (db_filename);
 
   /* End transaction */
   writer_class->end (writer);
