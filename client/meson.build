@@ -10,10 +10,16 @@ install_headers(
   subdir: join_paths('dconf', 'client'),
 )
 
-sources = files('dconf-client.c')
+sources = files(
+  'dconf-client.c',
+  '../common/dconf-changeset.c',
+  '../common/dconf-error.c',
+  '../common/dconf-gvdb-utils.c',
+  '../common/dconf-paths.c',
+)
 
 deps = [
-  libdconf_common_hidden_dep,
+  libdconf_common_dep,
   libdconf_gdbus_thread_dep,
 ]
 

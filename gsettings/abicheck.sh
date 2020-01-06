@@ -15,6 +15,8 @@
 #
 # mangle_path
 
+set -x
+
 ${NM:-nm} --dynamic --defined-only $GSETTINGS_LIB > public-abi
 
 test "`\

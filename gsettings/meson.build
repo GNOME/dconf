@@ -2,7 +2,7 @@
 # link_whole; this avoids the gsettings backend module exposing
 # symbols other than g_io_module_*
 backend_deps = [
-  libdconf_common_hidden,
+  libdconf_common,
   libdconf_gdbus_thread,
 ]
 
