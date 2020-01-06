@@ -193,6 +193,16 @@ dconf_gvdb_utils_add_key (const gchar *path,
   return TRUE;
 }
 
+GHashTable *
+dconf_gvdb_utils_table_from_changeset (DConfChangeset *database)
+{
+  GHashTable *table;
+
+  table = gvdb_hash_table_new (NULL, NULL);
+  dconf_changeset_all (database, dconf_gvdb_utils_add_key, table);
+  return table;
+}
+
 gboolean
 dconf_gvdb_utils_write_file (const gchar     *filename,
                              DConfChangeset  *database,
@@ -201,8 +211,7 @@ dconf_gvdb_utils_write_file (const gchar     *filename,
   GHashTable *gvdb;
   gboolean success;
 
-  gvdb = gvdb_hash_table_new (NULL, NULL);
-  dconf_changeset_all (database, dconf_gvdb_utils_add_key, gvdb);
+  gvdb = dconf_gvdb_utils_table_from_changeset (database);
   success = gvdb_table_write_contents (gvdb, filename, FALSE, error);
 
   if (!success)
