@@ -1,3 +1,16 @@
+Changes in dconf 0.35.1
+=======================
+
+ - Writer service: avoid writing to disk and emitting changed signals
+   when write requests do not result in changes to the database (Daniel
+   Playfair Cal, !3)
+ - build: Drop redundant `install` key from `configure_file()` (Philip
+   Withnall, !53)
+ - build: Update abicheck.sh script to work with GCC 9 (Diego
+   Escalante Urello, !55)
+ - build: Update use of link_whole for meson-0.52 (Diego Escalante
+   Urello, !54)
+
 Changes in dconf 0.33.2
 =======================
 
