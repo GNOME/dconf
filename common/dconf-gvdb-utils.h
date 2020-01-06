@@ -28,6 +28,7 @@ DConfChangeset *                dconf_gvdb_utils_changeset_from_table   (GvdbTab
 DConfChangeset *                dconf_gvdb_utils_read_and_back_up_file  (const gchar     *filename,
                                                                          gboolean        *file_missing,
                                                                          GError         **error);
+GHashTable *                    dconf_gvdb_utils_table_from_changeset   (DConfChangeset  *database);
 gboolean                        dconf_gvdb_utils_write_file             (const gchar     *filename,
                                                                          DConfChangeset  *database,
                                                                          GError         **error);
