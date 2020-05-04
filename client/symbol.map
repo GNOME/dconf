@@ -1,0 +1,14 @@
+{
+global:
+  dconf_client_*;
+  dconf_changeset_*;
+  dconf_error_quark;
+  dconf_is_path;
+  dconf_is_key;
+  dconf_is_dir;
+  dconf_is_rel_path;
+  dconf_is_rel_key;
+  dconf_is_rel_dir;
+local:
+  *;
+};
