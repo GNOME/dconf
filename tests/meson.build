@@ -51,7 +51,8 @@ endforeach
 symbol_test = find_program('abicheck.sh')
 
 abi_tests = [
-  ['gsettings', libdconf_settings, files('../gsettings/symbols.txt')[0]]
+  ['gsettings', libdconf_settings, files('../gsettings/symbols.txt')[0]],
+  ['libdconf', libdconf, files('../client/symbols.txt')[0]],
 ]
 
 foreach abi_test: abi_tests
