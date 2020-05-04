@@ -50,8 +50,12 @@ dbus_session_service_dir = dependency('dbus-1').get_pkgconfig_variable('session_
 
 enable_bash_completion = get_option('bash_completion')
 if enable_bash_completion
-  # FIXME: the `.pc` file is wrong because `completionsdir` should be relative to `datadir`, not `prefix`
-  completions_dir = dependency('bash-completion').get_pkgconfig_variable('completionsdir', define_variable: ['prefix', dconf_prefix])
+  bash_completion_dep = dependency('bash-completion')
+  completions_dir = bash_completion_dep.get_pkgconfig_variable(
+    'completionsdir',
+    # bash-completion 2.10 changed the substitutions
+    define_variable: bash_completion_dep.version().version_compare('>= 2.10') ? ['datadir', dconf_datadir] : ['prefix', dconf_prefix],
+  )
 endif
 
 configure_file(
