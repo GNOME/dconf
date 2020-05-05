@@ -1208,6 +1208,7 @@ dconf_engine_manage_queue (DConfEngine *engine)
                                          G_VARIANT_TYPE ("(s)"), sizeof (OutstandingChange));
 
       oc->change = engine->in_flight = g_steal_pointer (&engine->pending);
+      dconf_changeset_seal (engine->in_flight);
 
       parameters = dconf_engine_prepare_change (engine, oc->change);
 
