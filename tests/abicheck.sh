@@ -29,5 +29,7 @@ SYMBOL_FILE="$2"
 ${NM:-nm} --dynamic --defined-only "$BINARY" | \
     cut -f 3 -d ' ' | \
     grep -v ^_ | \
+    grep -v ^environ | \
+    grep -v __progname | \
     grep -v ^mangle_path | \
     diff "$SYMBOL_FILE" -
