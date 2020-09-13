@@ -1,3 +1,9 @@
+Changes in dconf 0.38.0
+=======================
+
+ - build: Install bash-completion relative to datadir (Jan Trojnar, !58)
+ - client: add `dconf compile` to shell autocomplete (Andreas Polnas, !60)
+
 Changes in dconf 0.36.0
 =======================
 
