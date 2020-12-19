@@ -22,7 +22,7 @@
 
 #include "dconf-gvdb-utils.h"
 
-#include "../common/dconf-paths.h"
+#include "./dconf-paths.h"
 #include "../gvdb/gvdb-builder.h"
 #include "../gvdb/gvdb-reader.h"
 
@@ -30,6 +30,37 @@
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <string.h>
+
+DConfChangeset *
+dconf_gvdb_utils_changeset_from_table (GvdbTable *table)
+{
+  DConfChangeset *database = dconf_changeset_new_database (NULL);
+  gchar **names;
+  gsize n_names;
+  gsize i;
+
+  names = gvdb_table_get_names (table, &n_names);
+  for (i = 0; i < n_names; i++)
+    {
+      if (dconf_is_key (names[i], NULL))
+        {
+          GVariant *value;
+
+          value = gvdb_table_get_value (table, names[i]);
+
+          if (value != NULL)
+            {
+              dconf_changeset_set (database, names[i], value);
+              g_variant_unref (value);
+            }
+        }
+
+      g_free (names[i]);
+    }
+
+  g_free (names);
+  return database;
+}
 
 DConfChangeset *
 dconf_gvdb_utils_read_and_back_up_file (const gchar  *filename,
@@ -95,38 +126,14 @@ dconf_gvdb_utils_read_and_back_up_file (const gchar  *filename,
       return NULL;
     }
 
-  /* Only allocate once we know we are in a non-error situation */
-  database = dconf_changeset_new_database (NULL);
-
   /* Fill the table up with the initial state */
   if (table != NULL)
     {
-      gchar **names;
-      gsize n_names;
-      gsize i;
-
-      names = gvdb_table_get_names (table, &n_names);
-      for (i = 0; i < n_names; i++)
-        {
-          if (dconf_is_key (names[i], NULL))
-            {
-              GVariant *value;
-
-              value = gvdb_table_get_value (table, names[i]);
-
-              if (value != NULL)
-                {
-                  dconf_changeset_set (database, names[i], value);
-                  g_variant_unref (value);
-                }
-            }
-
-          g_free (names[i]);
-        }
-
+      database = dconf_gvdb_utils_changeset_from_table (table);
       gvdb_table_free (table);
-      g_free (names);
     }
+  else
+    database = dconf_changeset_new_database (NULL);
 
   if (file_missing)
     *file_missing = (table == NULL);
@@ -186,6 +193,16 @@ dconf_gvdb_utils_add_key (const gchar *path,
   return TRUE;
 }
 
+GHashTable *
+dconf_gvdb_utils_table_from_changeset (DConfChangeset *database)
+{
+  GHashTable *table;
+
+  table = gvdb_hash_table_new (NULL, NULL);
+  dconf_changeset_all (database, dconf_gvdb_utils_add_key, table);
+  return table;
+}
+
 gboolean
 dconf_gvdb_utils_write_file (const gchar     *filename,
                              DConfChangeset  *database,
@@ -194,8 +211,7 @@ dconf_gvdb_utils_write_file (const gchar     *filename,
   GHashTable *gvdb;
   gboolean success;
 
-  gvdb = gvdb_hash_table_new (NULL, NULL);
-  dconf_changeset_all (database, dconf_gvdb_utils_add_key, gvdb);
+  gvdb = dconf_gvdb_utils_table_from_changeset (database);
   success = gvdb_table_write_contents (gvdb, filename, FALSE, error);
 
   if (!success)

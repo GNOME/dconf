@@ -23,7 +23,7 @@
 #include "dconf-writer.h"
 
 #include "../shm/dconf-shm.h"
-#include "dconf-gvdb-utils.h"
+#include "../common/dconf-gvdb-utils.h"
 #include "dconf-generated.h"
 #include "dconf-blame.h"
 

@@ -24,6 +24,7 @@
 
 #include "../common/dconf-enums.h"
 #include "../common/dconf-paths.h"
+#include "../common/dconf-gvdb-utils.h"
 #include "../gvdb/gvdb-reader.h"
 #include <string.h>
 #include <stdlib.h>
@@ -822,6 +823,54 @@ dconf_engine_list (DConfEngine *engine,
   return list;
 }
 
+static gboolean
+dconf_engine_dir_has_writable_contents (DConfEngine *engine,
+                                        const gchar *dir)
+{
+  DConfChangeset *database;
+  GHashTable *current_state;
+
+  /* Read the on disk state */
+  if (engine->n_sources == 0 || !engine->sources[0]->writable)
+    // If there are no writable sources, there won't be any pending writes either
+    return FALSE;
+
+  dconf_engine_acquire_sources (engine);
+  database = dconf_gvdb_utils_changeset_from_table (engine->sources[0]->values);
+  dconf_engine_release_sources (engine);
+
+  /* Apply pending and in_flight changes to the on disk state */
+  dconf_engine_lock_queue (engine);
+
+  if (engine->in_flight != NULL)
+    dconf_changeset_change (database, engine->in_flight);
+
+  if (engine->pending != NULL)
+    {
+      /**
+       * We don't want to seal the pending changeset because it may still be changed,
+       * and sealing the changeset would be a side effect of passing engine->pending
+       * directly into dconf_changeset_change.
+       */
+      DConfChangeset *changes = dconf_changeset_filter_changes (database, engine->pending);
+      if (changes != NULL)
+        {
+          dconf_changeset_change (database, changes);
+          dconf_changeset_unref (changes);
+        }
+    }
+
+  dconf_engine_unlock_queue (engine);
+
+  /* Check if there are writable contents at the given directory in the current state */
+  current_state = dconf_gvdb_utils_table_from_changeset (database);
+  gboolean result = g_hash_table_contains (current_state, dir);
+
+  g_hash_table_unref (current_state);
+  dconf_changeset_unref (database);
+  return result;
+}
+
 typedef void (* DConfEngineCallHandleCallback) (DConfEngine  *engine,
                                                 gpointer      handle,
                                                 GVariant     *parameter,
@@ -1129,6 +1178,34 @@ dconf_engine_prepare_change (DConfEngine     *engine,
  */
 static void dconf_engine_manage_queue (DConfEngine *engine);
 
+/**
+ * a #DConfChangesetPredicate which determines whether the given path and
+ * value is already present in the given engine. "Already present" means
+ * that setting that path to that value would have no effect on the
+ * engine, including for directory resets.
+ */
+static gboolean
+dconf_engine_path_has_value_predicate (const gchar *path,
+                                      GVariant *new_value,
+                                      gpointer user_data)
+{
+  DConfEngine *engine = user_data;
+
+  // Path reset are handled specially
+  if (g_str_has_suffix (path, "/"))
+    return !dconf_engine_dir_has_writable_contents (engine, path);
+
+  g_autoptr(GVariant) current_value = dconf_engine_read (
+    engine,
+    DCONF_READ_USER_VALUE,
+    NULL,
+    path
+  );
+  return ((current_value == NULL && new_value == NULL) ||
+          (current_value != NULL && new_value != NULL &&
+           g_variant_equal (current_value, new_value)));
+}
+
 static void
 dconf_engine_emit_changes (DConfEngine    *engine,
                            DConfChangeset *changeset,
@@ -1208,6 +1285,7 @@ dconf_engine_manage_queue (DConfEngine *engine)
                                          G_VARIANT_TYPE ("(s)"), sizeof (OutstandingChange));
 
       oc->change = engine->in_flight = g_steal_pointer (&engine->pending);
+      dconf_changeset_seal (engine->in_flight);
 
       parameters = dconf_engine_prepare_change (engine, oc->change);
 
@@ -1273,6 +1351,10 @@ dconf_engine_change_fast (DConfEngine     *engine,
   if (dconf_changeset_is_empty (changeset))
     return TRUE;
 
+  gboolean has_no_effect = dconf_changeset_all (changeset,
+                                                dconf_engine_path_has_value_predicate,
+                                                engine);
+
   if (!dconf_engine_changeset_changes_only_writable_keys (engine, changeset, error))
     return FALSE;
 
@@ -1297,7 +1379,8 @@ dconf_engine_change_fast (DConfEngine     *engine,
   dconf_engine_unlock_queue (engine);
 
   /* Emit the signal after dropping the lock to avoid deadlock on re-entry. */
-  dconf_engine_emit_changes (engine, changeset, origin_tag);
+  if (!has_no_effect)
+    dconf_engine_emit_changes (engine, changeset, origin_tag);
 
   return TRUE;
 }

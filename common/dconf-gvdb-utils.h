@@ -21,11 +21,14 @@
 #ifndef __dconf_gvdb_utils_h__
 #define __dconf_gvdb_utils_h__
 
-#include "../common/dconf-changeset.h"
+#include "../gvdb/gvdb-reader.h"
+#include "./dconf-changeset.h"
 
+DConfChangeset *                dconf_gvdb_utils_changeset_from_table   (GvdbTable       *table);
 DConfChangeset *                dconf_gvdb_utils_read_and_back_up_file  (const gchar     *filename,
                                                                          gboolean        *file_missing,
                                                                          GError         **error);
+GHashTable *                    dconf_gvdb_utils_table_from_changeset   (DConfChangeset  *database);
 gboolean                        dconf_gvdb_utils_write_file             (const gchar     *filename,
                                                                          DConfChangeset  *database,
                                                                          GError         **error);

@@ -32,6 +32,9 @@ client_deps = [
   libdconf_gdbus_thread_dep,
 ]
 
+symbol_map = join_paths(meson.current_source_dir(), 'symbol.map')
+ldflags = cc.get_supported_link_arguments('-Wl,--version-script,@0@'.format(symbol_map))
+
 libdconf = shared_library(
   'dconf',
   sources: sources,
@@ -40,6 +43,8 @@ libdconf = shared_library(
   include_directories: top_inc,
   dependencies: client_deps,
   c_args: dconf_c_args,
+  link_args: ldflags,
+  link_depends: symbol_map,
   install: true,
 )
 
