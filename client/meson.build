@@ -12,11 +12,6 @@ install_headers(
 
 sources = files('dconf-client.c')
 
-deps = [
-  libdconf_common_hidden_dep,
-  libdconf_gdbus_thread_dep,
-]
-
 libdconf_client = static_library(
   'dconf-client',
   sources: sources,
@@ -31,13 +26,19 @@ libdconf_client_dep = declare_dependency(
   link_with: libdconf_client,
 )
 
+client_deps = [
+  libdconf_common_dep,
+  libdconf_engine_dep,
+  libdconf_gdbus_thread_dep,
+]
+
 libdconf = shared_library(
   'dconf',
   sources: sources,
   version: libversion,
   soversion: soversion,
   include_directories: top_inc,
-  dependencies: deps,
+  dependencies: client_deps,
   c_args: dconf_c_args,
   install: true,
 )

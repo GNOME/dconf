@@ -1,0 +1,10 @@
+{
+global:
+  g_io_module_load;
+  g_io_module_unload;
+  g_io_module_query;
+  environ;
+  __progname;
+local:
+  *;
+};

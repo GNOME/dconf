@@ -48,6 +48,23 @@ foreach unit_test: unit_tests
   test(unit_test[0], exe, is_parallel: false, env: envs)
 endforeach
 
+symbol_test = find_program('abicheck.sh')
+
+abi_tests = [
+  ['gsettings', libdconf_settings, files('../gsettings/symbols.txt')[0]],
+  ['libdconf', libdconf, files('../client/symbols.txt')[0]],
+]
+
+foreach abi_test: abi_tests
+  test(
+    abi_test[0],
+    symbol_test,
+    env: envs,
+    args: [abi_test[1].full_path(), abi_test[2]],
+  )
+endforeach
+
+
 python3 = find_program('python3', required: false)
 dbus_daemon = find_program('dbus-daemon', required: false)
 
