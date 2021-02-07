@@ -1,3 +1,13 @@
+Changes in dconf 0.39.1
+=======================
+
+ - build: improve libdconf visible symbols (Inigo Martinez, Daniel Playfair
+   Cal, !59)
+ - engine: do not emit optimistic change notifications unless the local value
+   is different (Daniel Playfair Cal, !2)
+ - build: minor fixes to bash completion script (Philip Withnall, !64)
+ - service: add a systemd unit for D-Bus activation (Simon McVittie, !63)
+
 Changes in dconf 0.38.0
 =======================
 
