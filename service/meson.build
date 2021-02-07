@@ -10,6 +10,15 @@ configure_file(
   install_dir: dbus_session_service_dir,
 )
 
+systemd_service = 'dconf.service'
+
+configure_file(
+  input: systemd_service + '.in',
+  output: systemd_service,
+  configuration: service_conf,
+  install_dir: systemd_userunitdir,
+)
+
 lib_sources = [
   'dconf-blame.c',
   'dconf-keyfile-writer.c',

@@ -48,6 +48,20 @@ glib_dep = dependency('glib-2.0', version: '>= 2.44.0')
 gio_module_dir = gio_dep.get_pkgconfig_variable('giomoduledir', define_variable: ['libdir', dconf_libdir])
 dbus_session_service_dir = dependency('dbus-1').get_pkgconfig_variable('session_bus_services_dir', define_variable: ['datadir', dconf_datadir])
 
+systemd_userunitdir = get_option('systemduserunitdir')
+
+if systemd_userunitdir == ''
+  systemd_dep = dependency('systemd', required: false)
+
+  if systemd_dep.found()
+    systemd_userunitdir = systemd_dep.get_pkgconfig_variable('systemduserunitdir')
+  else
+    # Fall back to the upstream default.
+    # Note that this is always 'lib', even if libdir is something else
+    systemd_userunitdir = join_paths(dconf_prefix, 'lib', 'systemd', 'user')
+  endif
+endif
+
 enable_bash_completion = get_option('bash_completion')
 if enable_bash_completion
   bash_completion_dep = dependency('bash-completion')

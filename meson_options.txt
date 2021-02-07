@@ -2,3 +2,4 @@ option('bash_completion', type: 'boolean', value: true, description: 'install ba
 option('man', type: 'boolean', value: true, description: 'generate man pages')
 option('gtk_doc', type: 'boolean', value: false, description: 'use gtk-doc to build documentation')
 option('vapi', type: 'boolean', value: true, description: 'install dconf client vapi')
+option('systemduserunitdir', type: 'string', value: '', description: 'override systemd user unit directory')
