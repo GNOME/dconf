@@ -23,6 +23,8 @@
 
 #include <glib.h>
 
+G_BEGIN_DECLS
+
 gboolean                dconf_is_path                                   (const gchar         *string,
                                                                          GError             **error);
 gboolean                dconf_is_key                                    (const gchar         *string,
@@ -36,5 +38,7 @@ gboolean                dconf_is_rel_key                                (const g
                                                                          GError             **error);
 gboolean                dconf_is_rel_dir                                (const gchar         *string,
                                                                          GError             **error);
+
+G_END_DECLS
 
 #endif /* __dconf_paths_h__ */

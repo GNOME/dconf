@@ -22,6 +22,8 @@
 
 #include <glib.h>
 
+G_BEGIN_DECLS
+
 typedef struct _DConfChangeset                              DConfChangeset;
 
 typedef gboolean     (* DConfChangesetPredicate)                        (const gchar              *path,
@@ -74,5 +76,7 @@ DConfChangeset *        dconf_changeset_diff                            (DConfCh
 void                    dconf_changeset_seal                            (DConfChangeset           *changeset);
 
 G_DEFINE_AUTOPTR_CLEANUP_FUNC(DConfChangeset, dconf_changeset_unref)
+
+G_END_DECLS
 
 #endif /* __dconf_changeset_h__ */
