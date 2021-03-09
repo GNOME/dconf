@@ -22,6 +22,8 @@
 
 #include <glib.h>
 
+G_BEGIN_DECLS
+
 #define DCONF_ERROR (dconf_error_quark ())
 GQuark dconf_error_quark (void);
 
@@ -38,5 +40,7 @@ typedef enum
   DCONF_READ_DEFAULT_VALUE              = (1u << 0),
   DCONF_READ_USER_VALUE                 = (1u << 1)
 } DConfReadFlags;
+
+G_END_DECLS
 
 #endif /* __dconf_error_h__ */
