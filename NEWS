@@ -1,3 +1,10 @@
+Changes in dconf 0.40.0
+=======================
+
+ - common: Add missing G_BEGIN/END_DECLS to allow use of headers from C++
+   code (Philip Withnall, !67)
+
+
 Changes in dconf 0.39.1
 =======================
 
