@@ -54,7 +54,7 @@ if systemd_userunitdir == ''
   systemd_dep = dependency('systemd', required: false)
 
   if systemd_dep.found()
-    systemd_userunitdir = systemd_dep.get_pkgconfig_variable('systemduserunitdir')
+    systemd_userunitdir = systemd_dep.get_pkgconfig_variable('systemduserunitdir', define_variable: ['prefix', dconf_prefix])
   else
     # Fall back to the upstream default.
     # Note that this is always 'lib', even if libdir is something else
