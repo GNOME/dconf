@@ -43,7 +43,7 @@ gio_req_version = '>= 2.25.7'
 
 gio_dep = dependency('gio-2.0', version: gio_req_version)
 gio_unix_dep = dependency('gio-unix-2.0', version: gio_req_version)
-glib_dep = dependency('glib-2.0', version: '>= 2.44.0')
+glib_dep = dependency('glib-2.0', version: '>= 2.67.4')
 
 gio_module_dir = gio_dep.get_pkgconfig_variable('giomoduledir', define_variable: ['libdir', dconf_libdir])
 dbus_session_service_dir = dependency('dbus-1').get_pkgconfig_variable('session_bus_services_dir', define_variable: ['datadir', dconf_datadir])
