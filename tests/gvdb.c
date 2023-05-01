@@ -361,7 +361,7 @@ test_corrupted (gconstpointer user_data)
 
       orig = g_mapped_file_get_contents (mapped);
       length = g_mapped_file_get_length (mapped);
-      copy = g_memdup (orig, length);
+      copy = g_memdup2 (orig, length);
 
       for (i = 0; i < 10000; i++)
         {
