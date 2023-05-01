@@ -2,7 +2,7 @@ project(
   'dconf', ['c'],
   version: '0.41.1',
   license: 'LGPL2.1+',
-  meson_version: '>= 0.47.0',
+  meson_version: '>= 0.57.0',
 )
 
 dconf_prefix = get_option('prefix')
@@ -100,4 +100,6 @@ subdir('bin')
 subdir('docs')
 subdir('tests')
 
-meson.add_install_script('meson_post_install.py', gio_module_dir)
+gnome.post_install(
+  gio_querymodules: gio_module_dir,
+)
