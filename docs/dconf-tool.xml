@@ -127,7 +127,7 @@
       <varlistentry>
         <term><option>read</option></term>
 
-        <listitem><para>Read the value of a key.</para></listitem>
+        <listitem><para>Read the value of a key. Use <option>-d</option> to print the default value rather than the user-set value.</para></listitem>
       </varlistentry>
 
       <varlistentry>
