@@ -35,7 +35,7 @@ libdconf_engine_test = static_library(
   'dconf-engine-test',
   sources: testable_sources,
   include_directories: top_inc,
-  dependencies: engine_deps + [libdconf_shm_dep],
+  dependencies: engine_deps,
   c_args: dconf_c_args,
   pic: true,
 )
