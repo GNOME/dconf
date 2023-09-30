@@ -11,6 +11,7 @@ if get_option('gtk_doc')
     gobject_typesfile: 'dconf.types',
     install: true,
     install_dir: join_paths(dconf_prefix, gnome.gtkdoc_html_dir('dconf')),
+    check: get_option('buildtype').contains('release'),
   )
 endif
 

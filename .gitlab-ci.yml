@@ -57,9 +57,6 @@ test:
       - "_build/meson-logs"
       - "_coverage"
 
-# FIXME: Run gtkdoc-check when we can. See:
-# https://github.com/mesonbuild/meson/issues/3580
-
 dist-job:
   stage: build
   only:
