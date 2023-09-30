@@ -67,7 +67,7 @@ dconf_mock_gvdb_table_insert (GvdbTable   *table,
 {
   DConfMockGvdbItem *item;
 
-  g_assert (value == NULL || subtable == NULL);
+  g_assert_true (value == NULL || subtable == NULL);
 
   if (subtable)
     subtable->top_level = FALSE;

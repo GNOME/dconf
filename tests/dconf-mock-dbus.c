@@ -46,7 +46,7 @@ dconf_mock_dbus_async_reply (GVariant *reply,
 {
   DConfEngineCallHandle *handle;
 
-  g_assert (!g_queue_is_empty (&dconf_mock_dbus_outstanding_call_handles));
+  g_assert_false (g_queue_is_empty (&dconf_mock_dbus_outstanding_call_handles));
   handle = g_queue_pop_head (&dconf_mock_dbus_outstanding_call_handles);
 
   if (reply)
@@ -54,7 +54,7 @@ dconf_mock_dbus_async_reply (GVariant *reply,
       const GVariantType *expected_type;
 
       expected_type = dconf_engine_call_handle_get_expected_type (handle);
-      g_assert (expected_type == NULL || g_variant_is_of_type (reply, expected_type));
+      g_assert_true (expected_type == NULL || g_variant_is_of_type (reply, expected_type));
       g_variant_ref_sink (reply);
     }
 
@@ -67,7 +67,7 @@ dconf_mock_dbus_async_reply (GVariant *reply,
 void
 dconf_mock_dbus_assert_no_async (void)
 {
-  g_assert (g_queue_is_empty (&dconf_mock_dbus_outstanding_call_handles));
+  g_assert_true (g_queue_is_empty (&dconf_mock_dbus_outstanding_call_handles));
 }
 
 DConfMockDBusSyncCallHandler dconf_mock_dbus_sync_call_handler;
@@ -84,7 +84,7 @@ dconf_engine_dbus_call_sync_func (GBusType             bus_type,
 {
   GVariant *reply;
 
-  g_assert (dconf_mock_dbus_sync_call_handler != NULL);
+  g_assert_nonnull (dconf_mock_dbus_sync_call_handler);
 
   g_variant_ref_sink (parameters);
 
@@ -93,7 +93,7 @@ dconf_engine_dbus_call_sync_func (GBusType             bus_type,
 
   g_variant_unref (parameters);
 
-  g_assert (reply != NULL || (error == NULL || *error != NULL));
+  g_assert_true (reply != NULL || (error == NULL || *error != NULL));
 
   return reply ? g_variant_take_ref (reply) : NULL;
 }

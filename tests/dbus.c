@@ -75,28 +75,28 @@ dconf_engine_call_handle_reply (DConfEngineCallHandle *handle,
    * It's okay if they are delivered in another thread at the same time
    * as a sync call is happening in the main thread, though...
    */
-  g_assert (g_thread_self () != main_thread || okay_in_main);
+  g_assert_true (g_thread_self () != main_thread || okay_in_main);
 
   /* Make sure that we only ever receive D-Bus calls from a single
    * thread.
    */
   if (!dbus_thread)
     dbus_thread = g_thread_self ();
-  g_assert (g_thread_self () == dbus_thread);
+  g_assert_true (g_thread_self () == dbus_thread);
 
   /* This is the passing case. */
   if (parameters != NULL)
     {
       g_mutex_lock (&async_call_queue_lock);
-      g_assert (g_queue_is_empty (&async_call_error_queue));
+      g_assert_true (g_queue_is_empty (&async_call_error_queue));
       expected_handle = g_queue_pop_head (&async_call_success_queue);
       g_mutex_unlock (&async_call_queue_lock);
 
-      g_assert (parameters != NULL);
-      g_assert (error == NULL);
-      g_assert (g_variant_is_of_type (parameters, G_VARIANT_TYPE ("(s)")));
+      g_assert_nonnull (parameters);
+      g_assert_null (error);
+      g_assert_true (g_variant_is_of_type (parameters, G_VARIANT_TYPE ("(s)")));
 
-      g_assert (expected_handle == handle);
+      g_assert_true (expected_handle == handle);
       g_variant_type_free ((GVariantType *) handle);
 
       signal_if_queue_is_empty (&async_call_success_queue);
@@ -104,14 +104,14 @@ dconf_engine_call_handle_reply (DConfEngineCallHandle *handle,
   else
     {
       g_mutex_lock (&async_call_queue_lock);
-      g_assert (g_queue_is_empty (&async_call_success_queue));
+      g_assert_true (g_queue_is_empty (&async_call_success_queue));
       expected_handle = g_queue_pop_head (&async_call_error_queue);
       g_mutex_unlock (&async_call_queue_lock);
 
-      g_assert (parameters == NULL);
-      g_assert (error != NULL);
+      g_assert_null (parameters);
+      g_assert_nonnull (error);
 
-      g_assert (expected_handle == handle);
+      g_assert_true (expected_handle == handle);
       g_variant_type_free ((GVariantType *) handle);
 
       signal_if_queue_is_empty (&async_call_error_queue);
@@ -125,18 +125,18 @@ dconf_engine_handle_dbus_signal (GBusType     bus_type,
                                  const gchar *signal_name,
                                  GVariant    *parameters)
 {
-  g_assert (g_thread_self () != main_thread || okay_in_main);
+  g_assert_true (g_thread_self () != main_thread || okay_in_main);
 
   if (!dbus_thread)
     dbus_thread = g_thread_self ();
-  g_assert (g_thread_self () == dbus_thread);
+  g_assert_true (g_thread_self () == dbus_thread);
 
   if (g_str_equal (signal_name, "TestSignal"))
     {
       GVariant *expected;
 
       expected = g_variant_parse (NULL, "('1', ['2', '3'])", NULL, NULL, NULL);
-      g_assert (g_variant_equal (parameters, expected));
+      g_assert_cmpvariant (parameters, expected);
       g_variant_unref (expected);
 
       signal_was_received = TRUE;
@@ -165,9 +165,9 @@ test_creation_error_sync_with_error (void)
                                                 "org.freedesktop.DBus", "/", "org.freedesktop.DBus", "GetId",
                                                 g_variant_new ("()"), G_VARIANT_TYPE ("(as)"), &error);
 
-      g_assert (reply == NULL);
-      g_assert (error != NULL);
-      g_assert (strstr (error->message, "some nonsense"));
+      g_assert_null (reply);
+      g_assert_nonnull (error);
+      g_assert_nonnull (strstr (error->message, "some nonsense"));
       return;
     }
 
@@ -195,7 +195,7 @@ test_creation_error_sync_without_error (void)
                                                 "org.freedesktop.DBus", "/", "org.freedesktop.DBus", "GetId",
                                                 g_variant_new ("()"), G_VARIANT_TYPE ("(as)"), NULL);
 
-      g_assert (reply == NULL);
+      g_assert_null (reply);
       return;
     }
 
@@ -240,7 +240,7 @@ test_creation_error_async (void)
           wait_for_queue_to_empty (&async_call_error_queue);
         }
       else
-        g_assert (error != NULL);
+        g_assert_nonnull (error);
 
       return;
     }
@@ -268,8 +268,8 @@ test_sync_call_success (void)
                                             g_variant_new ("()"), G_VARIANT_TYPE ("(as)"), &error);
 
   g_assert_no_error (error);
-  g_assert (reply != NULL);
-  g_assert (g_variant_is_of_type (reply, G_VARIANT_TYPE ("(as)")));
+  g_assert_nonnull (reply);
+  g_assert_true (g_variant_is_of_type (reply, G_VARIANT_TYPE ("(as)")));
   g_variant_unref (reply);
 
   reply = dconf_engine_dbus_call_sync_func (G_BUS_TYPE_SESSION,
@@ -277,8 +277,8 @@ test_sync_call_success (void)
                                             g_variant_new ("()"), G_VARIANT_TYPE ("(s)"), &error);
 
   g_assert_no_error (error);
-  g_assert (reply != NULL);
-  g_assert (g_variant_is_of_type (reply, G_VARIANT_TYPE ("(s)")));
+  g_assert_nonnull (reply);
+  g_assert_true (g_variant_is_of_type (reply, G_VARIANT_TYPE ("(s)")));
   g_variant_get (reply, "(s)", &session_id);
   g_variant_unref (reply);
 
@@ -287,8 +287,8 @@ test_sync_call_success (void)
                                             g_variant_new ("()"), G_VARIANT_TYPE ("(s)"), &error);
 
   g_assert_no_error (error);
-  g_assert (reply != NULL);
-  g_assert (g_variant_is_of_type (reply, G_VARIANT_TYPE ("(s)")));
+  g_assert_nonnull (reply);
+  g_assert_true (g_variant_is_of_type (reply, G_VARIANT_TYPE ("(s)")));
   g_variant_get (reply, "(s)", &system_id);
   g_variant_unref (reply);
 
@@ -314,27 +314,27 @@ test_sync_call_error (void)
   reply = dconf_engine_dbus_call_sync_func (G_BUS_TYPE_SESSION,
                                             "org.freedesktop.DBus", "/", "org.freedesktop.DBus", "GetId",
                                             g_variant_new ("(s)", ""), G_VARIANT_TYPE_UNIT, &error);
-  g_assert (reply == NULL);
-  g_assert (error != NULL);
-  g_assert (strstr (error->message, "org.freedesktop.DBus.Error.InvalidArgs"));
+  g_assert_null (reply);
+  g_assert_nonnull (error);
+  g_assert_nonnull (strstr (error->message, "org.freedesktop.DBus.Error.InvalidArgs"));
   g_clear_error (&error);
 
   /* Test with 'ay' to make sure transmitting that works as well */
   reply = dconf_engine_dbus_call_sync_func (G_BUS_TYPE_SESSION,
                                             "org.freedesktop.DBus", "/", "org.freedesktop.DBus", "GetId",
                                             g_variant_new ("(ay)", NULL), G_VARIANT_TYPE_UNIT, &error);
-  g_assert (reply == NULL);
-  g_assert (error != NULL);
-  g_assert (strstr (error->message, "org.freedesktop.DBus.Error.InvalidArgs"));
+  g_assert_null (reply);
+  g_assert_nonnull (error);
+  g_assert_nonnull (strstr (error->message, "org.freedesktop.DBus.Error.InvalidArgs"));
   g_clear_error (&error);
 
   /* Test reply type errors */
   reply = dconf_engine_dbus_call_sync_func (G_BUS_TYPE_SESSION,
                                             "org.freedesktop.DBus", "/", "org.freedesktop.DBus", "GetId",
                                             g_variant_new ("()"), G_VARIANT_TYPE ("(u)"), &error);
-  g_assert (reply == NULL);
-  g_assert (error != NULL);
-  g_assert (strstr (error->message, " type "));
+  g_assert_null (reply);
+  g_assert_nonnull (error);
+  g_assert_nonnull (strstr (error->message, " type "));
   g_clear_error (&error);
 
   /* Test two oddities:
@@ -366,7 +366,7 @@ test_sync_call_error (void)
       reply = dconf_engine_dbus_call_sync_func (G_BUS_TYPE_SESSION,
                                                 "ca.desrt.dconf.testsuite", "/", "org.freedesktop.DBus.Peer",
                                                 "Ping", g_variant_new ("()"), G_VARIANT_TYPE_UNIT, &error);
-      g_assert (reply != NULL);
+      g_assert_nonnull (reply);
       g_assert_no_error (error);
       g_variant_unref (reply);
     }
@@ -407,7 +407,7 @@ test_async_call_success (void)
                                                    "org.freedesktop.DBus", "/", "org.freedesktop.DBus", "GetId",
                                                    g_variant_new ("()"), handle, &error);
       g_assert_no_error (error);
-      g_assert (success);
+      g_assert_true (success);
     }
 
   wait_for_queue_to_empty (&async_call_success_queue);
@@ -436,7 +436,7 @@ test_async_call_error (void)
                                                "org.freedesktop.DBus", "/", "org.freedesktop.DBus", "GetId",
                                                g_variant_new ("(s)", ""), handle, &error);
   g_assert_no_error (error);
-  g_assert (success);
+  g_assert_true (success);
 
   wait_for_queue_to_empty (&async_call_error_queue);
 }
@@ -464,13 +464,13 @@ test_sync_during_async (void)
                                                "org.freedesktop.DBus", "/", "org.freedesktop.DBus", "GetId",
                                                g_variant_new ("()"), handle, &error);
   g_assert_no_error (error);
-  g_assert (success);
+  g_assert_true (success);
 
   reply = dconf_engine_dbus_call_sync_func (G_BUS_TYPE_SESSION,
                                             "org.freedesktop.DBus", "/", "org.freedesktop.DBus", "ListNames",
                                             g_variant_new ("()"), G_VARIANT_TYPE ("(as)"), &error);
   g_assert_no_error (error);
-  g_assert (reply != NULL);
+  g_assert_nonnull (reply);
   g_variant_unref (reply);
 
   wait_for_queue_to_empty (&async_call_success_queue);
@@ -501,7 +501,7 @@ test_signal_receipt (void)
                                             g_variant_new ("(s)", "type='signal',interface='ca.desrt.dconf.Writer'"),
                                             G_VARIANT_TYPE_UNIT, &error);
   g_assert_no_error (error);
-  g_assert (reply != NULL);
+  g_assert_nonnull (reply);
   g_variant_unref (reply);
 
   status = system ("gdbus emit --session "

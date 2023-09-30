@@ -12,7 +12,7 @@ dconf_test_create_tmpdir (void)
 
   temp = g_dir_make_tmp ("dconf-testcase.XXXXXX", &error);
   g_assert_no_error (error);
-  g_assert (temp != NULL);
+  g_assert_nonnull (temp);
 
   return temp;
 }

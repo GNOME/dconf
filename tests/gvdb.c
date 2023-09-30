@@ -9,22 +9,22 @@ test_reader_open_error (void)
 
   table = gvdb_table_new (SRCDIR "/gvdbs/does_not_exist", TRUE, &error);
   g_assert_error (error, G_FILE_ERROR, G_FILE_ERROR_NOENT);
-  g_assert (table == NULL);
+  g_assert_null (table);
   g_clear_error (&error);
 
   table = gvdb_table_new (SRCDIR "/gvdbs/file_empty", TRUE, &error);
   g_assert_error (error, G_FILE_ERROR, G_FILE_ERROR_INVAL);
-  g_assert (table == NULL);
+  g_assert_null (table);
   g_clear_error (&error);
 
   table = gvdb_table_new (SRCDIR "/gvdbs/invalid_header", TRUE, &error);
   g_assert_error (error, G_FILE_ERROR, G_FILE_ERROR_INVAL);
-  g_assert (table == NULL);
+  g_assert_null (table);
   g_clear_error (&error);
 
   table = gvdb_table_new (SRCDIR "/gvdbs/file_too_small", TRUE, &error);
   g_assert_error (error, G_FILE_ERROR, G_FILE_ERROR_INVAL);
-  g_assert (table == NULL);
+  g_assert_null (table);
   g_clear_error (&error);
 }
 
@@ -40,9 +40,9 @@ test_reader_empty (void)
 
   table = gvdb_table_new (SRCDIR "/gvdbs/empty_gvdb", TRUE, &error);
   g_assert_no_error (error);
-  g_assert (table != NULL);
+  g_assert_nonnull (table);
 
-  g_assert (gvdb_table_is_valid (table));
+  g_assert_true (gvdb_table_is_valid (table));
 
   names = gvdb_table_get_names (table, &n_names);
   g_assert_cmpint (n_names, ==, 0);
@@ -62,19 +62,19 @@ test_reader_empty (void)
       gchar **list;
 
       sub = gvdb_table_get_table (table, key);
-      g_assert (sub == NULL);
+      g_assert_null (sub);
 
       has = gvdb_table_has_value (table, key);
-      g_assert (!has);
+      g_assert_false (has);
 
       val = gvdb_table_get_value (table, key);
-      g_assert (val == NULL);
+      g_assert_null (val);
 
       val = gvdb_table_get_raw_value (table, key);
-      g_assert (val == NULL);
+      g_assert_null (val);
 
       list = gvdb_table_list (table, key);
-      g_assert (list == NULL);
+      g_assert_null (list);
     }
 
   gvdb_table_free (table);
@@ -105,13 +105,13 @@ verify_table (GvdbTable *table)
   g_strfreev (list);
 
   list = gvdb_table_list (table, "/");
-  g_assert (list != NULL);
+  g_assert_nonnull (list);
   g_assert_cmpint (g_strv_length (list), ==, 1);
   g_assert_cmpstr (list[0], ==, "values/");
   g_strfreev (list);
 
   list = gvdb_table_list (table, "/values/");
-  g_assert (list != NULL);
+  g_assert_nonnull (list);
   g_assert_cmpint (g_strv_length (list), ==, 3);
   g_assert_cmpstr (list[0], ==, "boolean");
   g_assert_cmpstr (list[1], ==, "int32");
@@ -120,48 +120,48 @@ verify_table (GvdbTable *table)
 
   /* A directory is not a value */
   has = gvdb_table_has_value (table, "/");
-  g_assert (!has);
+  g_assert_false (has);
   has = gvdb_table_has_value (table, "/values/");
-  g_assert (!has);
+  g_assert_false (has);
 
   has = gvdb_table_has_value (table, "/int32");
-  g_assert (!has);
+  g_assert_false (has);
   has = gvdb_table_has_value (table, "values/int32");
-  g_assert (!has);
+  g_assert_false (has);
   has = gvdb_table_has_value (table, "/values/int32");
-  g_assert (has);
+  g_assert_true (has);
 
   value = gvdb_table_get_value (table, "/");
-  g_assert (value == NULL);
+  g_assert_null (value);
   value = gvdb_table_get_value (table, "/values/");
-  g_assert (value == NULL);
+  g_assert_null (value);
   value = gvdb_table_get_value (table, "/int32");
-  g_assert (value == NULL);
+  g_assert_null (value);
   value = gvdb_table_get_value (table, "values/int32");
-  g_assert (value == NULL);
+  g_assert_null (value);
 
   value = gvdb_table_get_value (table, "/values/boolean");
-  g_assert (value != NULL && g_variant_is_of_type (value, G_VARIANT_TYPE_BOOLEAN));
-  g_assert (g_variant_get_boolean (value));
+  g_assert_true (value != NULL && g_variant_is_of_type (value, G_VARIANT_TYPE_BOOLEAN));
+  g_assert_true (g_variant_get_boolean (value));
   g_variant_unref (value);
 
   value = gvdb_table_get_raw_value (table, "/values/boolean");
-  g_assert (value != NULL && g_variant_is_of_type (value, G_VARIANT_TYPE_BOOLEAN));
-  g_assert (g_variant_get_boolean (value));
+  g_assert_true (value != NULL && g_variant_is_of_type (value, G_VARIANT_TYPE_BOOLEAN));
+  g_assert_true (g_variant_get_boolean (value));
   g_variant_unref (value);
 
   value = gvdb_table_get_value (table, "/values/int32");
-  g_assert (value != NULL && g_variant_is_of_type (value, G_VARIANT_TYPE_INT32));
+  g_assert_true (value != NULL && g_variant_is_of_type (value, G_VARIANT_TYPE_INT32));
   g_assert_cmpint (g_variant_get_int32 (value), ==, 0x44332211);
   g_variant_unref (value);
 
   value = gvdb_table_get_value (table, "/values/string");
-  g_assert (value != NULL && g_variant_is_of_type (value, G_VARIANT_TYPE_STRING));
+  g_assert_true (value != NULL && g_variant_is_of_type (value, G_VARIANT_TYPE_STRING));
   g_assert_cmpstr (g_variant_get_string (value, NULL), ==, "a string");
   g_variant_unref (value);
 
   value = gvdb_table_get_raw_value (table, "/values/string");
-  g_assert (value != NULL && g_variant_is_of_type (value, G_VARIANT_TYPE_STRING));
+  g_assert_true (value != NULL && g_variant_is_of_type (value, G_VARIANT_TYPE_STRING));
   g_assert_cmpstr (g_variant_get_string (value, NULL), ==, "a string");
   g_variant_unref (value);
 }
@@ -181,7 +181,7 @@ test_reader_values (void)
     GVariant *value;
 
     value = gvdb_table_get_raw_value (table, "/values/int32");
-    g_assert (value != NULL && g_variant_is_of_type (value, G_VARIANT_TYPE_INT32));
+    g_assert_true (value != NULL && g_variant_is_of_type (value, G_VARIANT_TYPE_INT32));
     g_assert_cmpint (g_variant_get_int32 (value), ==, 0x11223344);
     g_variant_unref (value);
   }
@@ -205,7 +205,7 @@ test_reader_values_bigendian (void)
     GVariant *value;
 
     value = gvdb_table_get_raw_value (table, "/values/int32");
-    g_assert (value != NULL && g_variant_is_of_type (value, G_VARIANT_TYPE_INT32));
+    g_assert_true (value != NULL && g_variant_is_of_type (value, G_VARIANT_TYPE_INT32));
     g_assert_cmpint (g_variant_get_int32 (value), ==, 0x11223344);
     g_variant_unref (value);
   }
@@ -240,23 +240,23 @@ test_nested (void)
   g_strfreev (names);
 
   locks = gvdb_table_get_table (table, "/");
-  g_assert (locks == NULL);
+  g_assert_null (locks);
   locks = gvdb_table_get_table (table, "/values/");
-  g_assert (locks == NULL);
+  g_assert_null (locks);
   locks = gvdb_table_get_table (table, "/values/int32");
-  g_assert (locks == NULL);
+  g_assert_null (locks);
 
   locks = gvdb_table_get_table (table, ".locks");
-  g_assert (locks != NULL);
+  g_assert_nonnull (locks);
 
   has = gvdb_table_has_value (locks, "/first/lck");
-  g_assert (!has);
+  g_assert_false (has);
 
   has = gvdb_table_has_value (locks, "/first/lock");
-  g_assert (has);
+  g_assert_true (has);
 
   has = gvdb_table_has_value (locks, "/second");
-  g_assert (has);
+  g_assert_true (has);
 
   gvdb_table_free (table);
   gvdb_table_free (locks);
@@ -295,7 +295,7 @@ inspect_carefully (GvdbTable *table,
       has = gvdb_table_has_value (table, key);
 
       list = gvdb_table_list (table, key);
-      g_assert (!has || list == NULL);
+      g_assert_true (!has || list == NULL);
       if (list)
         {
           gchar *joined = g_strjoinv (",", list);
@@ -324,7 +324,7 @@ inspect_carefully (GvdbTable *table,
         }
 
       subtable = gvdb_table_get_table (table, key);
-      g_assert (!has || subtable == NULL);
+      g_assert_true (!has || subtable == NULL);
       if (subtable)
         {
           inspect_carefully (subtable, level + 1);
@@ -349,7 +349,7 @@ test_corrupted (gconstpointer user_data)
 
   mapped = g_mapped_file_new (SRCDIR "/gvdbs/nested_gvdb", FALSE, &error);
   g_assert_no_error (error);
-  g_assert (mapped);
+  g_assert_nonnull (mapped);
 
   if (percentage)
     {
@@ -406,7 +406,7 @@ test_corrupted (gconstpointer user_data)
       g_bytes_unref (bytes);
 
       g_assert_no_error (error);
-      g_assert (table);
+      g_assert_nonnull (table);
 
       inspect_carefully (table, 0);
       gvdb_table_free (table);

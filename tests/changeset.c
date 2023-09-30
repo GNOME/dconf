@@ -42,45 +42,45 @@ test_basic (void)
 
   changeset = dconf_changeset_new_write ("/value/a", NULL);
   result = dconf_changeset_all (changeset, is_null, NULL);
-  g_assert (result);
+  g_assert_true (result);
   result = dconf_changeset_all (changeset, is_not_null, NULL);
-  g_assert (!result);
+  g_assert_false (result);
 
   result = dconf_changeset_get (changeset, "/value/a", &value);
-  g_assert (result);
-  g_assert (value == NULL);
+  g_assert_true (result);
+  g_assert_null (value);
 
   result = dconf_changeset_get (changeset, "/value/b", &value);
-  g_assert (!result);
+  g_assert_false (result);
 
   dconf_changeset_set (changeset, "/value/b", g_variant_new_int32 (123));
   result = dconf_changeset_all (changeset, is_null, NULL);
-  g_assert (!result);
+  g_assert_false (result);
   result = dconf_changeset_all (changeset, is_not_null, NULL);
-  g_assert (!result);
+  g_assert_false (result);
 
   result = dconf_changeset_get (changeset, "/value/a", &value);
-  g_assert (result);
-  g_assert (value == NULL);
+  g_assert_true (result);
+  g_assert_null (value);
 
   result = dconf_changeset_get (changeset, "/value/b", &value);
-  g_assert (result);
+  g_assert_true (result);
   g_assert_cmpint (g_variant_get_int32 (value), ==, 123);
   g_variant_unref (value);
 
   dconf_changeset_set (changeset, "/value/a", g_variant_new_string ("a string"));
   result = dconf_changeset_all (changeset, is_null, NULL);
-  g_assert (!result);
+  g_assert_false (result);
   result = dconf_changeset_all (changeset, is_not_null, NULL);
-  g_assert (result);
+  g_assert_true (result);
 
   result = dconf_changeset_get (changeset, "/value/a", &value);
-  g_assert (result);
+  g_assert_true (result);
   g_assert_cmpstr (g_variant_get_string (value, NULL), ==, "a string");
   g_variant_unref (value);
 
   result = dconf_changeset_get (changeset, "/value/b", &value);
-  g_assert (result);
+  g_assert_true (result);
   g_assert_cmpint (g_variant_get_int32 (value), ==, 123);
   g_variant_unref (value);
 
@@ -95,36 +95,36 @@ test_similarity (void)
   a = dconf_changeset_new ();
   b = dconf_changeset_new ();
 
-  g_assert (dconf_changeset_is_similar_to (a, b));
-  g_assert (dconf_changeset_is_similar_to (b, a));
+  g_assert_true (dconf_changeset_is_similar_to (a, b));
+  g_assert_true (dconf_changeset_is_similar_to (b, a));
 
   dconf_changeset_set (a, "/value/a", g_variant_new_int32 (0));
-  g_assert (!dconf_changeset_is_similar_to (a, b));
-  g_assert (!dconf_changeset_is_similar_to (b, a));
+  g_assert_false (dconf_changeset_is_similar_to (a, b));
+  g_assert_false (dconf_changeset_is_similar_to (b, a));
 
   /* different values for the same key are still the same */
   dconf_changeset_set (b, "/value/a", g_variant_new_int32 (1));
-  g_assert (dconf_changeset_is_similar_to (a, b));
-  g_assert (dconf_changeset_is_similar_to (b, a));
+  g_assert_true (dconf_changeset_is_similar_to (a, b));
+  g_assert_true (dconf_changeset_is_similar_to (b, a));
 
   /* make sure even a NULL is counted as different */
   dconf_changeset_set (a, "/value/b", NULL);
-  g_assert (!dconf_changeset_is_similar_to (a, b));
-  g_assert (!dconf_changeset_is_similar_to (b, a));
+  g_assert_false (dconf_changeset_is_similar_to (a, b));
+  g_assert_false (dconf_changeset_is_similar_to (b, a));
 
   dconf_changeset_set (b, "/value/b", NULL);
-  g_assert (dconf_changeset_is_similar_to (a, b));
-  g_assert (dconf_changeset_is_similar_to (b, a));
+  g_assert_true (dconf_changeset_is_similar_to (a, b));
+  g_assert_true (dconf_changeset_is_similar_to (b, a));
 
   /* different types are still the same */
   dconf_changeset_set (b, "/value/a", g_variant_new_uint32 (222));
-  g_assert (dconf_changeset_is_similar_to (a, b));
-  g_assert (dconf_changeset_is_similar_to (b, a));
+  g_assert_true (dconf_changeset_is_similar_to (a, b));
+  g_assert_true (dconf_changeset_is_similar_to (b, a));
 
   dconf_changeset_set (a, "/value/c", NULL);
   dconf_changeset_set (b, "/value/d", NULL);
-  g_assert (!dconf_changeset_is_similar_to (a, b));
-  g_assert (!dconf_changeset_is_similar_to (b, a));
+  g_assert_false (dconf_changeset_is_similar_to (a, b));
+  g_assert_false (dconf_changeset_is_similar_to (b, a));
 
   dconf_changeset_unref (a);
   dconf_changeset_unref (b);
@@ -152,8 +152,8 @@ test_describe (void)
   g_assert_cmpint (n_items, ==, 1);
   g_assert_cmpstr (prefix, ==, "/value/a");
   g_assert_cmpstr (keys[0], ==, "");
-  g_assert (keys[1] == NULL);
-  g_assert (values[0] == NULL);
+  g_assert_null (keys[1]);
+  g_assert_null (values[0]);
 
 
   /* Check again */
@@ -164,8 +164,8 @@ test_describe (void)
   g_assert_cmpint (n_items, ==, 1);
   g_assert_cmpstr (prefix, ==, "/value/a");
   g_assert_cmpstr (keys[0], ==, "");
-  g_assert (keys[1] == NULL);
-  g_assert (values[0] == NULL);
+  g_assert_null (keys[1]);
+  g_assert_null (values[0]);
   dconf_changeset_unref (changeset);
 
   /* test one non-NULL item */
@@ -174,7 +174,7 @@ test_describe (void)
   g_assert_cmpint (n_items, ==, 1);
   g_assert_cmpstr (prefix, ==, "/value/a");
   g_assert_cmpstr (keys[0], ==, "");
-  g_assert (keys[1] == NULL);
+  g_assert_null (keys[1]);
   g_assert_cmpint (g_variant_get_int32 (values[0]), ==, 55);
   dconf_changeset_unref (changeset);
 
@@ -201,7 +201,7 @@ test_describe (void)
       g_assert_cmpstr (keys[i], ==, key);
       g_assert_cmpint (g_variant_get_int32 (values[i]), ==, i);
     }
-  g_assert (keys[n_items] == NULL);
+  g_assert_null (keys[n_items]);
   dconf_changeset_unref (changeset);
 
   /* test many items with common names */
@@ -227,7 +227,7 @@ test_describe (void)
       g_assert_cmpstr (keys[i], ==, key);
       g_assert_cmpint (g_variant_get_int32 (values[i]), ==, i);
     }
-  g_assert (keys[n_items] == NULL);
+  g_assert_null (keys[n_items]);
   dconf_changeset_unref (changeset);
 
   /* test several values in different directories */
@@ -242,12 +242,12 @@ test_describe (void)
   g_assert_cmpstr (keys[0], ==, "int/a");
   g_assert_cmpint (g_variant_get_int32 (values[0]), ==, 123);
   g_assert_cmpstr (keys[1], ==, "reset/");
-  g_assert (values[1] == NULL);
+  g_assert_null (values[1]);
   g_assert_cmpstr (keys[2], ==, "string");
   g_assert_cmpstr (g_variant_get_string (values[2], NULL), ==, "bar");
   g_assert_cmpstr (keys[3], ==, "string/a");
   g_assert_cmpstr (g_variant_get_string (values[3], NULL), ==, "foo");
-  g_assert (keys[4] == NULL);
+  g_assert_null (keys[4]);
   dconf_changeset_unref (changeset);
 
   /* test a couple of values in very different directories */
@@ -258,9 +258,9 @@ test_describe (void)
   g_assert_cmpstr (prefix, ==, "/");
   g_assert_cmpstr (keys[0], ==, "a/deep/directory/");
   g_assert_cmpstr (keys[1], ==, "another/deep/directory/");
-  g_assert (keys[2] == NULL);
-  g_assert (values[0] == NULL);
-  g_assert (values[1] == NULL);
+  g_assert_null (keys[2]);
+  g_assert_null (values[0]);
+  g_assert_null (values[1]);
   dconf_changeset_unref (changeset);
 
   /* one more similar case, but with the first letter different */
@@ -271,9 +271,9 @@ test_describe (void)
   g_assert_cmpstr (prefix, ==, "/");
   g_assert_cmpstr (keys[0], ==, "another/deep/directory/");
   g_assert_cmpstr (keys[1], ==, "deep/directory/");
-  g_assert (keys[2] == NULL);
-  g_assert (values[0] == NULL);
-  g_assert (values[1] == NULL);
+  g_assert_null (keys[2]);
+  g_assert_null (values[0]);
+  g_assert_null (values[1]);
   dconf_changeset_unref (changeset);
 }
 
@@ -284,54 +284,54 @@ test_reset (void)
   GVariant *value;
 
   changeset = dconf_changeset_new ();
-  g_assert (!dconf_changeset_get (changeset, "/value/a", NULL));
-  g_assert (!dconf_changeset_get (changeset, "/value/a", &value));
+  g_assert_false (dconf_changeset_get (changeset, "/value/a", NULL));
+  g_assert_false (dconf_changeset_get (changeset, "/value/a", &value));
   /* value was not set */
 
   /* set a value */
   dconf_changeset_set (changeset, "/value/a", g_variant_new_boolean (TRUE));
-  g_assert (dconf_changeset_get (changeset, "/value/a", NULL));
-  g_assert (dconf_changeset_get (changeset, "/value/a", &value));
-  g_assert (value != NULL);
+  g_assert_true (dconf_changeset_get (changeset, "/value/a", NULL));
+  g_assert_true (dconf_changeset_get (changeset, "/value/a", &value));
+  g_assert_nonnull (value);
   g_variant_unref (value);
 
   /* record the reset */
   dconf_changeset_set (changeset, "/value/", NULL);
-  g_assert (dconf_changeset_get (changeset, "/value/a", NULL));
-  g_assert (dconf_changeset_get (changeset, "/value/a", &value));
-  g_assert (value == NULL);
+  g_assert_true (dconf_changeset_get (changeset, "/value/a", NULL));
+  g_assert_true (dconf_changeset_get (changeset, "/value/a", &value));
+  g_assert_null (value);
 
   /* write it back */
   dconf_changeset_set (changeset, "/value/a", g_variant_new_boolean (TRUE));
-  g_assert (dconf_changeset_get (changeset, "/value/a", NULL));
-  g_assert (dconf_changeset_get (changeset, "/value/a", &value));
-  g_assert (value != NULL);
+  g_assert_true (dconf_changeset_get (changeset, "/value/a", NULL));
+  g_assert_true (dconf_changeset_get (changeset, "/value/a", &value));
+  g_assert_nonnull (value);
   g_variant_unref (value);
 
   /* reset again */
   dconf_changeset_set (changeset, "/value/", NULL);
-  g_assert (dconf_changeset_get (changeset, "/value/a", NULL));
-  g_assert (dconf_changeset_get (changeset, "/value/a", &value));
-  g_assert (value == NULL);
+  g_assert_true (dconf_changeset_get (changeset, "/value/a", NULL));
+  g_assert_true (dconf_changeset_get (changeset, "/value/a", &value));
+  g_assert_null (value);
 
   /* write again */
   dconf_changeset_set (changeset, "/value/a", g_variant_new_boolean (TRUE));
-  g_assert (dconf_changeset_get (changeset, "/value/a", NULL));
-  g_assert (dconf_changeset_get (changeset, "/value/a", &value));
-  g_assert (value != NULL);
+  g_assert_true (dconf_changeset_get (changeset, "/value/a", NULL));
+  g_assert_true (dconf_changeset_get (changeset, "/value/a", &value));
+  g_assert_nonnull (value);
   g_variant_unref (value);
 
   /* reset a different way */
   dconf_changeset_set (changeset, "/value/a", NULL);
-  g_assert (dconf_changeset_get (changeset, "/value/a", NULL));
-  g_assert (dconf_changeset_get (changeset, "/value/a", &value));
-  g_assert (value == NULL);
+  g_assert_true (dconf_changeset_get (changeset, "/value/a", NULL));
+  g_assert_true (dconf_changeset_get (changeset, "/value/a", &value));
+  g_assert_null (value);
 
   /* write last time */
   dconf_changeset_set (changeset, "/value/a", g_variant_new_boolean (TRUE));
-  g_assert (dconf_changeset_get (changeset, "/value/a", NULL));
-  g_assert (dconf_changeset_get (changeset, "/value/a", &value));
-  g_assert (value != NULL);
+  g_assert_true (dconf_changeset_get (changeset, "/value/a", NULL));
+  g_assert_true (dconf_changeset_get (changeset, "/value/a", &value));
+  g_assert_nonnull (value);
   g_variant_unref (value);
 
   dconf_changeset_unref (changeset);
@@ -347,13 +347,13 @@ has_same_value (const gchar *key,
   gboolean success;
 
   success = dconf_changeset_get (other, key, &other_value);
-  g_assert (success);
+  g_assert_true (success);
 
   if (value == NULL)
-    g_assert (other_value == NULL);
+    g_assert_null (other_value);
   else
     {
-      g_assert (g_variant_equal (value, other_value));
+      g_assert_cmpvariant (value, other_value);
       g_variant_unref (other_value);
     }
 
@@ -370,10 +370,10 @@ test_serialisation (DConfChangeset *changes)
   copy = dconf_changeset_deserialise (serialised);
   g_variant_unref (serialised);
 
-  g_assert (dconf_changeset_is_similar_to (copy, changes));
-  g_assert (dconf_changeset_is_similar_to (changes, copy));
-  g_assert (dconf_changeset_all (copy, has_same_value, changes));
-  g_assert (dconf_changeset_all (changes, has_same_value, copy));
+  g_assert_true (dconf_changeset_is_similar_to (copy, changes));
+  g_assert_true (dconf_changeset_is_similar_to (changes, copy));
+  g_assert_true (dconf_changeset_all (copy, has_same_value, changes));
+  g_assert_true (dconf_changeset_all (changes, has_same_value, copy));
 
   dconf_changeset_unref (copy);
 }
@@ -412,49 +412,49 @@ test_change (void)
 
   dba = dconf_changeset_new_database (NULL);
   dbb = dconf_changeset_new_database (dba);
-  g_assert (dconf_changeset_is_empty (dbb));
+  g_assert_true (dconf_changeset_is_empty (dbb));
   dconf_changeset_unref (dbb);
 
   deltaa = dconf_changeset_new ();
   dconf_changeset_change (dba, deltaa);
-  g_assert (dconf_changeset_is_empty (dba));
+  g_assert_true (dconf_changeset_is_empty (dba));
   dconf_changeset_unref (deltaa);
 
   deltaa = dconf_changeset_new_write ("/some/value", NULL);
   dconf_changeset_change (dba, deltaa);
-  g_assert (dconf_changeset_is_empty (dba));
+  g_assert_true (dconf_changeset_is_empty (dba));
   dconf_changeset_unref (deltaa);
 
   deltaa = dconf_changeset_new ();
   deltab = dconf_changeset_new_write ("/some/value", g_variant_new_int32 (123));
   dconf_changeset_change (deltaa, deltab);
-  g_assert (!dconf_changeset_is_empty (deltaa));
+  g_assert_false (dconf_changeset_is_empty (deltaa));
   dconf_changeset_change (dba, deltab);
-  g_assert (!dconf_changeset_is_empty (dba));
+  g_assert_false (dconf_changeset_is_empty (dba));
   dconf_changeset_unref (deltaa);
   dconf_changeset_unref (deltab);
 
   deltaa = dconf_changeset_new ();
   deltab = dconf_changeset_new_write ("/other/value", g_variant_new_int32 (123));
   dconf_changeset_change (deltaa, deltab);
-  g_assert (!dconf_changeset_is_empty (deltaa));
+  g_assert_false (dconf_changeset_is_empty (deltaa));
   dconf_changeset_unref (deltab);
   deltab = dconf_changeset_new_write ("/other/", NULL);
   dconf_changeset_change (deltaa, deltab);
-  g_assert (!dconf_changeset_is_empty (deltaa));
+  g_assert_false (dconf_changeset_is_empty (deltaa));
   dconf_changeset_change (dba, deltaa);
-  g_assert (!dconf_changeset_is_empty (dba));
+  g_assert_false (dconf_changeset_is_empty (dba));
 
   dbb = dconf_changeset_new_database (dba);
-  g_assert (!dconf_changeset_is_empty (dbb));
+  g_assert_false (dconf_changeset_is_empty (dbb));
 
   dconf_changeset_set (dba, "/some/", NULL);
 
   dconf_changeset_set (dba, "/other/value", g_variant_new_int32 (123));
-  g_assert (!dconf_changeset_is_empty (dba));
+  g_assert_false (dconf_changeset_is_empty (dba));
   dconf_changeset_change (dba, deltaa);
-  g_assert (dconf_changeset_is_empty (dba));
-  g_assert (!dconf_changeset_is_empty (dbb));
+  g_assert_true (dconf_changeset_is_empty (dba));
+  g_assert_false (dconf_changeset_is_empty (dbb));
 
   dconf_changeset_unref (deltaa);
   dconf_changeset_unref (deltab);
@@ -486,11 +486,11 @@ assert_diff_change_invariant (DConfChangeset *from,
 
   /* Make sure they are now equal */
   diff = dconf_changeset_diff (copy, to);
-  g_assert (diff == NULL);
+  g_assert_null (diff);
 
   /* Why not try it the other way too? */
   diff = dconf_changeset_diff (to, copy);
-  g_assert (diff == NULL);
+  g_assert_null (diff);
 
   dconf_changeset_unref (copy);
 }

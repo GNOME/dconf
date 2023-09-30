@@ -17,7 +17,7 @@ test_lifecycle (void)
   g_weak_ref_init (&weak, client);
   g_object_unref (client);
 
-  g_assert (g_weak_ref_get (&weak) == NULL);
+  g_assert_null (g_weak_ref_get (&weak));
   g_weak_ref_clear (&weak);
 }
 
@@ -30,7 +30,7 @@ changed (DConfClient         *client,
          const gchar         *tag,
          gpointer             user_data)
 {
-  g_assert (g_thread_self () == main_thread);
+  g_assert_true (g_thread_self () == main_thread);
 
   changed_was_called = TRUE;
 }
@@ -42,14 +42,14 @@ check_and_free (GVariant *to_check,
   if (expected)
     {
       g_variant_ref_sink (expected);
-      g_assert (to_check);
+      g_assert_nonnull (to_check);
 
-      g_assert (g_variant_equal (to_check, expected));
+      g_assert_cmpvariant (to_check, expected);
       g_variant_unref (to_check);
       g_variant_unref (expected);
     }
   else
-    g_assert (to_check == NULL);
+    g_assert_null (to_check);
 }
 
 static void
@@ -64,7 +64,7 @@ queue_up_100_writes (DConfClient *client)
     {
       changed_was_called = FALSE;
       dconf_client_write_fast (client, "/test/value", g_variant_new_int32 (i), NULL);
-      g_assert (changed_was_called);
+      g_assert_true (changed_was_called);
 
       /* We should always see the most recently written value. */
       check_and_free (dconf_client_read (client, "/test/value"), g_variant_new_int32 (i));
@@ -127,7 +127,7 @@ test_fast (void)
 
   changed_was_called = FALSE;
   fail_one_call ();
-  g_assert (changed_was_called);
+  g_assert_true (changed_was_called);
 
   /* For the first failure, we should continue to see the most recently written value (99) */
   check_and_free (dconf_client_read (client, "/test/value"), g_variant_new_int32 (99));
@@ -137,7 +137,7 @@ test_fast (void)
 
   changed_was_called = FALSE;
   fail_one_call ();
-  g_assert (changed_was_called);
+  g_assert_true (changed_was_called);
 
   /* Should read back now as NULL */
   check_and_free (dconf_client_read (client, "/test/value"), NULL);
