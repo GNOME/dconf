@@ -63,7 +63,8 @@ dist-job:
   only:
     - tags
   script:
-    - meson --buildtype release _build .
+    - apt install --assume-yes --quiet=2 git > /dev/null
+    - meson setup --buildtype release _build
     - ninja -C _build dist
   artifacts:
     paths:
