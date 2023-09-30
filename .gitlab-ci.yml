@@ -1,6 +1,7 @@
 image: debian:unstable
 
 before_script:
+  - export DEBIAN_FRONTEND=noninteractive
   - apt update -qq
   - apt install -y -qq build-essential meson pkg-config gtk-doc-tools
                        libxml2-utils gobject-introspection dbus dbus-x11
