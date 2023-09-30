@@ -6,6 +6,8 @@ before_script:
                        libxml2-utils gobject-introspection dbus dbus-x11
                        libdbus-1-dev libgirepository1.0-dev libglib2.0-dev
                        bash-completion lcov valac
+  # Temporary fix for URL
+  - apt install -y -qq libcapture-tiny-perl libdatetime-perl
   - export LANG=C.UTF-8
 
 stages:
