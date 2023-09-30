@@ -1,23 +1,27 @@
-image: debian:unstable
+default:
+  image: debian:unstable
 
-before_script:
-  - export DEBIAN_FRONTEND=noninteractive
-  - apt update -qq
-  - apt install -y -qq build-essential meson pkg-config gtk-doc-tools
-                       libxml2-utils gobject-introspection dbus dbus-x11
-                       libdbus-1-dev libgirepository1.0-dev libglib2.0-dev
-                       bash-completion lcov valac
-  # Temporary fix for URL
-  - apt install -y -qq libcapture-tiny-perl libdatetime-perl
-  - export LANG=C.UTF-8
+  before_script:
+    - export DEBIAN_FRONTEND=noninteractive
+    - export LANG=C.UTF-8
+    - apt update --assume-yes --quiet=2 > /dev/null &&
+        apt install --assume-yes --quiet=2
+          build-essential meson pkg-config gtk-doc-tools libxml2-utils
+          gobject-introspection dbus dbus-x11 libdbus-1-dev
+          libgirepository1.0-dev libglib2.0-dev bash-completion lcov
+          valac > /dev/null
+    # Temporary fix for
+    # https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=1053252
+    - apt install --assume-yes --quiet=2
+        libcapture-tiny-perl libdatetime-perl > /dev/null
+
+variables:
+  MESON_TEST_TIMEOUT_MULTIPLIER: 2
 
 stages:
   - build
   - test
   - deploy
-
-variables:
-  MESON_TEST_TIMEOUT_MULTIPLIER: 2
 
 build-job:
   stage: build
