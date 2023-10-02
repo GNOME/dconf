@@ -11,8 +11,9 @@ default:
           libgirepository1.0-dev libglib2.0-dev bash-completion lcov
           valac > /dev/null
     - apt install --assume-yes --quiet=2 git > /dev/null
-    # Temporary fix for
-    # https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=1053252
+    # FIXME: Missing Perl dependencies in lcov_2.0-3.
+    # This can be removed when #1053252 is fixed in sid/unstable.
+    # See: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=1053252
     - apt install --assume-yes --quiet=2
         libcapture-tiny-perl libdatetime-perl > /dev/null
 
