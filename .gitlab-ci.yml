@@ -1,25 +1,34 @@
-image: debian:unstable
+default:
+  image: debian:unstable
 
-before_script:
-  - apt update -qq
-  - apt install -y -qq build-essential meson pkg-config gtk-doc-tools
-                       libxml2-utils gobject-introspection dbus dbus-x11
-                       libdbus-1-dev libgirepository1.0-dev libglib2.0-dev
-                       bash-completion lcov valac
-  - export LANG=C.UTF-8
+  before_script:
+    - export DEBIAN_FRONTEND=noninteractive
+    - export LANG=C.UTF-8
+    - apt update --assume-yes --quiet=2 > /dev/null &&
+        apt install --assume-yes --quiet=2
+          build-essential meson pkg-config gtk-doc-tools libxml2-utils
+          gobject-introspection dbus dbus-x11 libdbus-1-dev
+          libgirepository1.0-dev libglib2.0-dev bash-completion lcov
+          valac > /dev/null
+    - apt install --assume-yes --quiet=2 git > /dev/null
+    # FIXME: Missing Perl dependencies in lcov_2.0-3.
+    # This can be removed when #1053252 is fixed in sid/unstable.
+    # See: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=1053252
+    - apt install --assume-yes --quiet=2
+        libcapture-tiny-perl libdatetime-perl > /dev/null
+
+variables:
+  MESON_TEST_TIMEOUT_MULTIPLIER: 2
 
 stages:
   - build
   - test
   - deploy
 
-variables:
-  MESON_TEST_TIMEOUT_MULTIPLIER: 2
-
 build-job:
   stage: build
   script:
-    - meson -Db_coverage=true -Dman=true -Dgtk_doc=true --buildtype debug --werror _build .
+    - meson setup -Db_coverage=true -Dman=true -Dgtk_doc=true --buildtype debug --werror _build
     - ninja -C _build all dconf-doc
   except:
     - tags
@@ -32,10 +41,12 @@ build-job:
 test:
   stage: test
   script:
-    - meson _build . -Db_coverage=true -Dman=true -Dgtk_doc=true
+    - meson setup -Db_coverage=true -Dman=true -Dgtk_doc=true _build
     - ninja -C _build all dconf-doc
+
     - mkdir -p _coverage
     - lcov --rc lcov_branch_coverage=1 --directory _build --capture --initial --output-file "_coverage/${CI_JOB_NAME}-baseline.lcov"
+
     - meson test -C _build --timeout-multiplier ${MESON_TEST_TIMEOUT_MULTIPLIER}
     - lcov --rc lcov_branch_coverage=1 --directory _build --capture --output-file "_coverage/${CI_JOB_NAME}.lcov"
   coverage: '/^\s+lines\.+:\s+([\d.]+\%)\s+/'
@@ -48,15 +59,12 @@ test:
       - "_build/meson-logs"
       - "_coverage"
 
-# FIXME: Run gtkdoc-check when we can. See:
-# https://github.com/mesonbuild/meson/issues/3580
-
 dist-job:
   stage: build
   only:
     - tags
   script:
-    - meson --buildtype release _build .
+    - meson setup --buildtype release _build
     - ninja -C _build dist
   artifacts:
     paths:
@@ -67,12 +75,15 @@ pages:
   only:
     - master
   script:
-    - meson -Db_coverage=true -Dgtk_doc=true _build .
+    - meson setup -Db_coverage=true -Dgtk_doc=true _build
     - ninja -C _build all dconf-doc
+
     - mkdir -p _coverage
     - lcov --rc lcov_branch_coverage=1 --directory _build --capture --initial --output-file "_coverage/${CI_JOB_NAME}-baseline.lcov"
+
     - meson test -C _build --timeout-multiplier ${MESON_TEST_TIMEOUT_MULTIPLIER}
     - lcov --rc lcov_branch_coverage=1 --directory _build --capture --output-file "_coverage/${CI_JOB_NAME}.lcov"
+
     - mkdir -p public/
     - mv _build/docs/html/ public/docs/
     - mv _coverage/ public/coverage/
