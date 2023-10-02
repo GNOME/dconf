@@ -10,6 +10,7 @@ default:
           gobject-introspection dbus dbus-x11 libdbus-1-dev
           libgirepository1.0-dev libglib2.0-dev bash-completion lcov
           valac > /dev/null
+    - apt install --assume-yes --quiet=2 git > /dev/null
     # Temporary fix for
     # https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=1053252
     - apt install --assume-yes --quiet=2
@@ -62,7 +63,6 @@ dist-job:
   only:
     - tags
   script:
-    - apt install --assume-yes --quiet=2 git > /dev/null
     - meson setup --buildtype release _build
     - ninja -C _build dist
   artifacts:
