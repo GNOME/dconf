@@ -13,8 +13,8 @@ test_engine_dbus_call (void)
                                             "org.freedesktop.DBus", "/", "org.freedesktop.DBus", "ListNames",
                                             g_variant_new ("()"), G_VARIANT_TYPE ("(as)"), &error);
   g_assert_no_error (error);
-  g_assert (reply != NULL);
-  g_assert (g_variant_is_of_type (reply, G_VARIANT_TYPE ("(as)")));
+  g_assert_nonnull (reply);
+  g_assert_true (g_variant_is_of_type (reply, G_VARIANT_TYPE ("(as)")));
   g_variant_unref (reply);
 }
 

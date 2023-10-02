@@ -30,7 +30,7 @@ test_mkdir_fail (void)
       close (fd);
 
       shm = dconf_shm_open ("foo");
-      g_assert (shm == NULL);
+      g_assert_null (shm);
 
       g_unlink (evil);
       g_free (evil);
@@ -55,10 +55,10 @@ test_open_and_flag (void)
   guint8 *shm;
 
   shm = dconf_shm_open ("foo");
-  g_assert (shm != NULL);
-  g_assert (!dconf_shm_is_flagged (shm));
+  g_assert_nonnull (shm);
+  g_assert_false (dconf_shm_is_flagged (shm));
   dconf_shm_flag ("foo");
-  g_assert (dconf_shm_is_flagged (shm));
+  g_assert_true (dconf_shm_is_flagged (shm));
   dconf_shm_close (shm);
 }
 
@@ -72,8 +72,8 @@ test_invalid_name (void)
       g_log_set_always_fatal (G_LOG_LEVEL_ERROR);
 
       shm = dconf_shm_open ("foo/bar");
-      g_assert (shm == NULL);
-      g_assert (dconf_shm_is_flagged (shm));
+      g_assert_null (shm);
+      g_assert_true (dconf_shm_is_flagged (shm));
       return;
     }
 
@@ -113,8 +113,8 @@ test_out_of_space_open (void)
       should_fail_pwrite = TRUE;
 
       shm = dconf_shm_open ("foo");
-      g_assert (shm == NULL);
-      g_assert (dconf_shm_is_flagged (shm));
+      g_assert_null (shm);
+      g_assert_true (dconf_shm_is_flagged (shm));
       return;
     }
 
