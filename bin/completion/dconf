@@ -36,7 +36,7 @@ __dconf() {
   esac
 
   local IFS=$'\n'
-  COMPREPLY=($(compgen -W "${choices}" "${COMP_WORDS[$COMP_CWORD]}"))
+  COMPREPLY=($(compgen -W "${choices-}" "${COMP_WORDS[$COMP_CWORD]}"))
 }
 
 ####################################################################################################
