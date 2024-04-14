@@ -89,10 +89,10 @@ verify_table (GvdbTable *table)
   gboolean has;
 
   /* We could not normally expect these to be in a particular order but
-   * we are using a specific test file that we know to be layed out this
+   * we are using a specific test file that we know to be laid out this
    * way...
    *
-   * It's pure luck that they happened to be layed out in this nice way.
+   * It's pure luck that they happened to be laid out in this nice way.
    */
   list = gvdb_table_get_names (table, &n_names);
   g_assert_cmpint (n_names, ==, g_strv_length (list));

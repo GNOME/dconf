@@ -151,7 +151,7 @@ Changes in dconf 0.29.1
    a changed signal is only sent for the path being subscribed to
    instead of the root path. (Daniel Playfair Cal; !1, !5, #790640)
 
- - Engine: fix deadlock which occured when using the engine from libsoup
+ - Engine: fix deadlock which occurred when using the engine from libsoup
    within flatpak by extending the existing workaround for Glib !541, aka
    #674885. GSocket and various other GObject types are now also
    initialised in the main thread. (Owen Taylor; !15)

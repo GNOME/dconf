@@ -2,7 +2,7 @@
 #include <glib.h>
 #include <stdlib.h>
 
-/* Test the DBus communicaton code.
+/* Test the DBus communication code.
  */
 
 #include "../engine/dconf-engine.h"

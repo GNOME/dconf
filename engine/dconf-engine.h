@@ -78,7 +78,7 @@ void                    dconf_engine_dbus_handle_connection_closed      (GDBusCo
                                                                          GCallback                bus_closed_callback,
                                                                          gpointer                 bus_closed_callback_user_data);
 
-/* Notifies that a change occured.
+/* Notifies that a change occurred.
  *
  * The engine lock is never held when calling this function so it is
  * safe to run user callbacks or emit signals from this function.
