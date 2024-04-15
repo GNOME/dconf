@@ -73,7 +73,7 @@ dist-job:
 pages:
   stage: deploy
   only:
-    - master
+    - main
   script:
     - meson setup -Db_coverage=true -Dgtk_doc=true _build
     - ninja -C _build all dconf-doc
