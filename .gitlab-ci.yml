@@ -22,26 +22,12 @@ variables:
 
 stages:
   - build
-  - test
   - deploy
 
-build-job:
+build-and-test:
   stage: build
   script:
     - meson setup -Db_coverage=true -Dman=true -Dgtk_doc=true --buildtype debug --werror _build
-    - ninja -C _build all dconf-doc
-  except:
-    - tags
-  artifacts:
-    when: on_failure
-    name: "dconf-_${CI_COMMIT_REF_NAME}"
-    paths:
-      - "_build/meson-logs"
-
-test:
-  stage: test
-  script:
-    - meson setup -Db_coverage=true -Dman=true -Dgtk_doc=true _build
     - ninja -C _build all dconf-doc
 
     - mkdir -p _coverage
