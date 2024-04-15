@@ -20,7 +20,7 @@ __dconf() {
         list|list-locks|dump|load)
           choices="$(dconf _complete / "${COMP_WORDS[2]}")"
           ;;
-        read|list|write|lock|unlock|watch|reset)
+        read|write|lock|unlock|watch|reset)
           choices="$(dconf _complete '' "${COMP_WORDS[2]}")"
           ;;
       esac
