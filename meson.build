@@ -84,6 +84,7 @@ test_env = [
   'G_DEBUG=gc-friendly,fatal-warnings',
   'MALLOC_CHECK_=2',
   'LC_ALL=C.UTF-8',
+  'LINT_WARNINGS_ARE_ERRORS=1',
 ]
 
 gnome = import('gnome')
