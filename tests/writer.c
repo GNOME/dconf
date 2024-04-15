@@ -353,7 +353,7 @@ static void test_writer_commit_real_changes (Fixture       *fixture,
   /* End transaction */
   writer_class->end (writer);
 
-  /* Check that no extra write was done (even afer committing a real change) */
+  /* Check that no extra write was done (even after committing a real change) */
   g_assert_cmpuint (db_mtime_us, ==, get_file_mtime_us (db_filename));
   db_mtime_us = get_file_mtime_us (db_filename);
 
@@ -367,7 +367,7 @@ static void test_writer_commit_real_changes (Fixture       *fixture,
   g_assert_no_error (local_error);
   g_assert_true (retval);
 
-  /* Check that no extra write was done (even afer committing a real change) */
+  /* Check that no extra write was done (even after committing a real change) */
   g_assert_cmpuint (db_mtime_us, ==, get_file_mtime_us (db_filename));
   db_mtime_us = get_file_mtime_us (db_filename);
 

@@ -309,7 +309,7 @@ class DBusTest(unittest.TestCase):
         self.assertEqual([], dconf_list('/app/'))
 
     def test_reset_dir(self):
-        """Reseting whole directory is possible with -f option.
+        """Resetting whole directory is possible with -f option.
 
         It is an error not to use -f when resetting a dir.
         """
