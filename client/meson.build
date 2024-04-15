@@ -70,9 +70,9 @@ if get_option('vapi')
     'dconf.deps',
   )
 
-  vapi_dir = vapigen_dep.get_pkgconfig_variable(
-    'vapidir',
-    define_variable: ['datadir', dconf_datadir]
+  vapi_dir = vapigen_dep.get_variable(
+    pkgconfig: 'vapidir',
+    pkgconfig_define: ['datadir', dconf_datadir]
   )
 
   install_data(

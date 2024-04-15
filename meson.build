@@ -45,8 +45,8 @@ gio_dep = dependency('gio-2.0', version: gio_req_version)
 gio_unix_dep = dependency('gio-unix-2.0', version: gio_req_version)
 glib_dep = dependency('glib-2.0', version: '>= 2.67.4')
 
-gio_module_dir = gio_dep.get_pkgconfig_variable('giomoduledir', define_variable: ['libdir', dconf_libdir])
-dbus_session_service_dir = dependency('dbus-1').get_pkgconfig_variable('session_bus_services_dir', define_variable: ['datadir', dconf_datadir])
+gio_module_dir = gio_dep.get_variable(pkgconfig: 'giomoduledir', pkgconfig_define: ['libdir', dconf_libdir])
+dbus_session_service_dir = dependency('dbus-1').get_variable(pkgconfig: 'session_bus_services_dir', pkgconfig_define: ['datadir', dconf_datadir])
 
 systemd_userunitdir = get_option('systemduserunitdir')
 
@@ -54,7 +54,7 @@ if systemd_userunitdir == ''
   systemd_dep = dependency('systemd', required: false)
 
   if systemd_dep.found()
-    systemd_userunitdir = systemd_dep.get_pkgconfig_variable('systemduserunitdir', define_variable: ['prefix', dconf_prefix])
+    systemd_userunitdir = systemd_dep.get_variable(pkgconfig: 'systemduserunitdir', pkgconfig_define: ['prefix', dconf_prefix])
   else
     # Fall back to the upstream default.
     # Note that this is always 'lib', even if libdir is something else
@@ -62,13 +62,16 @@ if systemd_userunitdir == ''
   endif
 endif
 
+bash = find_program('bash', required : false)
+have_bash = bash.found() # For completion scripts
+
 enable_bash_completion = get_option('bash_completion')
 if enable_bash_completion
   bash_completion_dep = dependency('bash-completion')
-  completions_dir = bash_completion_dep.get_pkgconfig_variable(
-    'completionsdir',
+  completions_dir = bash_completion_dep.get_variable(
+    pkgconfig: 'completionsdir',
     # bash-completion 2.10 changed the substitutions
-    define_variable: bash_completion_dep.version().version_compare('>= 2.10') ? ['datadir', dconf_datadir] : ['prefix', dconf_prefix],
+    pkgconfig_define: bash_completion_dep.version().version_compare('>= 2.10') ? ['datadir', dconf_datadir] : ['prefix', dconf_prefix],
   )
 endif
 
