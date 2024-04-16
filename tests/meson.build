@@ -78,3 +78,18 @@ if python3.found() and dbus_daemon.found()
 else
   message('Skipping dconf test because python3 or dbus-daemon is not available')
 endif
+
+lint_scripts = [
+  'shellcheck.sh',
+]
+
+if have_bash
+  foreach test_name : lint_scripts
+    test(
+      test_name, files(test_name),
+      env : test_env,
+      suite : ['lint'],
+      protocol : 'tap',
+    )
+  endforeach
+endif

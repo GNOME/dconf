@@ -9,7 +9,7 @@ default:
           build-essential meson pkg-config gtk-doc-tools libxml2-utils
           gobject-introspection dbus dbus-x11 libdbus-1-dev
           libgirepository1.0-dev libglib2.0-dev bash-completion lcov
-          valac > /dev/null
+          valac shellcheck > /dev/null
     - apt install --assume-yes --quiet=2 git > /dev/null
     # FIXME: Missing Perl dependencies in lcov_2.0-3.
     # This can be removed when #1053252 is fixed in sid/unstable.
@@ -22,26 +22,12 @@ variables:
 
 stages:
   - build
-  - test
   - deploy
 
-build-job:
+build-and-test:
   stage: build
   script:
     - meson setup -Db_coverage=true -Dman=true -Dgtk_doc=true --buildtype debug --werror _build
-    - ninja -C _build all dconf-doc
-  except:
-    - tags
-  artifacts:
-    when: on_failure
-    name: "dconf-_${CI_COMMIT_REF_NAME}"
-    paths:
-      - "_build/meson-logs"
-
-test:
-  stage: test
-  script:
-    - meson setup -Db_coverage=true -Dman=true -Dgtk_doc=true _build
     - ninja -C _build all dconf-doc
 
     - mkdir -p _coverage

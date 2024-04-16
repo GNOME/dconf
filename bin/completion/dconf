@@ -1,4 +1,6 @@
 
+# shellcheck shell=bash
+
 # Check for bash
 [ -z "$BASH_VERSION" ] && return
 
@@ -20,7 +22,7 @@ __dconf() {
         list|list-locks|dump|load)
           choices="$(dconf _complete / "${COMP_WORDS[2]}")"
           ;;
-        read|list|write|lock|unlock|watch|reset)
+        read|write|lock|unlock|watch|reset)
           choices="$(dconf _complete '' "${COMP_WORDS[2]}")"
           ;;
       esac
@@ -36,6 +38,7 @@ __dconf() {
   esac
 
   local IFS=$'\n'
+  # shellcheck disable=SC2207
   COMPREPLY=($(compgen -W "${choices-}" "${COMP_WORDS[$COMP_CWORD]}"))
 }
 
