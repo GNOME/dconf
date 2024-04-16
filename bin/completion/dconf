@@ -38,6 +38,7 @@ __dconf() {
   esac
 
   local IFS=$'\n'
+  # shellcheck disable=SC2207
   COMPREPLY=($(compgen -W "${choices-}" "${COMP_WORDS[$COMP_CWORD]}"))
 }
 
