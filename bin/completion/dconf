@@ -20,10 +20,10 @@ __dconf() {
           choices=$'help \nread \nlist \nlist-locks \nwrite \nreset \ncompile \nupdate \nwatch \ndump \nload \nblame '
           ;;
         list|list-locks|dump|load)
-          choices="$(dconf _complete / "${COMP_WORDS[2]}")"
+          choices="$("$1" _complete / "${COMP_WORDS[2]}")"
           ;;
         read|write|lock|unlock|watch|reset)
-          choices="$(dconf _complete '' "${COMP_WORDS[2]}")"
+          choices="$("$1" _complete '' "${COMP_WORDS[2]}")"
           ;;
       esac
       ;;
@@ -31,7 +31,7 @@ __dconf() {
     3)
       case "${COMP_WORDS[1]} ${COMP_WORDS[2]}" in
 	reset\ -f)
-          choices="$(dconf _complete '' "${COMP_WORDS[3]}")"
+          choices="$("$1" _complete '' "${COMP_WORDS[3]}")"
           ;;
       esac
       ;;
