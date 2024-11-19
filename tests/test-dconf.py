@@ -105,9 +105,16 @@ class DBusTest(unittest.TestCase):
         os.mkdir(self.dbus_dir, mode=0o700)
         os.mkdir(os.path.join(self.config_home, 'dconf'))
 
+        os.environ['DCONF_PROFILE'] = os.path.join(self.temporary_dir.name, 'profile')
         os.environ['DCONF_BLAME'] = ''
         os.environ['XDG_RUNTIME_DIR'] = self.runtime_dir
         os.environ['XDG_CONFIG_HOME'] = self.config_home
+
+        # Configure default profile so that the system one
+        # does not affect the tests.
+        path = os.path.join(self.temporary_dir.name, 'profile')
+        with open(path, 'w') as file:
+            file.write('user-db:user')
 
         # Prepare dbus-daemon config.
         dbus_daemon_config = os.path.join(self.dbus_dir, 'session.conf')
