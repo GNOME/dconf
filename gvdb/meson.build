@@ -1,6 +1,4 @@
-gvdb_builder = files('gvdb-builder.c')
-
-sources = gvdb_builder + files('gvdb-reader.c')
+gvdb_dep = dependency('gvdb')
 
 gvdb_deps = [
   gio_dep,
@@ -13,16 +11,17 @@ cflags = [
   '-DGVDB_USE_WEAK_SYMBOLS',
 ]
 
+gvdb_include = dependency('gvdb-include')
+
 libgvdb = static_library(
   'gvdb',
-  sources: sources,
   include_directories: top_inc,
-  dependencies: gvdb_deps,
+  dependencies: gvdb_deps + gvdb_dep,
   c_args: cflags,
   pic: true,
 )
 
 libgvdb_dep = declare_dependency(
-  dependencies: gvdb_deps,
+  dependencies: gvdb_deps + gvdb_include,
   link_with: libgvdb,
 )

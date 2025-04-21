@@ -21,7 +21,7 @@
 #ifndef __dconf_gvdb_utils_h__
 #define __dconf_gvdb_utils_h__
 
-#include "../gvdb/gvdb-reader.h"
+#include "gvdb/gvdb-reader.h"
 #include "./dconf-changeset.h"
 
 DConfChangeset *                dconf_gvdb_utils_changeset_from_table   (GvdbTable       *table);

@@ -1,4 +1,4 @@
-#include "../gvdb/gvdb-reader.h"
+#include "gvdb/gvdb-reader.h"
 #include "dconf-mock.h"
 
 /* The global dconf_mock_gvdb_tables hashtable is modified all the time

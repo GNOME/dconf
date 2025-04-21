@@ -2,7 +2,7 @@ project(
   'dconf', ['c'],
   version: '0.41.1',
   license: 'LGPL2.1+',
-  meson_version: '>= 0.57.0',
+  meson_version: '>= 0.60.0',
 )
 
 dconf_prefix = get_option('prefix')

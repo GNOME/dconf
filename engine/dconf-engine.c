@@ -25,7 +25,7 @@
 #include "../common/dconf-enums.h"
 #include "../common/dconf-paths.h"
 #include "../common/dconf-gvdb-utils.h"
-#include "../gvdb/gvdb-reader.h"
+#include "gvdb/gvdb-reader.h"
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
