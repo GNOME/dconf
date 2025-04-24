@@ -2,14 +2,13 @@ dconf is split into a large number of small modules.  This is required
 because of the client/server architecture as well as the wide variety of
 situations that dconf is used in on the client side.
 
-gvdb/:
+subprojects/gvdb/:
 
   This code implements the GVDB file format used for the on-disk
   database.  GVDB is shared with a number of other users and lives in a
   separate 'gvdb' module on git.gnome.org.
 
-  Changes should never be made to this directory.  Instead, they should
-  be made against the 'gvdb' module and merged using git.
+  To update, change the revision in gvdb.wrap and update the git submodule.
 
   The code is split into a reader and a writer (builder).
 

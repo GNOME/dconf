@@ -7,7 +7,7 @@ sources = files(
 libdconf_mock = static_library(
   'dconf-mock',
   sources: sources,
-  dependencies: glib_dep,
+  dependencies: [glib_dep, libgvdb_dep],
 )
 
 envs = test_env + [

@@ -21,7 +21,7 @@
 #ifndef __dconf_engine_source_h__
 #define __dconf_engine_source_h__
 
-#include "../gvdb/gvdb-reader.h"
+#include "gvdb/gvdb-reader.h"
 #include <gio/gio.h>
 
 typedef struct _DConfEngineSourceVTable DConfEngineSourceVTable;

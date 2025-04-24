@@ -1,4 +1,4 @@
-sources = gvdb_builder + files(
+sources = files(
   'dconf.c',
 )
 

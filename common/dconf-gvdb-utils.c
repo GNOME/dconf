@@ -23,8 +23,8 @@
 #include "dconf-gvdb-utils.h"
 
 #include "./dconf-paths.h"
-#include "../gvdb/gvdb-builder.h"
-#include "../gvdb/gvdb-reader.h"
+#include "gvdb/gvdb-builder.h"
+#include "gvdb/gvdb-reader.h"
 
 #include <errno.h>
 #include <glib.h>
