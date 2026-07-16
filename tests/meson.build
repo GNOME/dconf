@@ -10,6 +10,12 @@ libdconf_mock = static_library(
   dependencies: [glib_dep, libgvdb_dep],
 )
 
+libdconf_mock_no_gvdb = static_library(
+  'dconf-mock-no-gvdb',
+  sources: files('dconf-mock-dbus.c', 'dconf-mock-shm.c'),
+  dependencies: [glib_dep, libgvdb_dep],
+)
+
 envs = test_env + [
   'G_TEST_SRCDIR=' + meson.current_source_dir(),
   'G_TEST_BUILDDIR=' + meson.current_build_dir(),
@@ -32,7 +38,7 @@ unit_tests = [
   ['gdbus-filter-leak', 'dbus-leak.c', '-DDBUS_BACKEND="/gdbus/filter"', [libdconf_client_dep, libdconf_gdbus_filter_dep], []],
   ['engine', 'engine.c', '-DSRCDIR="@0@"'.format(test_dir), [dl_dep, libdconf_engine_test_dep, m_dep], libdconf_mock],
   ['client', 'client.c', '-DSRCDIR="@0@"'.format(test_dir), [libdconf_client_dep, libdconf_engine_dep], libdconf_mock],
-  ['writer', 'writer.c', '-DSRCDIR="@0@"'.format(test_dir), [glib_dep, dl_dep, m_dep, libdconf_service_dep], [libdconf_mock]],
+  ['writer', 'writer.c', '-DSRCDIR="@0@"'.format(test_dir), [glib_dep, dl_dep, m_dep, libdconf_service_dep], [libdconf_mock_no_gvdb]],
 ]
 
 foreach unit_test: unit_tests
