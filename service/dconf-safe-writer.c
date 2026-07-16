@@ -49,6 +49,7 @@ typedef struct
 
   DConfChangeset *uncommitted_values;
   DConfChangeset *committed_values;
+  gboolean        committed_values_missing;
 } DConfSafeWriter;
 
 G_DEFINE_TYPE (DConfSafeWriter, dconf_safe_writer, DCONF_TYPE_WRITER)
@@ -115,6 +116,7 @@ dconf_safe_writer_begin (DConfWriter  *writer,
   sw->committed_values = dconf_gvdb_utils_read_and_back_up_file (sw->filename, &missing, error);
   if (sw->committed_values == NULL)
     return FALSE;
+  sw->committed_values_missing = missing;
 
   if (!DCONF_WRITER_CLASS (dconf_safe_writer_parent_class)->begin (writer, error))
     return FALSE;
@@ -149,6 +151,27 @@ dconf_safe_writer_change (DConfWriter    *writer,
     }
 }
 
+static gboolean
+dconf_safe_writer_rollback (DConfSafeWriter  *sw,
+                            GError          **error)
+{
+  if (sw->committed_values_missing)
+    {
+      if (g_unlink (sw->filename) != 0 && errno != ENOENT)
+        {
+          gint saved_errno = errno;
+
+          g_set_error (error, G_FILE_ERROR, g_file_error_from_errno (saved_errno),
+                       "%s: %s", sw->filename, g_strerror (saved_errno));
+          return FALSE;
+        }
+
+      return TRUE;
+    }
+
+  return dconf_gvdb_utils_write_file (sw->filename, sw->committed_values, error);
+}
+
 /* Store the uncommitted changes to the GVDB files. */
 static gboolean
 dconf_safe_writer_commit (DConfWriter  *writer,
@@ -156,6 +179,7 @@ dconf_safe_writer_commit (DConfWriter  *writer,
 {
   DConfSafeWriter *sw = (DConfSafeWriter *) writer;
   g_autoptr(DConfChangeset) effective_changeset = NULL;
+  gboolean wrote_user_database = FALSE;
 
   effective_changeset = dconf_changeset_diff (sw->committed_values, sw->uncommitted_values);
 
@@ -164,14 +188,34 @@ dconf_safe_writer_commit (DConfWriter  *writer,
     {
       if (!dconf_gvdb_utils_write_file (sw->filename, sw->uncommitted_values, error))
         return FALSE;
+
+      wrote_user_database = TRUE;
     }
 
+  /* The runtime database update is the visible commit point for this process:
+   * the parent writer only emits notifications after this succeeds. If it
+   * fails, undo the user database write so the failed operation is not
+   * persisted on disk.
+   */
   if (!DCONF_WRITER_CLASS (dconf_safe_writer_parent_class)->commit (writer, error))
-    return FALSE;
+    {
+      if (wrote_user_database)
+        {
+          g_autoptr(GError) rollback_error = NULL;
+
+          if (!dconf_safe_writer_rollback (sw, &rollback_error))
+            g_warning ("Error rolling back database %s after failed write: %s",
+                       sw->filename, rollback_error->message);
+        }
+
+      return FALSE;
+    }
 
   g_clear_pointer (&sw->committed_values, dconf_changeset_unref);
   sw->committed_values = sw->uncommitted_values;
   sw->uncommitted_values = NULL;
+  if (wrote_user_database)
+    sw->committed_values_missing = FALSE;
 
   return TRUE;
 }
