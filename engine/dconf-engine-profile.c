@@ -28,6 +28,7 @@
 #include <errno.h>
 
 #include "dconf-engine-source.h"
+#include "dconf-engine-source-private.h"
 
 #define MANDATORY_DIR           "/run/dconf/user/" /* + getuid () */
 #define RUNTIME_PROFILE         /* XDG_RUNTIME_DIR + */ "/dconf/profile"
@@ -137,6 +138,30 @@ dconf_engine_profile_handle_line (gchar *line)
   return source;
 }
 
+static gboolean
+file_is_on_nfs (const gchar  *filename)
+{
+  GFileInfo *file_info;
+  gboolean   result = FALSE;
+  GFile     *file;
+
+  file = g_file_new_for_path (filename);
+  file_info = g_file_query_filesystem_info (file, G_FILE_ATTRIBUTE_FILESYSTEM_TYPE, NULL, NULL); /* ASYNC ? */
+  if (file_info != NULL)
+    {
+      const gchar *filesystem_type = g_file_info_get_attribute_string (file_info, G_FILE_ATTRIBUTE_FILESYSTEM_TYPE);
+      if (g_strcmp0 (filesystem_type, "nfs") == 0 ||
+          g_strcmp0 (filesystem_type, "nfs4") == 0)
+        {
+          result = TRUE;
+        }
+      g_object_unref (file_info);
+    }
+  g_clear_object (&file);
+
+  return result;
+}
+
 static DConfEngineSource **
 dconf_engine_read_profile_file (FILE *file,
                                 gint *n_sources)
@@ -145,7 +170,7 @@ dconf_engine_read_profile_file (FILE *file,
   gchar line[80];
   gint n = 0, a;
 
-  sources = g_new (DConfEngineSource *, (a = 4));
+  sources = g_new0 (DConfEngineSource *, (a = 4));
 
   while (fgets (line, sizeof line, file))
     {
@@ -257,6 +282,12 @@ dconf_engine_open_runtime_profile (void)
   return dconf_engine_fopen (path, "r");
 }
 
+static inline gboolean
+engine_source_is_user_db (DConfEngineSource *source)
+{
+  return source->vtable == &dconf_engine_source_user_vtable;
+}
+
 DConfEngineSource **
 dconf_engine_profile_open (const gchar *profile,
                            gint        *n_sources)
@@ -300,7 +331,10 @@ dconf_engine_profile_open (const gchar *profile,
 
   /* 5. Default profile */
   if (profile == NULL && file == NULL)
-    return dconf_engine_default_profile (n_sources);
+    {
+      sources = dconf_engine_default_profile (n_sources);
+      goto out;
+    }
 
   /* At this point either we have a profile name or file open, but never
    * both.  If it's a profile name, we try to open it.
@@ -324,6 +358,35 @@ dconf_engine_profile_open (const gchar *profile,
     {
       g_warning ("unable to open named profile (%s): using the null configuration.", profile);
       sources = dconf_engine_null_profile (n_sources);
+    }
+
+out:
+  /* Switch to "safe" backend if user config directory is on NFS.
+     This avoids the need to use "keyfile" backend which was recommended
+     for such situation before.
+   */
+  if (sources != NULL && sources[0] != NULL)
+    {
+      if (engine_source_is_user_db (sources[0]))
+        {
+          if (G_UNLIKELY (file_is_on_nfs (g_get_user_config_dir ())))
+            {
+              DConfEngineSource *old_source = sources[0];
+
+              if (old_source->name != NULL)
+                {
+                  gchar *name = g_strdup_printf ("service-db:safe/%s", old_source->name);
+                  sources[0] = dconf_engine_source_new (name);
+                  g_free (name);
+                }
+              else
+                {
+                  sources[0] = dconf_engine_source_new ("service-db:safe/user");
+                }
+
+              dconf_engine_source_free (old_source);
+            }
+        }
     }
 
   return sources;
