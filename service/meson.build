@@ -25,6 +25,7 @@ lib_sources = [
   'dconf-service.c',
   'dconf-shm-writer.c',
   'dconf-writer.c',
+  'dconf-writer-common.c',
 ]
 sources = [
   'main.c',
