@@ -460,6 +460,61 @@ test_safe_writer_persists_add_and_delete (Fixture       *fixture,
   g_rmdir (rt_service_dir);
 }
 
+static void
+test_safe_writer_rolls_back_persistent_db_on_runtime_commit_failure (Fixture       *fixture,
+                                                                     gconstpointer  test_data)
+{
+  const gchar *db_name = "safe-rollback";
+  g_autoptr(DConfWriter) writer = NULL;
+  DConfWriterClass *writer_class;
+  g_autoptr(GError) error = NULL;
+  g_autofree gchar *db_filename = g_build_filename (fixture->dconf_dir, db_name, NULL);
+  g_autofree gchar *runtime_db_filename = safe_runtime_db_filename (db_name);
+
+  g_autoptr(DConfChangeset) old_db = dconf_changeset_new_database (NULL);
+  dconf_changeset_set (old_db, "/key", g_variant_new ("(s)", "old"));
+  g_assert_true (dconf_gvdb_utils_write_file (db_filename, old_db, &error));
+  g_assert_no_error (error);
+
+  writer = DCONF_WRITER (dconf_writer_new (DCONF_TYPE_SAFE_WRITER, db_name));
+  writer_class = DCONF_WRITER_GET_CLASS (writer);
+
+  g_assert_true (writer_class->begin (writer, &error));
+  g_assert_no_error (error);
+
+  g_autoptr(DConfChangeset) change = dconf_changeset_new ();
+  dconf_changeset_set (change, "/key", g_variant_new ("(s)", "new"));
+  writer_class->change (writer, change, NULL);
+
+  /* Make the runtime DB path not writable as a file target after begin(),
+   * so the persistent write succeeds and the parent/runtime commit fails.
+   */
+  g_assert_cmpint (g_mkdir_with_parents (runtime_db_filename, 0700), ==, 0);
+
+  g_assert_false (writer_class->commit (writer, &error));
+  g_assert_error (error, G_FILE_ERROR, G_FILE_ERROR_ISDIR);
+  g_clear_error (&error);
+
+  writer_class->end (writer);
+
+  {
+    g_autoptr(DConfChangeset) db = read_db (db_filename);
+    g_autoptr(GVariant) value = NULL;
+
+    g_assert_true (dconf_changeset_get (db, "/key", &value));
+    g_assert_true (g_variant_equal (value, g_variant_new ("(s)", "old")));
+  }
+
+  g_unlink (db_filename);
+  g_autofree gchar *lock = g_build_filename (fixture->dconf_dir, ".safe-rollback.lock", NULL);
+  g_unlink (lock);
+  g_rmdir (runtime_db_filename);
+  g_autofree gchar *rt_safe_dir = g_build_filename (runtime_dir, "dconf-service", "safe", NULL);
+  g_rmdir (rt_safe_dir);
+  g_autofree gchar *rt_service_dir = g_build_filename (runtime_dir, "dconf-service", NULL);
+  g_rmdir (rt_service_dir);
+}
+
 int
 main (int argc, char **argv)
 {
@@ -514,6 +569,8 @@ main (int argc, char **argv)
               test_writer_commit_real_changes, tear_down);
   g_test_add ("/safe-writer/commit/persistence", Fixture, NULL, set_up,
               test_safe_writer_persists_add_and_delete, tear_down);
+  g_test_add ("/safe-writer/commit/rollback", Fixture, NULL, set_up,
+              test_safe_writer_rolls_back_persistent_db_on_runtime_commit_failure, tear_down);
 
   retval = g_test_run ();
 
