@@ -86,5 +86,7 @@ GDBusInterfaceSkeleton *dconf_writer_new                                (GType  
 GType                   dconf_shm_writer_get_type                       (void);
 #define DCONF_TYPE_KEYFILE_WRITER                           (dconf_keyfile_writer_get_type ())
 GType                   dconf_keyfile_writer_get_type                   (void);
+#define DCONF_TYPE_SAFE_WRITER                              (dconf_safe_writer_get_type ())
+GType                   dconf_safe_writer_get_type                      (void);
 
 #endif /* __dconf_writer_h__ */

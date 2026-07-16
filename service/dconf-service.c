@@ -238,6 +238,7 @@ dconf_service_dbus_register (GApplication     *application,
   g_io_extension_point_implement ("dconf-backend", DCONF_TYPE_WRITER, "Writer", 0);
   g_io_extension_point_implement ("dconf-backend", DCONF_TYPE_KEYFILE_WRITER, "keyfile", 0);
   g_io_extension_point_implement ("dconf-backend", DCONF_TYPE_SHM_WRITER, "shm", 0);
+  g_io_extension_point_implement ("dconf-backend", DCONF_TYPE_SAFE_WRITER, "safe", 0);
 
   service->blame = dconf_blame_get ();
   if (service->blame)
