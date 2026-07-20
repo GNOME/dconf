@@ -22,9 +22,11 @@ configure_file(
 lib_sources = [
   'dconf-blame.c',
   'dconf-keyfile-writer.c',
+  'dconf-safe-writer.c',
   'dconf-service.c',
   'dconf-shm-writer.c',
   'dconf-writer.c',
+  'dconf-writer-common.c',
 ]
 sources = [
   'main.c',

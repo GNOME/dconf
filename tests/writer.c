@@ -23,8 +23,10 @@
 
 #include "service/dconf-generated.h"
 #include "service/dconf-writer.h"
+#include "common/dconf-gvdb-utils.h"
 
 static guint n_warnings = 0;
+static gchar *runtime_dir = NULL;
 
 static GLogWriterOutput
 log_writer_cb (GLogLevelFlags   log_level,
@@ -378,6 +380,141 @@ static void test_writer_commit_real_changes (Fixture       *fixture,
   g_assert_cmpint (g_unlink (db_filename), ==, 0);
 }
 
+static gchar *
+safe_runtime_db_filename (const gchar *db_name)
+{
+  return g_build_filename (runtime_dir, "dconf-service", "safe", db_name, NULL);
+}
+
+static DConfChangeset *
+read_db (const gchar *filename)
+{
+  g_autoptr(GError) error = NULL;
+  gboolean missing = FALSE;
+  DConfChangeset *db;
+
+  db = dconf_gvdb_utils_read_and_back_up_file (filename, &missing, &error);
+  g_assert_no_error (error);
+  g_assert_false (missing);
+  g_assert_nonnull (db);
+
+  return db;
+}
+
+static void
+test_safe_writer_persists_add_and_delete (Fixture       *fixture,
+                                          gconstpointer  test_data)
+{
+  const gchar *db_name = "safe-add-delete";
+  g_autoptr(DConfWriter) writer = NULL;
+  DConfWriterClass *writer_class;
+  g_autoptr(GError) error = NULL;
+  g_autofree gchar *db_filename = g_build_filename (fixture->dconf_dir, db_name, NULL);
+
+  writer = DCONF_WRITER (dconf_writer_new (DCONF_TYPE_SAFE_WRITER, db_name));
+  writer_class = DCONF_WRITER_GET_CLASS (writer);
+
+  g_assert_true (writer_class->begin (writer, &error));
+  g_assert_no_error (error);
+
+  g_autoptr(DConfChangeset) add = dconf_changeset_new ();
+  dconf_changeset_set (add, "/key", g_variant_new ("(s)", "value"));
+  writer_class->change (writer, add, NULL);
+
+  g_assert_true (writer_class->commit (writer, &error));
+  g_assert_no_error (error);
+  writer_class->end (writer);
+
+  {
+    g_autoptr(DConfChangeset) db = read_db (db_filename);
+    g_autoptr(GVariant) value = NULL;
+
+    g_assert_true (dconf_changeset_get (db, "/key", &value));
+    g_assert_true (g_variant_equal (value, g_variant_new ("(s)", "value")));
+  }
+
+  g_assert_true (writer_class->begin (writer, &error));
+  g_assert_no_error (error);
+
+  g_autoptr(DConfChangeset) reset = dconf_changeset_new ();
+  dconf_changeset_set (reset, "/key", NULL);
+  writer_class->change (writer, reset, NULL);
+
+  g_assert_true (writer_class->commit (writer, &error));
+  g_assert_no_error (error);
+  writer_class->end (writer);
+
+  {
+    g_autoptr(DConfChangeset) db = read_db (db_filename);
+    g_assert_false (dconf_changeset_get (db, "/key", NULL));
+  }
+
+  g_unlink (db_filename);
+  g_autofree gchar *lock = g_build_filename (fixture->dconf_dir, ".safe-add-delete.lock", NULL);
+  g_unlink (lock);
+  g_autofree gchar *rt = safe_runtime_db_filename (db_name);
+  g_unlink (rt);
+  g_autofree gchar *rt_safe_dir = g_build_filename (runtime_dir, "dconf-service", "safe", NULL);
+  g_rmdir (rt_safe_dir);
+  g_autofree gchar *rt_service_dir = g_build_filename (runtime_dir, "dconf-service", NULL);
+  g_rmdir (rt_service_dir);
+}
+
+static void
+test_safe_writer_rolls_back_persistent_db_on_runtime_commit_failure (Fixture       *fixture,
+                                                                     gconstpointer  test_data)
+{
+  const gchar *db_name = "safe-rollback";
+  g_autoptr(DConfWriter) writer = NULL;
+  DConfWriterClass *writer_class;
+  g_autoptr(GError) error = NULL;
+  g_autofree gchar *db_filename = g_build_filename (fixture->dconf_dir, db_name, NULL);
+  g_autofree gchar *runtime_db_filename = safe_runtime_db_filename (db_name);
+
+  g_autoptr(DConfChangeset) old_db = dconf_changeset_new_database (NULL);
+  dconf_changeset_set (old_db, "/key", g_variant_new ("(s)", "old"));
+  g_assert_true (dconf_gvdb_utils_write_file (db_filename, old_db, &error));
+  g_assert_no_error (error);
+
+  writer = DCONF_WRITER (dconf_writer_new (DCONF_TYPE_SAFE_WRITER, db_name));
+  writer_class = DCONF_WRITER_GET_CLASS (writer);
+
+  g_assert_true (writer_class->begin (writer, &error));
+  g_assert_no_error (error);
+
+  g_autoptr(DConfChangeset) change = dconf_changeset_new ();
+  dconf_changeset_set (change, "/key", g_variant_new ("(s)", "new"));
+  writer_class->change (writer, change, NULL);
+
+  /* Make the runtime DB path not writable as a file target after begin(),
+   * so the persistent write succeeds and the parent/runtime commit fails.
+   */
+  g_assert_cmpint (g_mkdir_with_parents (runtime_db_filename, 0700), ==, 0);
+
+  g_assert_false (writer_class->commit (writer, &error));
+  g_assert_error (error, G_FILE_ERROR, G_FILE_ERROR_ISDIR);
+  g_clear_error (&error);
+
+  writer_class->end (writer);
+
+  {
+    g_autoptr(DConfChangeset) db = read_db (db_filename);
+    g_autoptr(GVariant) value = NULL;
+
+    g_assert_true (dconf_changeset_get (db, "/key", &value));
+    g_assert_true (g_variant_equal (value, g_variant_new ("(s)", "old")));
+  }
+
+  g_unlink (db_filename);
+  g_autofree gchar *lock = g_build_filename (fixture->dconf_dir, ".safe-rollback.lock", NULL);
+  g_unlink (lock);
+  g_rmdir (runtime_db_filename);
+  g_autofree gchar *rt_safe_dir = g_build_filename (runtime_dir, "dconf-service", "safe", NULL);
+  g_rmdir (rt_safe_dir);
+  g_autofree gchar *rt_service_dir = g_build_filename (runtime_dir, "dconf-service", NULL);
+  g_rmdir (rt_service_dir);
+}
+
 int
 main (int argc, char **argv)
 {
@@ -405,9 +542,13 @@ main (int argc, char **argv)
   g_assert_true (g_setenv ("XDG_CONFIG_HOME", config_dir, TRUE));
   g_test_message ("Using config directory: %s", config_dir);
 
+  runtime_dir = g_dir_make_tmp ("dconf-test-writer-runtime_XXXXXX", &local_error);
+  g_assert_no_error (local_error);
+  g_assert_true (g_setenv ("XDG_RUNTIME_DIR", runtime_dir, TRUE));
+  g_test_message ("Using runtime directory: %s", runtime_dir);
+
   /* Log handling so we don’t abort on the first g_warning(). */
   g_log_set_writer_func (log_writer_cb, NULL, NULL);
-
   g_test_add ("/writer/basic", Fixture, NULL, set_up,
               test_writer_basic, tear_down);
   g_test_add ("/writer/begin/missing", Fixture, NULL, set_up,
@@ -426,6 +567,10 @@ main (int argc, char **argv)
               test_writer_commit_empty_changes, tear_down);
   g_test_add ("/writer/commit/redundant_change/2", Fixture, NULL, set_up,
               test_writer_commit_real_changes, tear_down);
+  g_test_add ("/safe-writer/commit/persistence", Fixture, NULL, set_up,
+              test_safe_writer_persists_add_and_delete, tear_down);
+  g_test_add ("/safe-writer/commit/rollback", Fixture, NULL, set_up,
+              test_safe_writer_rolls_back_persistent_db_on_runtime_commit_failure, tear_down);
 
   retval = g_test_run ();
 
@@ -433,6 +578,11 @@ main (int argc, char **argv)
   g_unsetenv ("XDG_CONFIG_HOME");
   g_assert_cmpint (g_rmdir (config_dir), ==, 0);
   g_clear_pointer (&config_dir, g_free);
+
+  /* Clean up the runtime dir. */
+  g_unsetenv ("XDG_RUNTIME_DIR");
+  g_assert_cmpint (g_rmdir (runtime_dir), ==, 0);
+  g_clear_pointer (&runtime_dir, g_free);
 
   return retval;
 }

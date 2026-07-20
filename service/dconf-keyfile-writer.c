@@ -21,6 +21,7 @@
 #include "config.h"
 
 #include "dconf-writer.h"
+#include "dconf-writer-common.h"
 
 #include <string.h>
 #include <unistd.h>
@@ -198,54 +199,9 @@ dconf_keyfile_writer_begin (DConfWriter  *writer,
 
   g_clear_pointer (&kfw->contents, g_free);
 
-  kfw->lock_fd = open (kfw->lock_filename, O_RDWR | O_CREAT, 0666);
+  kfw->lock_fd = dconf_lock_file_lock (kfw->lock_filename, error);
   if (kfw->lock_fd == -1)
-    {
-      gchar *dirname;
-
-      /* Maybe it failed because the directory doesn't exist.  Try
-       * again, after mkdir().
-       */
-      dirname = g_path_get_dirname (kfw->lock_filename);
-      g_mkdir_with_parents (dirname, 0700);
-      g_free (dirname);
-
-      kfw->lock_fd = open (kfw->lock_filename, O_RDWR | O_CREAT, 0666);
-      if (kfw->lock_fd == -1)
-        {
-          gint saved_errno = errno;
-
-          g_set_error (error, G_FILE_ERROR, g_file_error_from_errno (saved_errno),
-                       "%s: %s", kfw->lock_filename, g_strerror (saved_errno));
-          return FALSE;
-        }
-    }
-
-  while (TRUE)
-    {
-      struct flock lock;
-
-      lock.l_type = F_WRLCK;
-      lock.l_whence = 0;
-      lock.l_start = 0;
-      lock.l_len = 0; /* lock all bytes */
-
-      if (fcntl (kfw->lock_fd, F_SETLKW, &lock) == 0)
-        break;
-
-      if (errno != EINTR)
-        {
-          gint saved_errno = errno;
-
-          g_set_error (error, G_FILE_ERROR, g_file_error_from_errno (saved_errno),
-                       "%s: unable to fcntl(F_SETLKW): %s", kfw->lock_filename, g_strerror (saved_errno));
-          close (kfw->lock_fd);
-          kfw->lock_fd = -1;
-          return FALSE;
-        }
-
-      /* it was EINTR.  loop again. */
-    }
+    return FALSE;
 
   if (!g_file_get_contents (kfw->filename, &kfw->contents, NULL, &local_error))
     {

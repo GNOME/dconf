@@ -62,6 +62,132 @@ dconf_gvdb_utils_changeset_from_table (GvdbTable *table)
   return database;
 }
 
+#include <fcntl.h>
+#include <unistd.h>
+
+#define DCONF_GVDB_UTILS_ESTALE_RETRY_TIMEOUT_USEC (G_USEC_PER_SEC)
+#define DCONF_GVDB_UTILS_ESTALE_INITIAL_DELAY_USEC 5000
+#define DCONF_GVDB_UTILS_ESTALE_MAX_DELAY_USEC     100000
+
+
+static gboolean
+dconf_gvdb_utils_set_file_error (const gchar  *filename,
+                                 gint          saved_errno,
+                                 GError      **error)
+{
+  g_set_error (error, G_FILE_ERROR, g_file_error_from_errno (saved_errno),
+               "%s: %s", filename, g_strerror (saved_errno));
+
+  return FALSE;
+}
+
+static gboolean
+dconf_gvdb_utils_read_file_once (const gchar  *filename,
+                                 gchar       **contents,
+                                 gsize        *size,
+                                 gint         *saved_errno,
+                                 GError      **error)
+{
+  gint fd;
+
+  *contents = NULL;
+  *size = 0;
+  *saved_errno = 0;
+
+  do
+    fd = g_open (filename, O_RDONLY | O_CLOEXEC, 0);
+  while (fd == -1 && errno == EINTR);
+
+  if (fd == -1)
+    {
+      *saved_errno = errno;
+
+      return dconf_gvdb_utils_set_file_error (filename, *saved_errno, error);
+    }
+  else
+    {
+      GString *data;
+      guint8   buffer[4096];
+
+      data = g_string_new (NULL);
+
+      for (;;)
+        {
+          gssize bytes_read;
+
+          bytes_read = read (fd, buffer, sizeof buffer);
+          if (bytes_read > 0)
+            {
+              g_string_append_len (data, (const gchar *) buffer, bytes_read);
+            }
+          else if (bytes_read == 0)
+            {
+              break;
+            }
+          else if (errno != EINTR)
+            {
+              *saved_errno = errno;
+              close (fd);
+              g_string_free (data, TRUE);
+
+              return dconf_gvdb_utils_set_file_error (filename, *saved_errno, error);
+            }
+        }
+
+      close (fd);
+
+      *size = data->len;
+      *contents = g_string_free_and_steal (data);
+
+      return TRUE;
+    }
+}
+
+static gboolean
+dconf_gvdb_utils_read_file (const gchar  *filename,
+                            gchar       **contents,
+                            gsize        *size,
+                            GError      **error)
+{
+  GError *local_error = NULL;
+  gint saved_errno = 0;
+  gint64 estale_retry_deadline = 0;
+  guint estale_retry_delay = DCONF_GVDB_UTILS_ESTALE_INITIAL_DELAY_USEC;
+
+  while (!dconf_gvdb_utils_read_file_once (filename, contents, size,
+                                           &saved_errno, &local_error))
+    {
+#ifdef ESTALE
+      if (saved_errno == ESTALE)
+        {
+          gint64 now = g_get_monotonic_time ();
+
+          if (estale_retry_deadline == 0)
+            estale_retry_deadline = now + DCONF_GVDB_UTILS_ESTALE_RETRY_TIMEOUT_USEC;
+
+          if (now < estale_retry_deadline)
+            {
+              gint64 remaining_usec = estale_retry_deadline - now;
+              guint delay_usec = MIN (estale_retry_delay, remaining_usec);
+
+              g_clear_error (&local_error);
+              g_usleep (delay_usec);
+
+              estale_retry_delay = MIN (estale_retry_delay * 2,
+                                        DCONF_GVDB_UTILS_ESTALE_MAX_DELAY_USEC);
+              continue;
+            }
+        }
+#endif
+
+      g_propagate_error (error, local_error);
+
+      return FALSE;
+    }
+
+  return TRUE;
+}
+
 DConfChangeset *
 dconf_gvdb_utils_read_and_back_up_file (const gchar  *filename,
                                         gboolean     *file_missing,
@@ -73,7 +199,7 @@ dconf_gvdb_utils_read_and_back_up_file (const gchar  *filename,
   gchar *contents;
   gsize size;
 
-  if (g_file_get_contents (filename, &contents, &size, &my_error))
+  if (dconf_gvdb_utils_read_file (filename, &contents, &size, &my_error))
     {
       GBytes *bytes;
 
