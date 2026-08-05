@@ -1,3 +1,11 @@
+Changes in dconf 51.beta
+=======================
+
+ - Implement safe GVDB writer and use it by default for homes on NFS (Marek Kasik, Ray Strode, !88)
+ - docs: Describe DBDIR argument in man page (Marek Kasik, !94)
+ - docs: Fix a typo (Marek Kasik)
+
+
 Changes in dconf 0.49.0
 =======================
 
