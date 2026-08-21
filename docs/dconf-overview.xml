@@ -62,10 +62,9 @@
       can be read back immediately) until the service signals that a write has completed.
     </para>
     <para>
-      The binary database format that dconf uses by default is not suitable for use on NFS, where mmap does not
-      work well. To handle this common use case, dconf can be configured to place its binary database in
-      <envar>XDG_RUNTIME_DIR</envar> (which is guaranteed to be local, but non-persistent) and synchronize it
-      with a plain text keyfile in the users home directory.
+      To overcome mmap issues when the binary database is on NFS, dconf places a binary database in
+      <envar>XDG_RUNTIME_DIR</envar> (which is guaranteed to be local, but non-persistent) and synchronizes it
+      automatically with the one in the user's home directory.
     </para>
   </refsect1>
 
